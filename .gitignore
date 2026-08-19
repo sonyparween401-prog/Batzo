@@ -1,0 +1,13 @@
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+frontend/dist/
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/.idea/
+android-sdk/
+*.log
+.DS_Store
+.env
+.env.*

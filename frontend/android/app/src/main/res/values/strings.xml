@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Batzo</string>
+    <string name="title_activity_main">Batzo</string>
+    <string name="package_name">com.batzo.app</string>
+    <string name="custom_url_scheme">com.batzo.app</string>
+</resources>
