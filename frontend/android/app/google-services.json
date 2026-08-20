@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "962823937275",
+    "project_id": "batzo-369df",
+    "storage_bucket": "batzo-369df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962823937275:android:bcac963ff91c4e9205e45e",
+        "android_client_info": {
+          "package_name": "com.batzo.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962823937275-gvavhqvk7af4bqtisnkuubjjd270pveo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrukpC1baONIt_2KdJBLZ8ZPhjpo6nIFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962823937275-gvavhqvk7af4bqtisnkuubjjd270pveo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962823937275-gq4mtfo0umkrn671shegg2a1vorouhjf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.batzo.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
