@@ -8,13 +8,28 @@ const { registerRoutes } = require('./routes');
 
 const { registerUser } = require('./auth');
 const { requestOtp, verifyOtp } = require('./otp');
+const { loginWithFirebaseIdToken } = require('./firebase-user');
 
+const cricketRoutes = require("./cricket-routes");
 const app = express();
+
+// BATZO CRICKET API ROUTES
+
+
+// BATZO CRICKET API - MUST BE BEFORE SPA/404 HANDLERS
+
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '100kb' }));
+// BATZO REAL CRICKET ROUTES
+app.use("/api/cricket", cricketRoutes);
+
+// BATZO REAL CRICKET API
+
+// BATZO REAL CRICKET API ROUTES
+
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -115,6 +130,35 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Batzo API running on http://127.0.0.1:${PORT}`);
+
+app.post('/api/auth/firebase', async (req, res) => {
+  try {
+    const { idToken } = req.body || {};
+
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Firebase ID token is required.'
+      });
+    }
+
+    const result = await loginWithFirebaseIdToken(idToken);
+
+    return res.json({
+      success: true,
+      ...result
+    });
+  } catch (err) {
+    console.error('Firebase authentication failed:', err.message);
+
+    return res.status(401).json({
+      success: false,
+      message: 'Firebase authentication failed.'
+    });
+  }
 });
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Batzo API running on http://0.0.0.0:${PORT}`);
+});
+
