@@ -113,10 +113,9 @@ export default function App() {
     <div className="batzo-app">
       <header className="topbar">
         <div className="brand-wrap">
-          <div className="brand-logo-3d">
-            <span className="logo-b">B</span><span className="logo-a">A</span><span className="logo-t">T</span><span className="logo-z">Z</span><span className="logo-o">O</span>
-          </div>
-          <div className="brand-sub-wrap">
+          <div className="brand-mark">B</div>
+          <div>
+            <div className="brand">BATZO</div>
             <div className="brand-sub">CRICKET HUB</div>
           </div>
         </div>
