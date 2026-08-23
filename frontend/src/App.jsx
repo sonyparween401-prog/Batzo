@@ -1,411 +1,261 @@
-import React, { useState } from 'react';
-import './App.css';
+import React, { useEffect, useMemo, useState } from "react";
+import "./App.css";
 
-import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-const matches = [
-  { id: 1, status: 'LIVE', league: 'International Cricket', team1: 'IND', team2: 'AUS', team1Name: 'India', team2Name: 'Australia', score1: '156/4', score2: '—', overs: '17.2', time: 'Live now' },
-  { id: 2, status: 'UPCOMING', league: 'T20 Match', team1: 'ENG', team2: 'SA', team1Name: 'England', team2Name: 'South Africa', score1: '—', score2: '—', overs: '', time: 'Today • 7:30 PM' },
-  { id: 3, status: 'UPCOMING', league: 'Premier Cricket', team1: 'WI', team2: 'NZ', team1Name: 'West Indies', team2Name: 'New Zealand', score1: '—', score2: '—', overs: '', time: 'Tomorrow • 3:30 PM' }
+const upcoming = [
+  { id: 1, league: "T20", time: "Today • 7:30 PM", a: "India", ac: "IND", b: "Australia", bc: "AUS", tag: "MEGA CONTEST" },
+  { id: 2, league: "T20", time: "Tomorrow • 3:30 PM", a: "England", ac: "ENG", b: "South Africa", bc: "SA", tag: "HOT CONTEST" },
+  { id: 3, league: "T20", time: "Tomorrow • 7:30 PM", a: "Pakistan", ac: "PAK", b: "New Zealand", bc: "NZ", tag: "POPULAR" }
 ];
 
-function App() {
-  const [page, setPage] = useState('home');
-  const [mobile, setMobile] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [message, setMessage] = useState('');
+const live = [
+  { id: 11, league: "LIVE • T20", time: "2nd Innings", a: "India", ac: "IND", as: "168/4", b: "Australia", bc: "AUS", bs: "142/7", over: "17.2 ov" }
+];
 
-  const go = (next) => {
-    setMessage('');
-    setPage(next);
-  };
+const contests = [
+  { title: "Mega Contest", prize: "₹50 Lakhs", spots: "2.1L", entry: "₹49" },
+  { title: "Head to Head", prize: "₹1,800", spots: "2", entry: "₹49" },
+  { title: "Small Contest", prize: "₹25,000", spots: "1,000", entry: "₹99" }
+];
 
-  const sendOtp = async () => {
-    const digits = String(mobile || '').replace(/\D/g, '');
+function TeamBadge({ code }) {
+  return <div className="team-badge">{code}</div>;
+}
 
-    if (digits.length !== 10) {
-      setMessage('Please enter a valid 10 digit mobile number.');
-      return;
-    }
-
-    try {
-      setMessage('Sending Firebase OTP...');
-
-      await FirebaseAuthentication.removeAllListeners();
-
-      await FirebaseAuthentication.addListener(
-        'phoneCodeSent',
-        async event => {
-          setVerificationId(event.verificationId);
-          setMessage('6-digit OTP sent to your mobile.');
-          setPage('otp');
-        }
-      );
-
-      await FirebaseAuthentication.addListener(
-        'phoneVerificationCompleted',
-        async event => {
-          setMessage('OTP verified successfully.');
-          setPage('profile');
-        }
-      );
-
-      await FirebaseAuthentication.addListener(
-        'phoneVerificationFailed',
-        async event => {
-          setMessage(event.message || 'Firebase phone verification failed.');
-        }
-      );
-
-      await FirebaseAuthentication.signInWithPhoneNumber({
-        phoneNumber: `+91${digits}`
-      });
-    } catch (error) {
-      console.error('Firebase OTP error:', error);
-      setMessage(error?.message || 'Firebase OTP could not be sent.');
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      setMessage('Opening Google Sign-In...');
-      const result = await FirebaseAuthentication.signInWithGoogle();
-
-      if (result?.user) {
-        const user = result.user;
-        setName(user.displayName || '');
-        setMessage(`Google sign-in successful. Welcome ${user.displayName || 'to Batzo'}!`);
-        setPage('profile');
-      } else {
-        setMessage('Google Sign-In completed, but no user was returned.');
-      }
-    } catch (error) {
-      console.error('Firebase Google Sign-In error:', error);
-      setMessage(error?.message || 'Google Sign-In failed. Please try again.');
-    }
-  };
-
-  const submitRegister = async () => {
-    if (!name.trim() || !mobile.trim() || !password) {
-      setMessage('Please fill all registration fields.');
-      return;
-    }
-
-    const digits = String(mobile).replace(/\D/g, '');
-
-    if (digits.length !== 10) {
-      setMessage('Please enter a valid 10 digit mobile number.');
-      return;
-    }
-
-    try {
-      setMessage('Sending Firebase OTP...');
-
-      await FirebaseAuthentication.removeAllListeners();
-
-      await FirebaseAuthentication.addListener(
-        'phoneCodeSent',
-        async event => {
-          setVerificationId(event.verificationId);
-          setMessage('6-digit OTP sent to your mobile.');
-          setPage('otp');
-        }
-      );
-
-      await FirebaseAuthentication.addListener(
-        'phoneVerificationCompleted',
-        async event => {
-          setMessage('Mobile verified successfully.');
-          setPage('profile');
-        }
-      );
-
-      await FirebaseAuthentication.addListener(
-        'phoneVerificationFailed',
-        async event => {
-          setMessage(event.message || 'Firebase phone verification failed.');
-        }
-      );
-
-      await FirebaseAuthentication.signInWithPhoneNumber({
-        phoneNumber: `+91${digits}`
-      });
-    } catch (error) {
-      console.error('Firebase registration OTP error:', error);
-      setMessage(error?.message || 'Unable to send OTP.');
-    }
-  };
-
-  const verifyOtp = async () => {
-    if (!/^\d{6}$/.test(otp)) {
-      setMessage('Please enter the 6-digit OTP.');
-      return;
-    }
-
-    if (!verificationId) {
-      setMessage('OTP session expired. Please resend OTP.');
-      return;
-    }
-
-    try {
-      setMessage('Verifying OTP...');
-
-      await FirebaseAuthentication.confirmVerificationCode({
-        verificationId,
-        verificationCode: otp
-      });
-
-      setMessage('OTP verified successfully.');
-      setPage('profile');
-    } catch (error) {
-      console.error('Firebase OTP verification error:', error);
-      setMessage(error?.message || 'Invalid or expired OTP.');
-    }
-  };
-
-  if (page === 'login') {
-    return (
-      <AuthShell title="Welcome back" subtitle="Login to continue to Batzo">
-        <label>Mobile Number</label>
-        <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="Enter mobile number" inputMode="numeric" />
-
-        <button className="auth-primary" onClick={sendOtp}>Continue with OTP</button>
-
-        <div className="divider"><span>OR</span></div>
-
-        <button className="social google" onClick={signInWithGoogle}>
-          <b>G</b> Continue with Google
-        </button>
-
-        <button className="social facebook" onClick={() => setMessage('Facebook Login will be connected with OAuth.')}>
-          <b>f</b> Continue with Facebook
-        </button>
-
-        {message && <div className="auth-message">{message}</div>}
-
-        <p className="switch">
-          New to Batzo?
-          <button onClick={() => go('register')}> Create account</button>
-        </p>
-      </AuthShell>
-    );
-  }
-
-  if (page === 'register') {
-    return (
-      <AuthShell title="Create account" subtitle="Join Batzo and start your cricket journey">
-        <label>Full Name</label>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name" />
-
-        <label>Mobile Number</label>
-        <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="Enter mobile number" inputMode="numeric" />
-
-        <label>Password</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create password" />
-
-        <button className="auth-primary" onClick={submitRegister}>Create Account</button>
-
-        <div className="divider"><span>OR</span></div>
-
-        <button className="social google" onClick={signInWithGoogle}>
-          <b>G</b> Sign up with Google
-        </button>
-
-        <button className="social facebook" onClick={() => setMessage('Facebook signup will be connected with OAuth.')}>
-          <b>f</b> Sign up with Facebook
-        </button>
-
-        {message && <div className="auth-message">{message}</div>}
-
-        <p className="switch">
-          Already have an account?
-          <button onClick={() => go('login')}> Login</button>
-        </p>
-      </AuthShell>
-    );
-  }
-
-  if (page === 'otp') {
-    return (
-      <AuthShell title="Verify mobile" subtitle={`Enter the OTP sent to ${mobile || 'your mobile number'}`}>
-        <label>OTP</label>
-        <input className="otp-input" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Enter OTP" inputMode="numeric" maxLength="6" />
-
-        <button className="auth-primary" onClick={verifyOtp}>Verify OTP</button>
-
-        <button className="link-button" onClick={sendOtp}>Resend OTP</button>
-
-        {message && <div className="auth-message">{message}</div>}
-
-        <button className="back-button" onClick={() => go('login')}>← Back to Login</button>
-      </AuthShell>
-    );
-  }
-
-  if (page === 'profile') {
-    return (
-      <div className="batzo-app">
-        <header className="topbar">
-          <div className="brand">
-            <div className="brand-mark">B</div>
-            <div>
-              <div className="brand-name">BATZO</div>
-              <div className="brand-subtitle">Cricket Hub</div>
-            </div>
-          </div>
-        </header>
-
-        <main className="content">
-          <section className="page-section">
-            <span className="eyebrow">ACCOUNT</span>
-            <h1>Welcome to Batzo</h1>
-
-            <div className="profile-card">
-              <div className="large-avatar">👤</div>
-              <div>
-                <h2>{name || 'Batzo Player'}</h2>
-                <p>{mobile || 'Mobile number'}</p>
-              </div>
-            </div>
-
-            <button className="primary-button full-button" onClick={() => go('home')}>
-              Go to Home
-            </button>
-
-            <button className="back-button full-button" onClick={() => go('login')}>
-              Logout
-            </button>
-          </section>
-        </main>
+function MatchCard({ match, isLive = false, onOpen }) {
+  return (
+    <button className="match-card" onClick={() => onOpen(match)}>
+      <div className="match-top">
+        <span>{match.league}</span>
+        <span className={isLive ? "live-dot" : "match-time"}>{isLive ? "● LIVE" : match.time}</span>
       </div>
+
+      <div className="teams">
+        <div className="team">
+          <TeamBadge code={match.ac} />
+          <strong>{match.a}</strong>
+          {isLive && <b>{match.as}</b>}
+        </div>
+
+        <div className="vs">VS</div>
+
+        <div className="team">
+          <TeamBadge code={match.bc} />
+          <strong>{match.b}</strong>
+          {isLive && <b>{match.bs}</b>}
+        </div>
+      </div>
+
+      {isLive ? (
+        <div className="match-bottom">
+          <span>{match.over}</span>
+          <span className="join-live">VIEW MATCH →</span>
+        </div>
+      ) : (
+        <div className="match-bottom">
+          <span>{match.tag}</span>
+          <span className="join-live">VIEW CONTESTS →</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
+function ContestCard({ contest }) {
+  return (
+    <button className="contest-card">
+      <div>
+        <span className="contest-label">WINNING PRIZE</span>
+        <strong>{contest.prize}</strong>
+      </div>
+      <div className="contest-mid">
+        <b>{contest.title}</b>
+        <span>{contest.spots} spots</span>
+      </div>
+      <div className="entry">
+        <span>JOIN</span>
+        <b>₹{contest.entry.replace("₹", "")}</b>
+      </div>
+    </button>
+  );
+}
+
+export default function App() {
+  const [tab, setTab] = useState("home");
+  const [notice, setNotice] = useState("");
+  const [wallet] = useState("₹0");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    document.title = "BATZO • Cricket Hub";
+  }, []);
+
+  const filteredUpcoming = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return upcoming;
+    return upcoming.filter(
+      m =>
+        m.a.toLowerCase().includes(q) ||
+        m.b.toLowerCase().includes(q) ||
+        m.league.toLowerCase().includes(q)
     );
-  }
+  }, [search]);
+
+  const openMatch = match => {
+    setNotice(`${match.a} vs ${match.b} — Match Centre`);
+    setTab("matches");
+  };
+
+  const comingSoon = name => {
+    setNotice(`${name} is ready for the next Batzo release.`);
+  };
 
   return (
     <div className="batzo-app">
       <header className="topbar">
-        <div className="brand">
+        <div className="brand-wrap">
           <div className="brand-mark">B</div>
           <div>
-            <div className="brand-name">BATZO</div>
-            <div className="brand-subtitle">Cricket Hub</div>
+            <div className="brand">BATZO</div>
+            <div className="brand-sub">CRICKET HUB</div>
           </div>
         </div>
 
-        <button className="profile-button" onClick={() => go('login')}>👤</button>
+        <div className="top-actions">
+          <button className="icon-btn" onClick={() => comingSoon("Notifications")} aria-label="Notifications">♢</button>
+          <button className="wallet-btn" onClick={() => comingSoon("Wallet")}>
+            <span>Wallet</span>
+            <b>{wallet}</b>
+          </button>
+        </div>
       </header>
 
       <main className="content">
-        <section className="hero">
-          <div className="hero-content">
-            <span className="hero-badge">🏏 BATZO</span>
-            <h1>Cricket starts here.</h1>
-            <p>Follow matches, explore contests and manage your cricket experience from one place.</p>
+        {notice && (
+          <button className="notice" onClick={() => setNotice("")}>
+            <span>{notice}</span><b>×</b>
+          </button>
+        )}
 
-            <div className="hero-actions">
-              <button className="primary-button" onClick={() => go('matches')}>Explore Matches</button>
-              <button className="secondary-button" onClick={() => go('contests')}>View Contests</button>
+        {tab === "home" && (
+          <>
+            <section className="hero">
+              <div className="hero-glow" />
+              <div className="hero-copy">
+                <span className="eyebrow">THE NEW CRICKET EXPERIENCE</span>
+                <h1>Play smart.<br /><em>Play Batzo.</em></h1>
+                <p>Create your best XI, join contests and follow every ball.</p>
+                <button className="primary-btn" onClick={() => setTab("matches")}>
+                  EXPLORE MATCHES <span>→</span>
+                </button>
+              </div>
+              <div className="hero-ball">🏏</div>
+            </section>
+
+            <section className="quick-grid">
+              <button onClick={() => setTab("matches")}><span>🏏</span><b>Matches</b><small>Live & upcoming</small></button>
+              <button onClick={() => comingSoon("My Contests")}><span>🏆</span><b>My Contests</b><small>Track entries</small></button>
+              <button onClick={() => comingSoon("My Teams")}><span>👥</span><b>My Teams</b><small>Build your XI</small></button>
+              <button onClick={() => comingSoon("Rewards")}><span>🎁</span><b>Rewards</b><small>Coming soon</small></button>
+            </section>
+
+            <section className="section">
+              <div className="section-head">
+                <div><span className="section-kicker">PLAY NOW</span><h2>Live Matches</h2></div>
+                <button onClick={() => setTab("matches")}>View all →</button>
+              </div>
+              {live.map(match => <MatchCard key={match.id} match={match} isLive onOpen={openMatch} />)}
+            </section>
+
+            <section className="section">
+              <div className="section-head">
+                <div><span className="section-kicker">DON'T MISS OUT</span><h2>Upcoming Matches</h2></div>
+                <button onClick={() => setTab("matches")}>View all →</button>
+              </div>
+              <div className="match-list">
+                {upcoming.slice(0, 2).map(match => <MatchCard key={match.id} match={match} onOpen={openMatch} />)}
+              </div>
+            </section>
+
+            <section className="section">
+              <div className="section-head">
+                <div><span className="section-kicker">TOP PICKS</span><h2>Popular Contests</h2></div>
+                <button onClick={() => comingSoon("All Contests")}>View all →</button>
+              </div>
+              <div className="contest-list">
+                {contests.map((contest, i) => <ContestCard key={i} contest={contest} />)}
+              </div>
+            </section>
+
+            <section className="trust-strip">
+              <span>✓</span><div><b>Built for cricket fans</b><small>Simple contests • Clear match data • Fast experience</small></div>
+            </section>
+          </>
+        )}
+
+        {tab === "matches" && (
+          <section className="page">
+            <div className="page-title">
+              <span className="section-kicker">BATZO CRICKET</span>
+              <h1>Matches</h1>
+              <p>Choose a match and enter the action.</p>
             </div>
-          </div>
-        </section>
-
-        <section className="section">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">TODAY</span>
-              <h2>Featured Matches</h2>
+            <div className="search-box">
+              <span>⌕</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search teams or matches" />
             </div>
-            <button className="text-button" onClick={() => go('matches')}>View all</button>
-          </div>
+            <h3 className="list-title">LIVE</h3>
+            {live.map(match => <MatchCard key={match.id} match={match} isLive onOpen={openMatch} />)}
+            <h3 className="list-title">UPCOMING</h3>
+            {filteredUpcoming.map(match => <MatchCard key={match.id} match={match} onOpen={openMatch} />)}
+          </section>
+        )}
 
-          <div className="match-list">
-            {matches.map(match => (
-              <article className="match-card" key={match.id}>
-                <div className="match-top">
-                  <span className={match.status === 'LIVE' ? 'status live' : 'status upcoming'}>{match.status}</span>
-                  <span className="league">{match.league}</span>
-                </div>
+        {tab === "contests" && (
+          <section className="page">
+            <div className="page-title">
+              <span className="section-kicker">COMPETE</span>
+              <h1>Contests</h1>
+              <p>Pick your format and play your way.</p>
+            </div>
+            {contests.map((contest, i) => <ContestCard key={i} contest={contest} />)}
+            <div className="empty-card">Your joined contests will appear here.</div>
+          </section>
+        )}
 
-                <div className="teams">
-                  <div className="team">
-                    <div className="team-logo">{match.team1}</div>
-                    <strong>{match.team1Name}</strong>
-                    <span>{match.score1}</span>
-                  </div>
+        {tab === "teams" && (
+          <section className="page centered-page">
+            <div className="big-icon">👥</div>
+            <span className="section-kicker">YOUR SQUADS</span>
+            <h1>My Teams</h1>
+            <p>Create and manage your fantasy cricket teams here.</p>
+            <button className="primary-btn" onClick={() => comingSoon("Team Builder")}>CREATE TEAM →</button>
+          </section>
+        )}
 
-                  <div className="vs">VS</div>
-
-                  <div className="team">
-                    <div className="team-logo">{match.team2}</div>
-                    <strong>{match.team2Name}</strong>
-                    <span>{match.score2}</span>
-                  </div>
-                </div>
-
-                <div className="match-bottom">
-                  <span>{match.status === 'LIVE' ? `Overs ${match.overs}` : match.time}</span>
-                  <button className="small-button" onClick={() => go('matches')}>View</button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="quick-grid">
-          <button className="quick-card" onClick={() => go('matches')}>
-            <span className="quick-icon">🏏</span>
-            <strong>Matches</strong>
-            <small>Live & upcoming</small>
-          </button>
-
-          <button className="quick-card" onClick={() => go('contests')}>
-            <span className="quick-icon">🏆</span>
-            <strong>Contests</strong>
-            <small>Explore contests</small>
-          </button>
-
-          <button className="quick-card" onClick={() => go('login')}>
-            <span className="quick-icon">🔐</span>
-            <strong>Login</strong>
-            <small>OTP / Google / Facebook</small>
-          </button>
-
-          <button className="quick-card" onClick={() => go('register')}>
-            <span className="quick-icon">👤</span>
-            <strong>Register</strong>
-            <small>Create Batzo account</small>
-          </button>
-        </section>
+        {tab === "profile" && (
+          <section className="page centered-page">
+            <div className="profile-avatar">B</div>
+            <span className="section-kicker">BATZO ACCOUNT</span>
+            <h1>Your Profile</h1>
+            <p>Profile, wallet and account settings will live here.</p>
+            <button className="secondary-btn" onClick={() => comingSoon("Profile settings")}>ACCOUNT SETTINGS</button>
+          </section>
+        )}
       </main>
 
       <nav className="bottom-nav">
-        <button className={page === 'home' ? 'nav-item active' : 'nav-item'} onClick={() => go('home')}><span>⌂</span><small>Home</small></button>
-        <button className={page === 'matches' ? 'nav-item active' : 'nav-item'} onClick={() => go('matches')}><span>🏏</span><small>Matches</small></button>
-        <button className={page === 'contests' ? 'nav-item active' : 'nav-item'} onClick={() => go('contests')}><span>🏆</span><small>Contests</small></button>
-        <button className="nav-item" onClick={() => go('login')}><span>🔐</span><small>Login</small></button>
-        <button className="nav-item" onClick={() => go('profile')}><span>👤</span><small>Profile</small></button>
+        {[
+          ["home", "⌂", "Home"],
+          ["matches", "🏏", "Matches"],
+          ["contests", "🏆", "Contests"],
+          ["teams", "👥", "My Teams"],
+          ["profile", "◉", "Profile"]
+        ].map(([id, icon, label]) => (
+          <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+            <span>{icon}</span><small>{label}</small>
+          </button>
+        ))}
       </nav>
     </div>
   );
 }
-
-function AuthShell({ title, subtitle, children }) {
-  return (
-    <div className="auth-page">
-      <div className="auth-logo">
-        <div className="brand-mark">B</div>
-        <div className="brand-name">BATZO</div>
-      </div>
-
-      <div className="auth-card">
-        <h1>{title}</h1>
-        <p className="auth-subtitle">{subtitle}</p>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export default App;
