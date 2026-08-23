@@ -28,27 +28,3 @@ body {
   overflow-x: hidden;
   background: #070a0f;
 }
-
-html {
-  background: #03070b;
-  width: 100%;
-  min-height: 100%;
-}
-
-body {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  background: #03070b;
-  overflow-x: hidden;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
-
