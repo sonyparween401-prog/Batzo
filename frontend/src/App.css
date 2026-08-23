@@ -1816,3 +1816,258 @@ button {
 .cinematic-match-card:active {
   transform: scale(.985);
 }
+
+/* ============================================================
+   BATZO CINEMATIC PLAYER HERO + PREMIUM LEAGUE HOME
+   ============================================================ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 86% 42%, rgba(0,255,117,.12), transparent 26%),
+    radial-gradient(circle at 78% 78%, rgba(150,0,255,.14), transparent 32%),
+    linear-gradient(120deg, #061014 0%, #090e17 48%, #13091a 100%);
+  border-color: rgba(0,255,117,.48);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(3,8,12,.98) 0%, rgba(3,8,12,.84) 39%, rgba(3,8,12,.18) 73%, rgba(3,8,12,.05) 100%);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -30px;
+  bottom: -60px;
+  width: 58%;
+  height: 118%;
+  background: url("/players/batzo-player-hero.svg") center bottom / contain no-repeat;
+  opacity: .96;
+  filter: saturate(1.08) contrast(1.05);
+  pointer-events: none;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  max-width: 58%;
+  text-shadow: 0 8px 28px rgba(0,0,0,.42);
+}
+
+.hero p {
+  max-width: 54%;
+}
+
+.hero .hero-button,
+.hero button {
+  box-shadow:
+    0 12px 28px rgba(0,255,117,.18),
+    inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* premium section headers */
+.section-kicker {
+  color: #00ed78;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.list-title {
+  font-weight: 950;
+  letter-spacing: -.4px;
+}
+
+/* cinematic match cards */
+.cinematic-match-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 92% 55%, rgba(0,255,117,.10), transparent 24%),
+    linear-gradient(125deg, #080d13 0%, #0b1119 54%, #150b18 100%);
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.cinematic-match-card::after {
+  content: "";
+  position: absolute;
+  right: -24px;
+  bottom: -38px;
+  width: 43%;
+  height: 115%;
+  background: url("/players/batzo-player-hero.svg") center bottom / contain no-repeat;
+  opacity: .26;
+  transform: scaleX(-1) scale(1.02);
+  filter: saturate(.9);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.live-match-card {
+  border-color: rgba(255,77,103,.26);
+}
+
+.upcoming-match-card {
+  border-color: rgba(0,255,117,.18);
+}
+
+.match-top,
+.teams,
+.match-meta,
+.match-bottom {
+  position: relative;
+  z-index: 3;
+}
+
+.match-top {
+  padding-right: 70px;
+}
+
+.live-match-card::before {
+  content: "LIVE";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,55,80,.13);
+  border: 1px solid rgba(255,80,100,.28);
+  color: #ff6679;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 1.2px;
+  z-index: 4;
+}
+
+.upcoming-match-card::before {
+  content: "UPCOMING";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(0,255,117,.08);
+  border: 1px solid rgba(0,255,117,.20);
+  color: #00e875;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: 1px;
+  z-index: 4;
+}
+
+/* home action cards */
+.quick-grid button,
+.contest-card {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.quick-grid button:hover,
+.contest-card:hover {
+  border-color: rgba(0,255,117,.35);
+  transform: translateY(-2px);
+}
+
+/* premium bottom navigation */
+.bottom-nav {
+  background: rgba(5,9,14,.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-color: rgba(255,255,255,.11);
+  box-shadow: 0 -12px 34px rgba(0,0,0,.34);
+}
+
+.bottom-nav .active {
+  box-shadow:
+    0 10px 26px rgba(0,255,117,.12),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* wallet polish */
+.wallet,
+.wallet-balance {
+  background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.012));
+  border-color: rgba(255,255,255,.12);
+}
+
+/* mobile composition */
+@media (max-width: 430px) {
+  .hero {
+    min-height: 360px;
+  }
+
+  .hero::after {
+    right: -52px;
+    bottom: -52px;
+    width: 72%;
+    height: 112%;
+    opacity: .92;
+  }
+
+  .hero h1 {
+    max-width: 72%;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: .98;
+  }
+
+  .hero p {
+    max-width: 67%;
+    font-size: 13px;
+  }
+
+  .hero .hero-button,
+  .hero button {
+    position: relative;
+    z-index: 5;
+  }
+
+  .cinematic-match-card::after {
+    width: 50%;
+    right: -34px;
+    opacity: .23;
+  }
+}
+
+.teams .team {
+  position: relative;
+  z-index: 4;
+}
+
+.team-badge {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 8px 20px rgba(0,0,0,.30);
+}
+
+.match-meta {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.match-bottom button,
+.match-bottom a {
+  box-shadow: 0 8px 18px rgba(0,0,0,.24);
+}
+
+.cinematic-match-card:active,
+.quick-grid button:active,
+.contest-card:active {
+  transform: scale(.985);
+}

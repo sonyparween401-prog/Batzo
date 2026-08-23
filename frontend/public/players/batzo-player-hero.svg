@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 760">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071018"/>
+      <stop offset=".52" stop-color="#101329"/>
+      <stop offset="1" stop-color="#25051f"/>
+    </linearGradient>
+    <linearGradient id="jersey" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172b35"/>
+      <stop offset=".55" stop-color="#07161c"/>
+      <stop offset="1" stop-color="#032a20"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d99568"/>
+      <stop offset=".55" stop-color="#9d583e"/>
+      <stop offset="1" stop-color="#5d302c"/>
+    </linearGradient>
+    <linearGradient id="bat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2b75e"/>
+      <stop offset=".45" stop-color="#a9652e"/>
+      <stop offset="1" stop-color="#4e2b1d"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#00ff75" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#00ff75" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#000" flood-opacity=".65"/>
+    </filter>
+  </defs>
+
+  <rect width="620" height="760" fill="url(#bg)"/>
+  <ellipse cx="410" cy="350" rx="250" ry="260" fill="url(#glow)" filter="url(#blur)"/>
+
+  <g opacity=".16" stroke="#fff" fill="none">
+    <circle cx="420" cy="350" r="210"/>
+    <circle cx="420" cy="350" r="155"/>
+    <path d="M220 510 Q410 260 600 130"/>
+    <path d="M190 560 Q400 320 610 180"/>
+  </g>
+
+  <!-- bat behind player -->
+  <g transform="rotate(-31 410 360)" filter="url(#shadow)">
+    <rect x="426" y="155" width="58" height="390" rx="22" fill="url(#bat)"/>
+    <rect x="430" y="110" width="50" height="95" rx="16" fill="#202a31"/>
+    <path d="M434 180 L476 180" stroke="#e6e6e6" stroke-width="8"/>
+    <path d="M434 202 L476 202" stroke="#e6e6e6" stroke-width="6"/>
+  </g>
+
+  <!-- rear arm -->
+  <path d="M337 330 Q408 335 466 410 L438 442 Q365 398 312 374Z"
+        fill="url(#skin)" filter="url(#shadow)"/>
+
+  <!-- torso -->
+  <path d="M232 290 Q300 250 366 286 L420 490 Q350 545 230 485Z"
+        fill="url(#jersey)" filter="url(#shadow)"/>
+
+  <path d="M253 310 Q306 295 357 318" stroke="#00e875" stroke-width="9" opacity=".7"/>
+  <path d="M271 342 Q320 328 370 346" stroke="#9df8c5" stroke-width="3" opacity=".35"/>
+
+  <!-- front arm -->
+  <path d="M270 325 Q320 348 395 418 L367 449 Q296 405 251 372Z"
+        fill="url(#skin)" filter="url(#shadow)"/>
+
+  <!-- head -->
+  <ellipse cx="296" cy="218" rx="61" ry="72" fill="url(#skin)" filter="url(#shadow)"/>
+
+  <!-- helmet -->
+  <path d="M232 222 Q226 136 300 128 Q370 133 366 214
+           L341 205 Q337 167 297 162 Q258 166 251 220Z"
+        fill="#111a22" filter="url(#shadow)"/>
+  <path d="M246 197 Q300 171 354 198" stroke="#00e875" stroke-width="7"/>
+  <path d="M300 159 L300 201" stroke="#77838c" stroke-width="4" opacity=".7"/>
+
+  <!-- face shadow -->
+  <path d="M312 208 Q345 219 337 254 Q320 279 292 269
+           Q316 248 312 208Z" fill="#713d35" opacity=".6"/>
+
+  <!-- legs -->
+  <path d="M255 470 Q293 470 326 487 L314 674 L252 674Z"
+        fill="#17202a" filter="url(#shadow)"/>
+  <path d="M326 487 Q372 475 406 460 L464 631 L402 648Z"
+        fill="#101a23" filter="url(#shadow)"/>
+
+  <!-- pads -->
+  <path d="M246 560 L316 558 L316 681 L242 681Z"
+        fill="#d8dde0" opacity=".9"/>
+  <path d="M401 548 L461 533 L485 635 L415 650Z"
+        fill="#d8dde0" opacity=".9"/>
+
+  <!-- shoes -->
+  <path d="M238 668 Q275 649 321 671 L334 710 L222 710Z" fill="#080d12"/>
+  <path d="M407 642 Q449 627 489 643 L511 684 L398 687Z" fill="#080d12"/>
+
+  <!-- ball -->
+  <circle cx="150" cy="260" r="24" fill="#c74645"/>
+  <path d="M132 246 Q153 260 168 277" stroke="#f2e6d8" stroke-width="5" fill="none"/>
+
+  <path d="M90 680 Q310 600 545 680" stroke="#00e875" stroke-width="4" opacity=".4"/>
+</svg>
