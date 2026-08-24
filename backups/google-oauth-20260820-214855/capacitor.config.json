@@ -1,0 +1,13 @@
+{
+  "appId": "com.batzo.app",
+  "appName": "Batzo",
+  "webDir": "dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "providers": [
+        "phone",
+        "google"
+      ]
+    }
+  }
+}

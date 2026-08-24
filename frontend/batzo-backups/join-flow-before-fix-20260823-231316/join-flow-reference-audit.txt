@@ -1,0 +1,547 @@
+frontend/src/App.css:189:.wallet-box {
+frontend/src/App.css:203:.wallet-icon {
+frontend/src/App.css:208:.wallet-box small {
+frontend/src/App.css:214:.wallet-box strong {
+frontend/src/App.css:220:.wallet-box em {
+frontend/src/App.css:765:.join-box {
+frontend/src/App.css:774:.join-box small {
+frontend/src/App.css:778:.join-box b {
+frontend/src/App.css:979:  .wallet-box {
+frontend/src/App.css:985:  .wallet-box strong {
+frontend/src/App.css:1159:  .wallet-box {
+frontend/src/App.css:1165:  .wallet-icon {
+frontend/src/App.css:1169:  .wallet-box small {
+frontend/src/App.css:1173:  .wallet-box strong {
+frontend/src/App.css:1177:  .wallet-box em {
+frontend/src/App.css:1319:  .join-box {
+frontend/src/App.css:2003:/* wallet polish */
+frontend/src/App.css:2004:.wallet,
+frontend/src/App.css:2005:.wallet-balance {
+frontend/src/App.css:2134:.wallet,
+frontend/src/App.css:2135:.wallet-balance,
+frontend/src/App.css:2136:.wallet-card {
+frontend/src/App.css:3740:.bz-contest-join {
+frontend/src/App.css:3751:.bz-contest-join button {
+frontend/src/App.jsx:98:          className="wallet-box"
+frontend/src/App.jsx:101:          <span className="wallet-icon">▰</span>
+frontend/src/App.jsx:197:      <span className="contest-action">VIEW CONTESTS <b>→</b></span>
+frontend/src/App.jsx:213:      <div className="join-box">
+frontend/src/App.jsx:273:                  Create your best XI, join contests
+frontend/src/App.jsx:465:              CREATE TEAM →
+frontend/src/App.jsx:475:            <p>Profile, wallet and account settings.</p>
+frontend/src/App.jsx:639:              <strong>${contest.joined}</strong>
+frontend/src/App.jsx:698:      text.includes("CREATE TEAM") ||
+frontend/src/App.jsx:725:            joined:3210
+frontend/src/App.jsx:747:    btn.textContent="VIEW CONTESTS";
+frontend/src/App.jsx:762:    ].join(";");
+frontend/src/App.jsx:882:        ].join(";");
+frontend/src/App.jsx:925:   * VIEW CONTESTS. This final listener is deliberately
+frontend/src/App.css.before-match-details:2039:.join-btn,
+frontend/src/App.css.before-match-details:2040:.join-button,
+frontend/src/App.css.before-match-details:2056:.join-btn:active,
+frontend/src/App.css.before-match-details:2057:.join-button:active,
+frontend/src/App.css.blank-screen-backup:2039:.join-btn,
+frontend/src/App.css.blank-screen-backup:2040:.join-button,
+frontend/src/App.css.blank-screen-backup:2056:.join-btn:active,
+frontend/src/App.css.blank-screen-backup:2057:.join-button:active,
+frontend/src/App.css.blank-screen-backup:2540:.bd-join-box {
+frontend/src/App.css.blank-screen-backup:2553:.bd-join-box small,
+frontend/src/App.css.blank-screen-backup:2554:.bd-join-box span {
+frontend/src/App.css.blank-screen-backup:2561:.bd-join-box strong {
+frontend/src/App.css.blank-screen-backup:2569:.bd-join-box button,
+frontend/src/App.css.blank-screen-backup:2787:  .bd-join-box button {
+frontend/src/App.css.safe-match-backup:2039:.join-btn,
+frontend/src/App.css.safe-match-backup:2040:.join-button,
+frontend/src/App.css.safe-match-backup:2056:.join-btn:active,
+frontend/src/App.css.safe-match-backup:2057:.join-button:active,
+frontend/src/App.css.match-flow-broken:2039:.join-btn,
+frontend/src/App.css.match-flow-broken:2040:.join-button,
+frontend/src/App.css.match-flow-broken:2056:.join-btn:active,
+frontend/src/App.css.match-flow-broken:2057:.join-button:active,
+frontend/src/App.css.home-stable-backup:2039:.join-btn,
+frontend/src/App.css.home-stable-backup:2040:.join-button,
+frontend/src/App.css.home-stable-backup:2056:.join-btn:active,
+frontend/src/App.css.home-stable-backup:2057:.join-button:active,
+frontend/src/App.css.failed-match-details-backup:2039:.join-btn,
+frontend/src/App.css.failed-match-details-backup:2040:.join-button,
+frontend/src/App.css.failed-match-details-backup:2056:.join-btn:active,
+frontend/src/App.css.failed-match-details-backup:2057:.join-button:active,
+frontend/src/App.css.failed-match-details-backup:2438:.safe-join-card{
+frontend/src/App.css.failed-match-details-backup:2450:.safe-join-card small,
+frontend/src/App.css.failed-match-details-backup:2451:.safe-join-card span{
+frontend/src/App.css.failed-match-details-backup:2458:.safe-join-card strong{
+frontend/src/App.css.failed-match-details-backup:2465:.safe-join-card button,
+frontend/src/MatchDetails.jsx.failed-backup:99:      <section className="safe-join-card">
+frontend/src/MatchDetails.jsx.failed-backup:217:          <button>CREATE TEAM</button>
+frontend/src/App.css.before-touch-fix:2039:.join-btn,
+frontend/src/App.css.before-touch-fix:2040:.join-button,
+frontend/src/App.css.before-touch-fix:2056:.join-btn:active,
+frontend/src/App.css.before-touch-fix:2057:.join-button:active,
+frontend/src/App.css.before-safe-details:2039:.join-btn,
+frontend/src/App.css.before-safe-details:2040:.join-button,
+frontend/src/App.css.before-safe-details:2056:.join-btn:active,
+frontend/src/App.css.before-safe-details:2057:.join-button:active,
+frontend/src/App.css.before-match-flow-1787367695:2039:.join-btn,
+frontend/src/App.css.before-match-flow-1787367695:2040:.join-button,
+frontend/src/App.css.before-match-flow-1787367695:2056:.join-btn:active,
+frontend/src/App.css.before-match-flow-1787367695:2057:.join-button:active,
+frontend/src/App.css.match-flow-backup:2039:.join-btn,
+frontend/src/App.css.match-flow-backup:2040:.join-button,
+frontend/src/App.css.match-flow-backup:2056:.join-btn:active,
+frontend/src/App.css.match-flow-backup:2057:.join-button:active,
+frontend/src/App.css.match-flow-backup:2730:.batzo-join-btn,
+frontend/src/App.css.match-flow-backup:2739:.batzo-join-btn{
+frontend/src/App.css.safe-check-backup:2039:.join-btn,
+frontend/src/App.css.safe-check-backup:2040:.join-button,
+frontend/src/App.css.safe-check-backup:2056:.join-btn:active,
+frontend/src/App.css.safe-check-backup:2057:.join-button:active,
+frontend/src/App.css.safe-check-backup:2730:.batzo-join-btn,
+frontend/src/App.css.safe-check-backup:2739:.batzo-join-btn{
+frontend/src/App.css.safe-check-backup:2911:.batzo-join-btn,
+frontend/src/App.css.safe-check-backup:2920:.batzo-join-btn{
+frontend/src/App.css.full-build-backup:2039:.join-btn,
+frontend/src/App.css.full-build-backup:2040:.join-button,
+frontend/src/App.css.full-build-backup:2056:.join-btn:active,
+frontend/src/App.css.full-build-backup:2057:.join-button:active,
+frontend/src/App.css.full-build-backup:2730:.batzo-join-btn,
+frontend/src/App.css.full-build-backup:2739:.batzo-join-btn{
+frontend/src/App.css.full-build-backup:2911:.batzo-join-btn,
+frontend/src/App.css.full-build-backup:2920:.batzo-join-btn{
+frontend/src/App.css.before-clean-android:2039:.join-btn,
+frontend/src/App.css.before-clean-android:2040:.join-button,
+frontend/src/App.css.before-clean-android:2056:.join-btn:active,
+frontend/src/App.css.before-clean-android:2057:.join-button:active,
+frontend/src/App.css.before-clean-android:2730:.batzo-join-btn,
+frontend/src/App.css.before-clean-android:2739:.batzo-join-btn{
+frontend/src/App.css.before-clean-android:2911:.batzo-join-btn,
+frontend/src/App.css.before-clean-android:2920:.batzo-join-btn{
+frontend/src/App.css.before-full-build:2039:.join-btn,
+frontend/src/App.css.before-full-build:2040:.join-button,
+frontend/src/App.css.before-full-build:2056:.join-btn:active,
+frontend/src/App.css.before-full-build:2057:.join-button:active,
+frontend/src/App.css.before-full-build:2730:.batzo-join-btn,
+frontend/src/App.css.before-full-build:2739:.batzo-join-btn{
+frontend/src/App.css.before-full-build:2911:.batzo-join-btn,
+frontend/src/App.css.before-full-build:2920:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2039:.join-btn,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2040:.join-button,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2056:.join-btn:active,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2057:.join-button:active,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2730:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2739:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2911:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.home-before-match-flow-20260822-084946:2920:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2039:.join-btn,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2040:.join-button,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2056:.join-btn:active,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2057:.join-button:active,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2730:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2739:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2911:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-full-match-flow-090305:2920:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2039:.join-btn,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2040:.join-button,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2056:.join-btn:active,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2057:.join-button:active,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2730:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2739:.batzo-join-btn{
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2911:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-safe-flow-20260822-090655:2920:.batzo-join-btn{
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2039:.join-btn,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2040:.join-button,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2056:.join-btn:active,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2057:.join-button:active,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2730:.batzo-join-btn,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2739:.batzo-join-btn{
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2911:.batzo-join-btn,
+frontend/src/batzo-backups/final-before-clean-20260822-091816/App.css:2920:.batzo-join-btn{
+frontend/src/batzo-backups/App.jsx.before-colour-theme-20260822-092427:225:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.before-match-ui-20260822-092814:225:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.before-contest-20260822-093328:225:                  CREATE TEAM
+frontend/src/batzo-backups/App.css.before-contest-20260822-093328:898:.match-card .join,
+frontend/src/batzo-backups/App.css.before-contest-20260822-093328:899:.match-card .join-contest,
+frontend/src/batzo-backups/App.css.before-contest-20260822-093328:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.jsx:225:                  CREATE TEAM
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.jsx:383:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.jsx:429:  if (joined) {
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.jsx:442:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.jsx:539:          className="batzo-join-btn"
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:898:.match-card .join,
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:899:.match-card .join-contest,
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:1301:.batzo-join-btn,
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:1312:.batzo-join-btn,
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:1329:.batzo-joined-card {
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/contest-step1-8-20260822-094113/App.css:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.jsx:225:                  CREATE TEAM
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.jsx:383:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.jsx:429:  if (joined) {
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.jsx:442:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.jsx:539:          className="batzo-join-btn"
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:898:.match-card .join,
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:899:.match-card .join-contest,
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:1301:.batzo-join-btn,
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:1312:.batzo-join-btn,
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:1329:.batzo-joined-card {
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/navigation-final-20260822-094834/App.css:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.jsx:225:                  CREATE TEAM
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.jsx:383:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.jsx:429:  if (joined) {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.jsx:442:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.jsx:539:          className="batzo-join-btn"
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:898:.match-card .join,
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:899:.match-card .join-contest,
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:1301:.batzo-join-btn,
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:1312:.batzo-join-btn,
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:1329:.batzo-joined-card {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/App.css:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:8:  const [joined, setJoined] = useState([]);
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:23:  const joinContest = () => {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:25:    if (!joined.find(c => c.id === selected.id)) {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:28:    setScreen("joined");
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:59:            <b>₹{selected.entryFee}</b>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:81:        <button className="bz-join-btn" onClick={joinContest}>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:82:          JOIN CONTEST · ₹{selected.entryFee}
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:88:  if (screen === "joined") {
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:99:        {joined.length === 0 ? (
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:105:              VIEW CONTESTS
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:110:            {joined.map(c => (
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:111:              <section className="bz-joined-card" key={c.id}>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:117:                  <small>Entry ₹{c.entryFee}</small>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:144:          <button onClick={() => setScreen("joined")}>←</button>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:186:        <button onClick={() => setScreen("joined")}>🏆</button>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.jsx:228:                  <strong>₹{c.entryFee}</strong>
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:166:.bz-panel,.bz-joined-card,.bz-result-preview{
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:187:.bz-join-btn{
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:199:.bz-joined-card>div{
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:204:.bz-joined-card strong{
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:207:.bz-joined-card small{
+frontend/src/batzo-backups/myteam-contest-20260822-095927/ContestSystem.css:210:.bz-joined-card button,.bz-empty button,.bz-back-home{
+frontend/src/batzo-backups/App.jsx.before-myteam-20260822-100938:225:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.before-myteam-20260822-100938:383:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/App.jsx.before-myteam-20260822-100938:429:  if (joined) {
+frontend/src/batzo-backups/App.jsx.before-myteam-20260822-100938:442:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/App.jsx.before-myteam-20260822-100938:539:          className="batzo-join-btn"
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:898:.match-card .join,
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:899:.match-card .join-contest,
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:1301:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:1312:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:1329:.batzo-joined-card {
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/App.css.before-myteam-20260822-100938:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/App.jsx.broken-before-final-20260822-101303:227:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.broken-before-final-20260822-101303:385:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/App.jsx.broken-before-final-20260822-101303:431:  if (joined) {
+frontend/src/batzo-backups/App.jsx.broken-before-final-20260822-101303:444:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/App.jsx.broken-before-final-20260822-101303:541:          className="batzo-join-btn"
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:898:.match-card .join,
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:899:.match-card .join-contest,
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:1301:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:1312:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:1329:.batzo-joined-card {
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/App.css.before-final-20260822-101303:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/BatzoMyTeamFlow.before-final-20260822-101303:27:  const [joined,setJoined] = useState(false);
+frontend/src/batzo-backups/App.jsx.before-final-20260822-101739:228:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.before-final-20260822-101739:386:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/App.jsx.before-final-20260822-101739:432:  if (joined) {
+frontend/src/batzo-backups/App.jsx.before-final-20260822-101739:445:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/App.jsx.before-final-20260822-101739:542:          className="batzo-join-btn"
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:898:.match-card .join,
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:899:.match-card .join-contest,
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:900:.match-card [class*="join"] {
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:1301:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:1312:.batzo-join-btn,
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:1329:.batzo-joined-card {
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:1360:.batzo-joined-card h2 {
+frontend/src/batzo-backups/App.css.before-final-20260822-101739:1365:.batzo-joined-card > p {
+frontend/src/batzo-backups/App.jsx.broken-jsx-20260822-101830:229:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.broken-jsx-20260822-101830:387:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/App.jsx.broken-jsx-20260822-101830:433:  if (joined) {
+frontend/src/batzo-backups/App.jsx.broken-jsx-20260822-101830:446:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/App.jsx.broken-jsx-20260822-101830:543:          className="batzo-join-btn"
+frontend/src/batzo-backups/App.jsx.pre-clean-rebuild-20260822-102208:227:                  CREATE TEAM
+frontend/src/batzo-backups/App.jsx.pre-clean-rebuild-20260822-102208:385:  const [joined, setJoined] = React.useState(false);
+frontend/src/batzo-backups/App.jsx.pre-clean-rebuild-20260822-102208:431:  if (joined) {
+frontend/src/batzo-backups/App.jsx.pre-clean-rebuild-20260822-102208:444:        <section className="batzo-joined-card">
+frontend/src/batzo-backups/App.jsx.pre-clean-rebuild-20260822-102208:541:          className="batzo-join-btn"
+frontend/src/batzo-backups/App-pre-contest-cvc-20260822-102858.jsx:50:    <button className="wallet">₹ 0</button>
+frontend/src/batzo-backups/App-before-create-team-fix-20260822-103342.jsx:49:    <button className="wallet">₹ 0</button>
+frontend/src/batzo-backups/App-before-create-team-fix-20260822-103342.jsx:176:  const [joined,setJoined]=React.useState(false);
+frontend/src/batzo-backups/App-before-create-team-fix-20260822-103342.jsx:211:    else if(screen==="joined") setScreen("team");
+frontend/src/batzo-backups/App-before-create-team-fix-20260822-103342.jsx:296:          React.createElement("button",{className:"cvc-btn",disabled:!valid,onClick:()=>setScreen("joined")},
+frontend/src/batzo-backups/App-before-create-team-fix-20260822-103342.jsx:302:      screen==="joined" && React.createElement("div",null,
+frontend/src/batzo-backups/App-before-full-dream11-20260822-103716.jsx:49:    <button className="wallet">₹ 0</button>
+frontend/src/batzo-backups/App-before-full-dream11-20260822-103716.jsx:176:  const [joined,setJoined]=React.useState(false);
+frontend/src/batzo-backups/App-before-full-dream11-20260822-103716.jsx:211:    else if(screen==="joined") setScreen("team");
+frontend/src/batzo-backups/App-before-full-dream11-20260822-103716.jsx:296:          React.createElement("button",{className:"cvc-btn",disabled:!valid,onClick:()=>setScreen("joined")},
+frontend/src/batzo-backups/App-before-full-dream11-20260822-103716.jsx:302:      screen==="joined" && React.createElement("div",null,
+frontend/src/batzo-backups/App-before-safe-repair-20260822-103840.jsx:49:    <button className="wallet">₹ 0</button>
+frontend/src/batzo-backups/App-pre-dream11-20260822-104317.jsx:49:    <button className="wallet">₹ 0</button>
+frontend/src/App.css.before-card-touch-final:2039:.join-btn,
+frontend/src/App.css.before-card-touch-final:2040:.join-button,
+frontend/src/App.css.before-card-touch-final:2056:.join-btn:active,
+frontend/src/App.css.before-card-touch-final:2057:.join-button:active,
+frontend/src/App.css.before-card-touch-final:2730:.batzo-join-btn,
+frontend/src/App.css.before-card-touch-final:2739:.batzo-join-btn{
+frontend/src/App.css.before-card-touch-final:2911:.batzo-join-btn,
+frontend/src/App.css.before-card-touch-final:2920:.batzo-join-btn{
+frontend/src/contest/contestData.js:6:    entryFee: 49,
+frontend/src/contest/contestData.js:17:    entryFee: 20,
+frontend/src/contest/contestData.js:28:    entryFee: 10,
+frontend/src/contest/contestData.js:39:    entryFee: 5,
+frontend/src/contest/ContestSystem.jsx:8:  const [joined, setJoined] = useState([]);
+frontend/src/contest/ContestSystem.jsx:23:  const joinContest = () => {
+frontend/src/contest/ContestSystem.jsx:25:    if (!joined.find(c => c.id === selected.id)) {
+frontend/src/contest/ContestSystem.jsx:28:    setScreen("joined");
+frontend/src/contest/ContestSystem.jsx:59:            <b>₹{selected.entryFee}</b>
+frontend/src/contest/ContestSystem.jsx:81:        <button className="bz-join-btn" onClick={joinContest}>
+frontend/src/contest/ContestSystem.jsx:82:          JOIN CONTEST · ₹{selected.entryFee}
+frontend/src/contest/ContestSystem.jsx:88:  if (screen === "joined") {
+frontend/src/contest/ContestSystem.jsx:99:        {joined.length === 0 ? (
+frontend/src/contest/ContestSystem.jsx:105:              VIEW CONTESTS
+frontend/src/contest/ContestSystem.jsx:110:            {joined.map(c => (
+frontend/src/contest/ContestSystem.jsx:111:              <section className="bz-joined-card" key={c.id}>
+frontend/src/contest/ContestSystem.jsx:117:                  <small>Entry ₹{c.entryFee}</small>
+frontend/src/contest/ContestSystem.jsx:144:          <button onClick={() => setScreen("joined")}>←</button>
+frontend/src/contest/ContestSystem.jsx:186:        <button onClick={() => setScreen("joined")}>🏆</button>
+frontend/src/contest/ContestSystem.jsx:228:                  <strong>₹{c.entryFee}</strong>
+frontend/src/contest/ContestSystem.css:166:.bz-panel,.bz-joined-card,.bz-result-preview{
+frontend/src/contest/ContestSystem.css:187:.bz-join-btn{
+frontend/src/contest/ContestSystem.css:199:.bz-joined-card>div{
+frontend/src/contest/ContestSystem.css:204:.bz-joined-card strong{
+frontend/src/contest/ContestSystem.css:207:.bz-joined-card small{
+frontend/src/contest/ContestSystem.css:210:.bz-joined-card button,.bz-empty button,.bz-back-home{
+frontend/src/myteam/MyTeam.jsx:122:            <b>₹{contest?.entryFee || 0}</b>
+frontend/src/myteam/contestTeamBridge.js:17:        id: "joined-" + Date.now(),
+frontend/src/myteam/contestTeamBridge.js:19:        teamId: team.id,
+frontend/src/BatzoContestFlow.jsx:8:  const [joined,setJoined]=useState(false);
+frontend/src/BatzoContestFlow.jsx:219:          joined?"My Contest ✓":"My Contest"),
+frontend/src/cricketApi.js:29:export async function getScorecard(matchId) {
+frontend/src/cricketApi.js:30:  return request(`/scorecard/${encodeURIComponent(matchId)}`);
+frontend/src/cricketApi.js:33:export async function getSquad(matchId) {
+frontend/src/cricketApi.js:34:  return request(`/squad/${encodeURIComponent(matchId)}`);
+frontend/src/cricketApi.js:39:    id: match?.id || match?.matchId || "",
+frontend/src/REAL_CRICKET_INTEGRATION.md:6:- getScorecard(matchId)
+frontend/src/REAL_CRICKET_INTEGRATION.md:7:- getSquad(matchId)
+frontend/src/App.css.before-real-matches-contests-20260822-124031:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.css.final-backup-1787383626:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.css.match-details-backup:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.css.before-match-details-real:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.jsx.backup-before-match-data-repair-20260822-212755:645:                and join a contest.
+frontend/src/App.jsx.backup-before-match-data-repair-20260822-212755:659:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-before-match-data-repair-20260822-212755:673:                🏆 VIEW CONTESTS
+frontend/src/App.css.backup-before-match-data-repair-20260822-212755:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.jsx.backup-details-data-20260822-213535:704:                and join a contest.
+frontend/src/App.jsx.backup-details-data-20260822-213535:718:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-details-data-20260822-213535:732:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.backup-20260822-213902:767:                and join a contest.
+frontend/src/App.jsx.backup-20260822-213902:781:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-20260822-213902:795:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.backup-final-20260822-214307:865:                and join a contest.
+frontend/src/App.jsx.backup-final-20260822-214307:879:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-final-20260822-214307:893:                🏆 VIEW CONTESTS
+frontend/src/batzoMatches.js:4:    matchId: 'live-001',
+frontend/src/batzoMatches.js:38:    matchId: 'upcoming-001',
+frontend/src/batzoMatches.js:69:    matchId: 'upcoming-002',
+frontend/src/batzoMatches.js:121:    id: m.id || m.matchId || `match-${i}`,
+frontend/src/batzoMatches.js:122:    matchId: m.matchId || m.id || `match-${i}`,
+frontend/src/App.jsx.backup-20260822-214404:883:                and join a contest.
+frontend/src/App.jsx.backup-20260822-214404:897:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-20260822-214404:911:                🏆 VIEW CONTESTS
+frontend/src/batzoMatches.js.backup-20260822-214404:4:    matchId: 'batzo-live-001',
+frontend/src/batzoMatches.js.backup-20260822-214404:32:    matchId: 'batzo-upcoming-001',
+frontend/src/batzoMatches.js.backup-20260822-214404:57:    matchId: 'batzo-upcoming-002',
+frontend/src/batzoMatches.js.backup-20260822-214404:101:    id: x.id || x.matchId || `api-match-${i}`,
+frontend/src/batzoMatches.js.backup-20260822-214404:102:    matchId: x.matchId || x.id || `api-match-${i}`,
+frontend/src/App.jsx.backup-20260822-214448:911:                and join a contest.
+frontend/src/App.jsx.backup-20260822-214448:925:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-20260822-214448:939:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.backup-offline-20260822-214821:892:                and join a contest.
+frontend/src/App.jsx.backup-offline-20260822-214821:906:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-offline-20260822-214821:920:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.backup-20260822-214911:892:                and join a contest.
+frontend/src/App.jsx.backup-20260822-214911:906:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-20260822-214911:920:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.backup-complete-20260822-220307:892:                and join a contest.
+frontend/src/App.jsx.backup-complete-20260822-220307:906:                👕 CREATE TEAM
+frontend/src/App.jsx.backup-complete-20260822-220307:920:                🏆 VIEW CONTESTS
+frontend/src/App.jsx.before-root-fix-20260822-220826:892:                and join a contest.
+frontend/src/App.jsx.before-root-fix-20260822-220826:906:                👕 CREATE TEAM
+frontend/src/App.jsx.before-root-fix-20260822-220826:920:                🏆 VIEW CONTESTS
+frontend/src/App.css.backup-bottomnav-20260823-195207:189:.wallet-box {
+frontend/src/App.css.backup-bottomnav-20260823-195207:203:.wallet-icon {
+frontend/src/App.css.backup-bottomnav-20260823-195207:208:.wallet-box small {
+frontend/src/App.css.backup-bottomnav-20260823-195207:214:.wallet-box strong {
+frontend/src/App.css.backup-bottomnav-20260823-195207:220:.wallet-box em {
+frontend/src/App.css.backup-bottomnav-20260823-195207:765:.join-box {
+frontend/src/App.css.backup-bottomnav-20260823-195207:774:.join-box small {
+frontend/src/App.css.backup-bottomnav-20260823-195207:778:.join-box b {
+frontend/src/App.css.backup-bottomnav-20260823-195207:979:  .wallet-box {
+frontend/src/App.css.backup-bottomnav-20260823-195207:985:  .wallet-box strong {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1159:  .wallet-box {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1165:  .wallet-icon {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1169:  .wallet-box small {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1173:  .wallet-box strong {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1177:  .wallet-box em {
+frontend/src/App.css.backup-bottomnav-20260823-195207:1319:  .join-box {
+frontend/src/App.css.backup-bottomnav-20260823-195207:2003:/* wallet polish */
+frontend/src/App.css.backup-bottomnav-20260823-195207:2004:.wallet,
+frontend/src/App.css.backup-bottomnav-20260823-195207:2005:.wallet-balance {
+frontend/src/App.css.backup-bottomnav-20260823-195207:2134:.wallet,
+frontend/src/App.css.backup-bottomnav-20260823-195207:2135:.wallet-balance,
+frontend/src/App.css.backup-bottomnav-20260823-195207:2136:.wallet-card {
+frontend/src/App.css.backup-player-match-20260823-200519:189:.wallet-box {
+frontend/src/App.css.backup-player-match-20260823-200519:203:.wallet-icon {
+frontend/src/App.css.backup-player-match-20260823-200519:208:.wallet-box small {
+frontend/src/App.css.backup-player-match-20260823-200519:214:.wallet-box strong {
+frontend/src/App.css.backup-player-match-20260823-200519:220:.wallet-box em {
+frontend/src/App.css.backup-player-match-20260823-200519:765:.join-box {
+frontend/src/App.css.backup-player-match-20260823-200519:774:.join-box small {
+frontend/src/App.css.backup-player-match-20260823-200519:778:.join-box b {
+frontend/src/App.css.backup-player-match-20260823-200519:979:  .wallet-box {
+frontend/src/App.css.backup-player-match-20260823-200519:985:  .wallet-box strong {
+frontend/src/App.css.backup-player-match-20260823-200519:1159:  .wallet-box {
+frontend/src/App.css.backup-player-match-20260823-200519:1165:  .wallet-icon {
+frontend/src/App.css.backup-player-match-20260823-200519:1169:  .wallet-box small {
+frontend/src/App.css.backup-player-match-20260823-200519:1173:  .wallet-box strong {
+frontend/src/App.css.backup-player-match-20260823-200519:1177:  .wallet-box em {
+frontend/src/App.css.backup-player-match-20260823-200519:1319:  .join-box {
+frontend/src/App.css.backup-player-match-20260823-200519:2003:/* wallet polish */
+frontend/src/App.css.backup-player-match-20260823-200519:2004:.wallet,
+frontend/src/App.css.backup-player-match-20260823-200519:2005:.wallet-balance {
+frontend/src/App.css.backup-player-match-20260823-200519:2134:.wallet,
+frontend/src/App.css.backup-player-match-20260823-200519:2135:.wallet-balance,
+frontend/src/App.css.backup-player-match-20260823-200519:2136:.wallet-card {
+frontend/src/App.css.backup-match-details-20260823-201414:189:.wallet-box {
+frontend/src/App.css.backup-match-details-20260823-201414:203:.wallet-icon {
+frontend/src/App.css.backup-match-details-20260823-201414:208:.wallet-box small {
+frontend/src/App.css.backup-match-details-20260823-201414:214:.wallet-box strong {
+frontend/src/App.css.backup-match-details-20260823-201414:220:.wallet-box em {
+frontend/src/App.css.backup-match-details-20260823-201414:765:.join-box {
+frontend/src/App.css.backup-match-details-20260823-201414:774:.join-box small {
+frontend/src/App.css.backup-match-details-20260823-201414:778:.join-box b {
+frontend/src/App.css.backup-match-details-20260823-201414:979:  .wallet-box {
+frontend/src/App.css.backup-match-details-20260823-201414:985:  .wallet-box strong {
+frontend/src/App.css.backup-match-details-20260823-201414:1159:  .wallet-box {
+frontend/src/App.css.backup-match-details-20260823-201414:1165:  .wallet-icon {
+frontend/src/App.css.backup-match-details-20260823-201414:1169:  .wallet-box small {
+frontend/src/App.css.backup-match-details-20260823-201414:1173:  .wallet-box strong {
+frontend/src/App.css.backup-match-details-20260823-201414:1177:  .wallet-box em {
+frontend/src/App.css.backup-match-details-20260823-201414:1319:  .join-box {
+frontend/src/App.css.backup-match-details-20260823-201414:2003:/* wallet polish */
+frontend/src/App.css.backup-match-details-20260823-201414:2004:.wallet,
+frontend/src/App.css.backup-match-details-20260823-201414:2005:.wallet-balance {
+frontend/src/App.css.backup-match-details-20260823-201414:2134:.wallet,
+frontend/src/App.css.backup-match-details-20260823-201414:2135:.wallet-balance,
+frontend/src/App.css.backup-match-details-20260823-201414:2136:.wallet-card {
+frontend/src/match-flow.js:117:              : '<button class="bz-contest-action">VIEW CONTESTS&nbsp; →</button>'
+frontend/src/match-flow.js:152:              `).join("")}
+frontend/src/match-flow.js:214:    if (text.includes("VIEW CONTESTS")) {
+frontend/src/match-flow.js.backup-photo-20260823-201841:101:              : '<button class="bz-contest-action">VIEW CONTESTS&nbsp; →</button>'
+frontend/src/match-flow.js.backup-photo-20260823-201841:136:              `).join("")}
+frontend/src/match-flow.js.backup-photo-20260823-201841:198:    if (text.includes("VIEW CONTESTS")) {
+frontend/src/batzo-team-contest.js:17:  {name:"Mega Contest",prize:"₹50 Lakhs",entry:"₹49",spots:"2.1L",joined:"1.84L",winners:"18,500"},
+frontend/src/batzo-team-contest.js:18:  {name:"Head To Head",prize:"₹1,800",entry:"₹49",spots:"2",joined:"1",winners:"1"},
+frontend/src/batzo-team-contest.js:19:  {name:"Small Contest",prize:"₹25,000",entry:"₹99",spots:"1,000",joined:"642",winners:"100"}
+frontend/src/batzo-team-contest.js:77:            <strong>${contest.joined}</strong>
+frontend/src/batzo-team-contest.js:104:      <div class="bz-contest-join">
+frontend/src/batzo-team-contest.js:142:  window.addEventListener("batzo:join-contest",function(){
+frontend/src/batzo-flow.js:12:  {name:"Mega Contest",prize:"₹50 Lakhs",entry:"₹49",spots:"2.1L",joined:"1.84L"},
+frontend/src/batzo-flow.js:13:  {name:"Head To Head",prize:"₹1,800",entry:"₹49",spots:"2",joined:"1"},
+frontend/src/batzo-flow.js:14:  {name:"Small Contest",prize:"₹25,000",entry:"₹99",spots:"1,000",joined:"642"}
+frontend/src/data/batzo-data.js:96:    joined: "1.84L"
+frontend/src/data/batzo-data.js:104:    joined: "1"
+frontend/src/data/batzo-data.js:112:    joined: "642"
+frontend/src/data/wallet-store.js:1:const BALANCE_KEY = "batzo_wallet_balance";
+frontend/src/data/wallet-store.js:2:const TX_KEY = "batzo_wallet_transactions";
+frontend/src/services/contest-store.js:11:export function joinContest({
+frontend/src/services/contest-store.js:12:  contestId,
+frontend/src/services/contest-store.js:13:  teamId,
+frontend/src/services/contest-store.js:14:  entryFee,
+frontend/src/services/contest-store.js:18:  const fee = Number(entryFee);
+frontend/src/services/contest-store.js:19:  const wallet = Number(balance);
+frontend/src/services/contest-store.js:21:  if (!contestId)
+frontend/src/services/contest-store.js:24:  if (!teamId)
+frontend/src/services/contest-store.js:30:  if (!Number.isFinite(wallet) || wallet < fee)
+frontend/src/services/contest-store.js:31:    throw new Error("Insufficient wallet balance");
+frontend/src/services/contest-store.js:37:    contestId,
+frontend/src/services/contest-store.js:38:    teamId,
+frontend/src/services/contest-store.js:39:    entryFee:fee,
+frontend/src/services/wallet-store.js:1:const BALANCE = "batzo_wallet_balance";
+frontend/src/services/wallet-store.js:2:const TX = "batzo_wallet_transactions";
+frontend/src/services/cricketService.js:26:  players: (matchId) => request(`/matches/${matchId}/players`),
+frontend/src/services/cricketService.js:27:  scorecard: (matchId) => request(`/matches/${matchId}/scorecard`)
+frontend/src/batzo-contest-flow.jsx:50:export function BatzoContestFlow({ matchId, onClose }) {
+frontend/src/batzo-contest-flow.jsx:52:    BATZO_MATCHES.find(m => m.id === matchId) ||
+frontend/src/batzo-contest-flow.jsx:106:      matchId: match.id,
+frontend/src/batzo-contest-flow.jsx:107:      contestId: contest?.id,
+frontend/src/batzo-contest-flow.jsx:133:              {screen === "success" && "Team Confirmed"}
+frontend/src/batzo-contest-flow.jsx:382:              VIEW CONTESTS
+frontend/src/batzo-contest-flow.jsx:429:            VIEW CONTESTS
+frontend/src/api/config.js:15:    wallet: "/wallet",
+frontend/src/api/config.js:16:    transactions: "/wallet/transactions",
+frontend/src/wallet/walletFoundation.js:1:export const walletTypes = {
+frontend/src/wallet/walletFoundation.js:14:  if (!walletTypes[tx.type?.toUpperCase()]) {
+frontend/src/App.css.backup-complete-20260822-220307:1255:.join-btn,.join-now,button[class*="join"]{
+frontend/src/App.css.backup-polish-20260823-195719:189:.wallet-box {
+frontend/src/App.css.backup-polish-20260823-195719:203:.wallet-icon {
+frontend/src/App.css.backup-polish-20260823-195719:208:.wallet-box small {
+frontend/src/App.css.backup-polish-20260823-195719:214:.wallet-box strong {
+frontend/src/App.css.backup-polish-20260823-195719:220:.wallet-box em {
+frontend/src/App.css.backup-polish-20260823-195719:765:.join-box {
+frontend/src/App.css.backup-polish-20260823-195719:774:.join-box small {
+frontend/src/App.css.backup-polish-20260823-195719:778:.join-box b {
+frontend/src/App.css.backup-polish-20260823-195719:979:  .wallet-box {
+frontend/src/App.css.backup-polish-20260823-195719:985:  .wallet-box strong {
+frontend/src/App.css.backup-polish-20260823-195719:1159:  .wallet-box {
+frontend/src/App.css.backup-polish-20260823-195719:1165:  .wallet-icon {
+frontend/src/App.css.backup-polish-20260823-195719:1169:  .wallet-box small {
+frontend/src/App.css.backup-polish-20260823-195719:1173:  .wallet-box strong {
+frontend/src/App.css.backup-polish-20260823-195719:1177:  .wallet-box em {
+frontend/src/App.css.backup-polish-20260823-195719:1319:  .join-box {
+frontend/src/App.css.backup-polish-20260823-195719:2003:/* wallet polish */
+frontend/src/App.css.backup-polish-20260823-195719:2004:.wallet,
+frontend/src/App.css.backup-polish-20260823-195719:2005:.wallet-balance {
+frontend/src/App.css.backup-polish-20260823-195719:2134:.wallet,
+frontend/src/App.css.backup-polish-20260823-195719:2135:.wallet-balance,
+frontend/src/App.css.backup-polish-20260823-195719:2136:.wallet-card {
+frontend/src/admin/admin-config.js:8:  "wallet",
+frontend/src/admin/admin-config.js:21:  wallet: true,
+frontend/src/batzo-visible-flow.js:748:      "Team Confirmed",
+frontend/src/batzo-visible-flow.js:834:          }).join("")
+frontend/src/batzo-visible-flow.js:861:          CREATE TEAM
+frontend/src/batzo-visible-flow.js:875:      text.includes("CREATE TEAM") ||
+frontend/src/batzo-visible-flow.js:921:            joined:"1.84L"
+frontend/src/batzo-visible-flow.js:949:    if(text.includes("VIEW CONTESTS")){
+frontend/src/batzo-visible-flow.js:963:    if(text.includes("CREATE TEAM") ||
+frontend/src/batzo-visible-flow.js:987:          joined:"1.84L"
+frontend/src/batzo-visible-flow.js:1000:            joined:"1.84L"
+frontend/src/batzo-visible-flow.js:1030:   * This makes the Upcoming VIEW CONTESTS button reliable.
+frontend/src/batzo-visible-flow.js:1048:        text.includes("VIEW CONTESTS") ||
+frontend/src/batzo-visible-flow.js:1064:        text.includes("CREATE TEAM") ||
+frontend/src/batzo-visible-flow.js:1088:      if(text.includes("VIEW CONTESTS")){
+frontend/src/core/batzo-flow-registry.js:21:  WALLET: "wallet"
+frontend/src/core/batzo-primary-bridge.js:73:        text.includes("VIEW CONTESTS") ||
+backend/src/models/contest.model.js:4:    matchId: "string",
+backend/src/models/contest.model.js:6:    entryFee: "number",
+backend/src/models/contest.model.js:9:    joinedSpots: "number",
+backend/src/models/team.model.js:5:    matchId: "string",
+backend/src/models/contestEntry.model.js:4:    contestId: "string",
+backend/src/models/contestEntry.model.js:6:    teamId: "string",
+backend/src/models/contestEntry.model.js:7:    entryFee: "number",
+backend/src/models/contestEntry.model.js:11:    status: "joined|ranked|settled"
+backend/src/services/contestService.js:11:    Number(contest.joinedSpots || 0) >=
+backend/src/services/settlementService.js:1:function calculatePrizePool(entryFee, joinedSpots) {
+backend/src/services/settlementService.js:2:  return Number(entryFee || 0) * Number(joinedSpots || 0);
+backend/src/services/settlementService.js:7:    contestId: contest.id,
+backend/src/services/settlementService.js:10:      contest.entryFee,
+backend/src/services/settlementService.js:11:      contest.joinedSpots
+backend/src/services/walletService.js:15:    throw new Error("Insufficient wallet balance.");

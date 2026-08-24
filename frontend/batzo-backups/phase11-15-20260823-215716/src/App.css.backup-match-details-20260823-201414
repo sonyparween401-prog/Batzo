@@ -1,0 +1,3024 @@
+:root {
+  --bg: #030508;
+  --panel: #0b1016;
+  --panel2: #10161e;
+  --text: #f7f8fa;
+  --muted: #89919e;
+  --line: rgba(255,255,255,.11);
+  --green: #20df75;
+  --green2: #0dbb5c;
+  --purple: #bd3cff;
+  --blue: #159bff;
+  --pink: #f028c8;
+  --gold: #ffbd24;
+  --red: #ff3855;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  background: #030508;
+  color: var(--text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.batzo-app {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(0,255,135,.045), transparent 26%),
+    radial-gradient(circle at 88% 35%, rgba(120,35,255,.045), transparent 30%),
+    #030508;
+  padding-bottom: 92px;
+  overflow-x: hidden;
+}
+
+.top-header {
+  min-height: 126px;
+  padding: 25px 24px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(3,5,8,.95);
+}
+
+.logo-area {
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.batzo-logo {
+  display: flex;
+  align-items: center;
+  line-height: .75;
+  font-size: clamp(47px, 12vw, 76px);
+  font-weight: 1000;
+  font-style: italic;
+  letter-spacing: -6px;
+  transform: skewX(-5deg);
+  filter: drop-shadow(0 7px 5px rgba(0,0,0,.9));
+  white-space: nowrap;
+}
+
+.batzo-logo span:nth-child(1) {
+  color: #55ff45;
+  text-shadow:
+    2px 3px 0 #00863b,
+    4px 6px 0 #005226,
+    0 0 14px rgba(65,255,93,.5);
+}
+
+.batzo-logo span:nth-child(2) {
+  color: #ffd51c;
+  text-shadow:
+    2px 3px 0 #d85c00,
+    4px 6px 0 #7b2400;
+}
+
+.batzo-logo span:nth-child(3) {
+  color: #ff2c51;
+  text-shadow:
+    2px 3px 0 #9d005d,
+    4px 6px 0 #52004c;
+}
+
+.batzo-logo span:nth-child(4) {
+  color: #a72cff;
+  text-shadow:
+    2px 3px 0 #5023cc,
+    4px 6px 0 #261170;
+}
+
+.batzo-logo span:nth-child(5) {
+  color: #16dfff;
+  text-shadow:
+    2px 3px 0 #006da5,
+    4px 6px 0 #003b69,
+    0 0 18px rgba(0,217,255,.4);
+}
+
+.logo-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.logo-line i {
+  display: block;
+  width: 48px;
+  height: 3px;
+  border-radius: 4px;
+  background: linear-gradient(90deg,#27ed66,#ffd21c,#ff32c8,#20cfff);
+}
+
+.logo-line strong {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: #25ef76;
+  white-space: nowrap;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-btn {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  color: white;
+  background: linear-gradient(145deg,#0c1118,#070a0e);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.notification-btn .bell {
+  font-size: 29px;
+  display: block;
+  transform: rotate(180deg);
+}
+
+.notification-btn b {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: #f02d31;
+  font-size: 11px;
+}
+
+.wallet-box {
+  min-width: 142px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: white;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px;
+  background: linear-gradient(145deg,#11161d,#090c11);
+}
+
+.wallet-icon {
+  color: var(--green);
+  font-size: 25px;
+}
+
+.wallet-box small {
+  display: block;
+  color: #969daa;
+  font-size: 10px;
+}
+
+.wallet-box strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 21px;
+}
+
+.wallet-box em {
+  margin-left: auto;
+  font-size: 28px;
+  font-style: normal;
+  color: #89919e;
+}
+
+.main-content {
+  width: min(100%, 1160px);
+  margin: 0 auto;
+  padding: 18px 24px;
+}
+
+.notice-bar {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #f3f5f7;
+  border: 1px solid rgba(32,223,117,.3);
+  border-radius: 15px;
+  background: rgba(9,39,28,.5);
+  font-size: 13px;
+}
+
+.notice-bar b {
+  color: var(--green);
+  font-size: 20px;
+}
+
+.hero-banner {
+  min-height: 360px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 40px 46px;
+  border: 1px solid rgba(35,219,118,.55);
+  border-radius: 27px;
+  background:
+    radial-gradient(circle at 78% 50%, rgba(19,147,255,.2), transparent 22%),
+    radial-gradient(circle at 82% 70%, rgba(255,0,157,.17), transparent 28%),
+    linear-gradient(105deg,#07100e,#080d14 58%,#070d13);
+  box-shadow:
+    0 0 45px rgba(0,255,119,.05),
+    inset 0 0 40px rgba(0,0,0,.5);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 5;
+}
+
+.hero-kicker,
+.section-heading > div > span,
+.page-heading > span,
+.match-section-title {
+  color: #22ed79;
+  font-weight: 900;
+  letter-spacing: 2px;
+  font-size: 12px;
+}
+
+.hero-copy h1 {
+  margin: 12px 0 13px;
+  font-size: clamp(42px,7vw,70px);
+  line-height: .98;
+  letter-spacing: -3px;
+}
+
+.hero-copy h1 span {
+  background: linear-gradient(
+    90deg,
+    #12f06d 0%,
+    #ffe019 25%,
+    #ff2c57 48%,
+    #bc30ff 70%,
+    #14dfff 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-copy p {
+  margin: 0 0 23px;
+  color: #b8bec7;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.hero-button {
+  border: 0;
+  border-radius: 28px;
+  padding: 14px 23px;
+  color: #021007;
+  font-weight: 1000;
+  font-size: 14px;
+  background: linear-gradient(100deg,#1cff72,#0bd96c);
+  box-shadow: 0 8px 25px rgba(16,222,104,.2);
+}
+
+.hero-button b {
+  margin-left: 12px;
+  font-size: 19px;
+}
+
+.hero-cricket {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 57%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stadium-lights {
+  position: absolute;
+  top: 42px;
+  right: 65px;
+  color: #eef7ff;
+  font-size: 42px;
+  letter-spacing: 30px;
+  opacity: .9;
+  text-shadow: 0 0 20px #fff;
+}
+
+.cricket-ring {
+  position: absolute;
+  width: 390px;
+  height: 130px;
+  border-radius: 50%;
+  border: 5px solid transparent;
+  transform: rotate(-22deg);
+  right: 35px;
+  top: 135px;
+}
+
+.ring-one {
+  border-top-color: #ff9e00;
+  border-right-color: #ffe100;
+  box-shadow: 0 0 18px rgba(255,172,0,.6);
+}
+
+.ring-two {
+  border-bottom-color: #00dfff;
+  border-left-color: #7d24ff;
+  box-shadow: 0 0 18px rgba(0,220,255,.6);
+}
+
+.cricket-player {
+  position: absolute;
+  right: 90px;
+  top: 70px;
+  font-size: 150px;
+  filter: drop-shadow(0 20px 15px rgba(0,0,0,.7));
+  transform: rotate(-8deg);
+}
+
+.cricket-ball {
+  position: absolute;
+  left: 55px;
+  bottom: 88px;
+  font-size: 55px;
+  transform: rotate(-20deg);
+  filter: drop-shadow(0 0 12px rgba(255,40,40,.7));
+}
+
+.hero-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  display: flex;
+  gap: 19px;
+}
+
+.hero-dots i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #39404a;
+}
+
+.hero-dots i.active {
+  background: #12e86d;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 16px;
+  margin: 14px 0 22px;
+}
+
+.quick-card {
+  min-height: 150px;
+  position: relative;
+  padding: 17px;
+  text-align: left;
+  color: white;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 22px;
+  background: linear-gradient(145deg,#090d12,#0d1219);
+  overflow: hidden;
+}
+
+.quick-card.green-card {
+  border-color: rgba(27,231,110,.55);
+  box-shadow: inset 0 0 25px rgba(0,255,100,.035);
+}
+
+.quick-card.gold-card {
+  border-color: rgba(255,190,35,.4);
+}
+
+.quick-card.blue-card {
+  border-color: rgba(20,160,255,.45);
+}
+
+.quick-card.pink-card {
+  border-color: rgba(230,35,201,.35);
+}
+
+.quick-icon {
+  font-size: 46px;
+  line-height: 1;
+  margin-bottom: 15px;
+}
+
+.quick-title {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.quick-sub {
+  margin-top: 4px;
+  color: #9199a4;
+  font-size: 12px;
+}
+
+.quick-arrow {
+  position: absolute;
+  right: 16px;
+  bottom: 17px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 50%;
+  font-size: 28px;
+}
+
+.section-block {
+  margin-top: 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin: 0 8px 10px;
+}
+
+.section-heading h2 {
+  margin: 4px 0 0;
+  font-size: 29px;
+  letter-spacing: -.8px;
+}
+
+.section-heading button {
+  border: 0;
+  background: none;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.live-match-card {
+  width: 100%;
+  padding: 14px 17px 10px;
+  color: white;
+  text-align: left;
+  border: 1px solid rgba(24,225,110,.55);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(18,116,71,.06),transparent 45%),
+    linear-gradient(145deg,#0b1115,#070a0d);
+}
+
+.live-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a4abb5;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.live-card-top b {
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: rgba(255,38,55,.14);
+  color: #ff6675;
+}
+
+.red-dot {
+  width: 9px;
+  height: 9px;
+  display: inline-block;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.live-score-row {
+  display: grid;
+  grid-template-columns: 1.1fr .8fr .3fr .8fr 1.1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 6px;
+}
+
+.side-team {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.side-team strong {
+  display: block;
+  font-size: 24px;
+}
+
+.side-team small {
+  display: block;
+  margin-top: 2px;
+  color: #9aa1aa;
+  font-size: 12px;
+}
+
+.side-team.right-team {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.flag {
+  width: 52px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  font-size: 29px;
+  border-radius: 10px;
+  background: #131a23;
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.score {
+  text-align: center;
+}
+
+.score strong {
+  display: block;
+  color: #20e86e;
+  font-size: 30px;
+}
+
+.score small {
+  display: block;
+  margin-top: 2px;
+  color: #b4bbc5;
+  font-size: 11px;
+}
+
+.versus {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 50%;
+  color: #aab1bb;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.live-bottom {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.watching {
+  color: #b7bec7;
+  font-size: 13px;
+}
+
+.watching span {
+  color: #1be66e;
+  margin-right: 8px;
+}
+
+.view-button,
+.contest-action {
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.view-button b,
+.contest-action b {
+  margin-left: 9px;
+  font-size: 18px;
+}
+
+.upcoming-list {
+  display: grid;
+  gap: 10px;
+}
+
+.upcoming-card {
+  min-height: 88px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 145px 1.15fr 180px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+  color: white;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 20px;
+  background: linear-gradient(145deg,#090d12,#070a0e);
+}
+
+.up-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.up-team.away {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.mini-flag {
+  width: 48px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #121923;
+  font-size: 26px;
+}
+
+.up-team strong {
+  display: block;
+  color: #20df73;
+  font-size: 18px;
+}
+
+.up-team small {
+  display: block;
+  color: #a2a9b2;
+  font-size: 11px;
+}
+
+.match-time-box {
+  padding: 7px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 11px;
+  background: #090d13;
+}
+
+.match-time-box span {
+  display: block;
+  color: #21dc70;
+  font-size: 11px;
+}
+
+.match-time-box strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.contest-action {
+  justify-self: end;
+  padding: 10px 14px;
+  border: 1px solid rgba(26,227,111,.6);
+  border-radius: 18px;
+}
+
+.contest-list {
+  display: grid;
+  gap: 10px;
+}
+
+.contest-card {
+  width: 100%;
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  color: white;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 17px;
+  background: #0a0e14;
+}
+
+.contest-card small {
+  display: block;
+  color: #7f8995;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+.contest-card > div > strong {
+  display: block;
+  margin-top: 4px;
+  color: #ffd24d;
+  font-size: 20px;
+}
+
+.contest-info b {
+  display: block;
+  font-size: 12px;
+}
+
+.contest-info span {
+  display: block;
+  margin-top: 4px;
+  color: #858e9a;
+  font-size: 9px;
+}
+
+.join-box {
+  min-width: 67px;
+  padding: 7px 10px;
+  text-align: center;
+  border-radius: 11px;
+  background: rgba(23,221,106,.07);
+  border: 1px solid rgba(23,221,106,.2);
+}
+
+.join-box small {
+  color: var(--green);
+}
+
+.join-box b {
+  display: block;
+  margin-top: 2px;
+  color: white;
+  font-size: 13px;
+}
+
+.matches-page,
+.simple-page {
+  padding-top: 15px;
+}
+
+.page-heading {
+  margin: 10px 3px 20px;
+}
+
+.page-heading h1 {
+  margin: 8px 0;
+  font-size: 45px;
+  letter-spacing: -2px;
+}
+
+.page-heading p {
+  margin: 0;
+  color: #9ba2ac;
+  font-size: 16px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 17px;
+  margin-bottom: 25px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 19px;
+  background: #0c1119;
+}
+
+.search-field span {
+  color: #929aa5;
+  font-size: 28px;
+}
+
+.search-field input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  color: white;
+  background: transparent;
+  font-size: 16px;
+}
+
+.search-field input::placeholder {
+  color: #6f7782;
+}
+
+.match-section-title {
+  margin: 22px 4px 10px;
+  color: #9da5b0;
+}
+
+.upcoming-title {
+  margin-top: 28px;
+}
+
+.empty-page {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-page > span {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.empty-page h1 {
+  margin: 9px 0;
+  font-size: 38px;
+}
+
+.empty-page p {
+  max-width: 350px;
+  color: #8e96a1;
+  line-height: 1.5;
+}
+
+.empty-icon,
+.profile-icon {
+  margin-bottom: 17px;
+}
+
+.empty-icon {
+  font-size: 70px;
+}
+
+.profile-icon {
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  border-radius: 23px;
+  color: #061008;
+  background: linear-gradient(145deg,#48ff91,#12d966);
+  font-size: 39px;
+  font-weight: 1000;
+}
+
+.outline-button {
+  padding: 13px 17px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 14px;
+  color: white;
+  background: #0b1017;
+  font-weight: 900;
+}
+
+.bottom-navigation {
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  bottom: 9px;
+  transform: translateX(-50%);
+  width: min(calc(100% - 22px), 1160px);
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  padding: 7px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 22px;
+  background: rgba(7,11,16,.94);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 15px 45px rgba(0,0,0,.6);
+}
+
+.bottom-navigation button {
+  min-height: 61px;
+  border: 0;
+  border-radius: 16px;
+  color: #89919d;
+  background: transparent;
+}
+
+.bottom-navigation button span {
+  display: block;
+  font-size: 22px;
+  line-height: 24px;
+}
+
+.bottom-navigation button small {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.bottom-navigation button.active {
+  color: #21e873;
+  background: linear-gradient(
+    145deg,
+    rgba(12,112,57,.5),
+    rgba(0,58,32,.22)
+  );
+  border: 1px solid rgba(23,224,107,.35);
+}
+
+@media (max-width: 800px) {
+  .top-header {
+    min-height: 115px;
+    padding: 22px 16px 10px;
+  }
+
+  .batzo-logo {
+    font-size: 53px;
+  }
+
+  .logo-line {
+    gap: 7px;
+  }
+
+  .logo-line i {
+    width: 30px;
+  }
+
+  .logo-line strong {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+  }
+
+  .notification-btn {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
+    border-radius: 16px;
+  }
+
+  .wallet-box {
+    min-width: 108px;
+    min-height: 50px;
+    border-radius: 16px;
+  }
+
+  .wallet-box strong {
+    font-size: 17px;
+  }
+
+  .main-content {
+    padding: 12px 15px;
+  }
+
+  .hero-banner {
+    min-height: 330px;
+    padding: 28px 24px;
+  }
+
+  .hero-copy h1 {
+    font-size: 44px;
+  }
+
+  .hero-copy p {
+    font-size: 14px;
+  }
+
+  .hero-cricket {
+    opacity: .85;
+    width: 53%;
+  }
+
+  .cricket-player {
+    right: 0;
+    font-size: 110px;
+  }
+
+  .cricket-ring {
+    width: 280px;
+    right: -25px;
+  }
+
+  .quick-grid {
+    gap: 8px;
+  }
+
+  .quick-card {
+    min-height: 130px;
+    padding: 12px;
+    border-radius: 17px;
+  }
+
+  .quick-icon {
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+
+  .quick-title {
+    font-size: 12px;
+  }
+
+  .quick-sub {
+    font-size: 8px;
+  }
+
+  .quick-arrow {
+    width: 28px;
+    height: 28px;
+    right: 8px;
+    bottom: 10px;
+    font-size: 21px;
+  }
+
+  .section-heading h2 {
+    font-size: 24px;
+  }
+
+  .live-score-row {
+    grid-template-columns: 1fr .8fr .2fr .8fr 1fr;
+    gap: 5px;
+  }
+
+  .side-team {
+    gap: 7px;
+  }
+
+  .side-team strong {
+    font-size: 19px;
+  }
+
+  .side-team small {
+    font-size: 9px;
+  }
+
+  .flag {
+    width: 40px;
+    height: 36px;
+    font-size: 23px;
+  }
+
+  .score strong {
+    font-size: 23px;
+  }
+
+  .versus {
+    width: 38px;
+    height: 38px;
+    font-size: 10px;
+  }
+
+  .upcoming-card {
+    grid-template-columns: 1fr 82px 1fr;
+    gap: 5px;
+    padding: 10px;
+  }
+
+  .contest-action {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    text-align: center;
+    padding: 7px;
+  }
+
+  .up-team strong {
+    font-size: 15px;
+  }
+
+  .mini-flag {
+    width: 38px;
+    height: 34px;
+    font-size: 21px;
+  }
+
+  .page-heading h1 {
+    font-size: 39px;
+  }
+}
+
+@media (max-width: 480px) {
+  .batzo-app {
+    padding-bottom: 84px;
+  }
+
+  .top-header {
+    align-items: flex-end;
+  }
+
+  .batzo-logo {
+    font-size: 42px;
+    letter-spacing: -4px;
+  }
+
+  .logo-line {
+    margin-top: 8px;
+  }
+
+  .logo-line i {
+    width: 24px;
+    height: 2px;
+  }
+
+  .logo-line strong {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .notification-btn {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+  }
+
+  .notification-btn .bell {
+    font-size: 22px;
+  }
+
+  .wallet-box {
+    min-width: 92px;
+    min-height: 43px;
+    padding: 6px 8px;
+  }
+
+  .wallet-icon {
+    font-size: 20px;
+  }
+
+  .wallet-box small {
+    font-size: 8px;
+  }
+
+  .wallet-box strong {
+    font-size: 15px;
+  }
+
+  .wallet-box em {
+    font-size: 20px;
+  }
+
+  .hero-banner {
+    min-height: 300px;
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+
+  .hero-kicker {
+    font-size: 9px;
+  }
+
+  .hero-copy h1 {
+    font-size: 38px;
+    letter-spacing: -2px;
+  }
+
+  .hero-copy p {
+    font-size: 12px;
+  }
+
+  .hero-button {
+    padding: 12px 15px;
+    font-size: 11px;
+  }
+
+  .hero-cricket {
+    width: 50%;
+    opacity: .6;
+  }
+
+  .cricket-player {
+    right: -15px;
+    top: 75px;
+    font-size: 85px;
+  }
+
+  .cricket-ball {
+    left: 0;
+    bottom: 72px;
+    font-size: 38px;
+  }
+
+  .stadium-lights {
+    right: 0;
+    font-size: 23px;
+    letter-spacing: 12px;
+  }
+
+  .cricket-ring {
+    width: 210px;
+    height: 90px;
+    right: -45px;
+    top: 130px;
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  .quick-card {
+    min-height: 118px;
+  }
+
+  .section-heading h2 {
+    font-size: 22px;
+  }
+
+  .section-heading > div > span {
+    font-size: 9px;
+  }
+
+  .section-heading button {
+    font-size: 11px;
+  }
+
+  .live-match-card {
+    padding: 12px 11px 8px;
+    border-radius: 18px;
+  }
+
+  .live-score-row {
+    grid-template-columns: 1fr .65fr .2fr .65fr 1fr;
+  }
+
+  .side-team strong {
+    font-size: 17px;
+  }
+
+  .side-team small {
+    font-size: 8px;
+  }
+
+  .flag {
+    width: 35px;
+    height: 32px;
+    font-size: 20px;
+  }
+
+  .score strong {
+    font-size: 20px;
+  }
+
+  .versus {
+    width: 32px;
+    height: 32px;
+  }
+
+  .watching {
+    font-size: 9px;
+  }
+
+  .view-button {
+    font-size: 9px;
+  }
+
+  .upcoming-card {
+    min-height: 78px;
+  }
+
+  .up-team strong {
+    font-size: 14px;
+  }
+
+  .up-team small {
+    font-size: 8px;
+  }
+
+  .match-time-box strong {
+    font-size: 13px;
+  }
+
+  .contest-card {
+    grid-template-columns: 1fr auto;
+  }
+
+  .contest-info {
+    grid-column: 1 / 2;
+  }
+
+  .join-box {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+
+  .bottom-navigation {
+    bottom: 6px;
+    width: calc(100% - 14px);
+    border-radius: 18px;
+  }
+
+  .bottom-navigation button {
+    min-height: 55px;
+  }
+
+  .bottom-navigation button span {
+    font-size: 19px;
+  }
+
+  .bottom-navigation button small {
+    font-size: 8px;
+  }
+}
+
+/* ============================================================
+   BATZO PROFESSIONAL CRICKET HOME POLISH
+   ============================================================ */
+
+.cricket-hero {
+  min-height: 265px;
+  isolation: isolate;
+  background:
+    linear-gradient(90deg, rgba(5,8,13,.98) 0%, rgba(7,11,17,.88) 43%, rgba(7,11,17,.45) 100%),
+    radial-gradient(circle at 78% 45%, rgba(139,92,246,.24), transparent 30%),
+    linear-gradient(145deg, #18202b 0%, #0a0e15 75%);
+  border-color: rgba(255,255,255,.10);
+}
+
+.hero-image {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 78% 62%, rgba(255,255,255,.10), transparent 20%),
+    radial-gradient(ellipse at 70% 100%, rgba(25,214,107,.08), transparent 38%);
+}
+
+.hero-image::before {
+  content: "";
+  position: absolute;
+  width: 310px;
+  height: 150px;
+  right: -70px;
+  bottom: -25px;
+  border-radius: 50%;
+  background:
+    repeating-linear-gradient(
+      175deg,
+      rgba(255,255,255,.035) 0 2px,
+      transparent 2px 9px
+    );
+  transform: rotate(-5deg);
+}
+
+.stadium-lights {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  right: 12px;
+  top: -55px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,.34) 0 2px,
+      rgba(255,255,255,.10) 3px 5px,
+      transparent 6px
+    );
+  opacity: .45;
+  filter: blur(.2px);
+}
+
+.cricket-player {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  font-size: 84px;
+  opacity: .28;
+  filter: grayscale(.25) contrast(1.25) drop-shadow(0 16px 20px rgba(0,0,0,.65));
+  transform: rotate(-13deg);
+}
+
+.hero-copy {
+  max-width: 76%;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 8vw, 42px);
+  font-weight: 950;
+  letter-spacing: -2px;
+  line-height: .98;
+}
+
+.hero p {
+  max-width: 300px;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.hero .primary-btn {
+  margin-top: 8px;
+  box-shadow: 0 10px 26px rgba(25,214,107,.12);
+}
+
+.hero-shine {
+  position: absolute;
+  left: -80px;
+  bottom: -110px;
+  width: 300px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(25,214,107,.12),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.featured-section .match-card {
+  border-color: rgba(25,214,107,.13);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(25,214,107,.055),
+      rgba(255,255,255,.035) 48%,
+      rgba(139,92,246,.035)
+    );
+}
+
+.match-card {
+  min-height: 138px;
+  transition: transform .16s ease, border-color .16s ease;
+}
+
+.match-card:hover {
+  border-color: rgba(255,255,255,.14);
+}
+
+.match-top > span:first-child {
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+
+.teams {
+  min-height: 50px;
+}
+
+.team strong {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.team-badge {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 5px 15px rgba(0,0,0,.22);
+}
+
+.vs {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.section {
+  margin-top: 28px;
+}
+
+.section-head {
+  padding: 0 2px;
+}
+
+.section-head h2 {
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.quick-grid button {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.018)
+    );
+  box-shadow: 0 7px 20px rgba(0,0,0,.10);
+}
+
+.quick-grid button span {
+  filter: saturate(.9);
+}
+
+.contest-card {
+  min-height: 76px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.055),
+      rgba(255,255,255,.02)
+    );
+}
+
+.trust-strip {
+  margin-bottom: 8px;
+}
+
+@media (max-width:430px) {
+  .cricket-hero {
+    min-height: 250px;
+  }
+
+  .cricket-player {
+    right: -2px;
+    bottom: 14px;
+    font-size: 70px;
+    opacity: .22;
+  }
+
+  .hero-copy {
+    max-width: 82%;
+  }
+
+  .hero h1 {
+    font-size: 31px;
+  }
+}
+
+/* ============================================================
+   BATZO PLAYER-FOCUSED CINEMATIC MATCH SYSTEM
+   ============================================================ */
+
+.cinematic-match-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 190px;
+  isolation: isolate;
+  padding: 15px;
+  background:
+    linear-gradient(100deg, rgba(8,11,16,.98) 0%, rgba(10,14,21,.94) 52%, rgba(18,23,32,.88) 100%);
+}
+
+.cinematic-match-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  background:
+    radial-gradient(
+      ellipse at 82% 38%,
+      rgba(139,92,246,.17),
+      transparent 30%
+    ),
+    radial-gradient(
+      ellipse at 74% 90%,
+      rgba(25,214,107,.09),
+      transparent 35%
+    );
+}
+
+.cinematic-match-card::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 150px;
+  right: -65px;
+  bottom: -55px;
+  z-index: -2;
+  border-radius: 50%;
+  background:
+    repeating-linear-gradient(
+      170deg,
+      rgba(255,255,255,.035) 0 2px,
+      transparent 2px 10px
+    );
+  transform: rotate(-8deg);
+}
+
+.match-player-visual {
+  position: absolute;
+  z-index: -1;
+  right: 3px;
+  top: 22px;
+  width: 155px;
+  height: 145px;
+  pointer-events: none;
+}
+
+.player-glow {
+  position: absolute;
+  inset: 15px 0 0 25px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,.14),
+      rgba(139,92,246,.10) 28%,
+      transparent 68%
+    );
+  filter: blur(2px);
+}
+
+.player-silhouette {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font-size: 108px;
+  line-height: 1;
+  opacity: .24;
+  filter:
+    grayscale(.35)
+    contrast(1.35)
+    drop-shadow(0 15px 25px rgba(0,0,0,.8));
+  transform: rotate(-12deg);
+}
+
+.live-match-card {
+  border-color: rgba(255,77,103,.22);
+  background:
+    linear-gradient(
+      110deg,
+      rgba(35,10,17,.82),
+      rgba(10,14,21,.95) 55%,
+      rgba(20,24,33,.86)
+    );
+}
+
+.upcoming-match-card {
+  border-color: rgba(255,255,255,.09);
+}
+
+.match-top {
+  position: relative;
+  z-index: 2;
+  padding-right: 90px;
+}
+
+.match-top > span:first-child {
+  color: #aab3c2;
+  font-weight: 900;
+}
+
+.match-time {
+  color: #d8deea;
+}
+
+.live-dot {
+  font-weight: 950;
+  text-shadow: 0 0 12px rgba(255,77,103,.25);
+}
+
+.cinematic-match-card .teams {
+  position: relative;
+  z-index: 3;
+  width: 73%;
+  margin: 19px 0 14px;
+}
+
+.cinematic-match-card .team {
+  grid-template-columns: 40px 1fr;
+  min-width: 0;
+}
+
+.cinematic-match-card .team-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, #293342, #10151d);
+  font-size: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 7px 18px rgba(0,0,0,.35);
+}
+
+.cinematic-match-card .team strong {
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cinematic-match-card .team b {
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.cinematic-match-card .vs {
+  flex: 0 0 30px;
+  background: rgba(255,255,255,.04);
+}
+
+.match-meta {
+  position: relative;
+  z-index: 3;
+  width: 73%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.045);
+  color: #788496;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .8px;
+}
+
+.live-match-card .match-meta span:first-child {
+  color: #ff6a7d;
+}
+
+.upcoming-match-card .match-meta span:first-child {
+  color: var(--accent);
+}
+
+.cinematic-match-card .match-bottom {
+  position: relative;
+  z-index: 3;
+  margin-top: 0;
+}
+
+.featured-section .cinematic-match-card {
+  min-height: 205px;
+  box-shadow:
+    0 16px 38px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.featured-section .match-player-visual {
+  transform: scale(1.08);
+  transform-origin: bottom right;
+}
+
+@media (max-width:430px) {
+  .cinematic-match-card {
+    min-height: 185px;
+  }
+
+  .match-player-visual {
+    right: -7px;
+    width: 145px;
+  }
+
+  .player-silhouette {
+    font-size: 96px;
+    opacity: .21;
+  }
+
+  .cinematic-match-card .teams,
+  .cinematic-match-card .match-meta {
+    width: 76%;
+  }
+}
+
+.page .cinematic-match-card {
+  margin-bottom: 10px;
+}
+
+.page .list-title {
+  margin-top: 22px;
+}
+
+.section-kicker {
+  font-weight: 950;
+}
+
+.hero {
+  box-shadow:
+    0 18px 45px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.quick-grid button,
+.contest-card {
+  transition: transform .15s ease, border-color .15s ease;
+}
+
+.quick-grid button:active,
+.contest-card:active,
+.cinematic-match-card:active {
+  transform: scale(.985);
+}
+
+/* ============================================================
+   BATZO CINEMATIC PLAYER HERO + PREMIUM LEAGUE HOME
+   ============================================================ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 86% 42%, rgba(0,255,117,.12), transparent 26%),
+    radial-gradient(circle at 78% 78%, rgba(150,0,255,.14), transparent 32%),
+    linear-gradient(120deg, #061014 0%, #090e17 48%, #13091a 100%);
+  border-color: rgba(0,255,117,.48);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(3,8,12,.98) 0%, rgba(3,8,12,.84) 39%, rgba(3,8,12,.18) 73%, rgba(3,8,12,.05) 100%);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -30px;
+  bottom: -60px;
+  width: 58%;
+  height: 118%;
+  background: url("/players/batzo-player-hero.svg") center bottom / contain no-repeat;
+  opacity: .96;
+  filter: saturate(1.08) contrast(1.05);
+  pointer-events: none;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  max-width: 58%;
+  text-shadow: 0 8px 28px rgba(0,0,0,.42);
+}
+
+.hero p {
+  max-width: 54%;
+}
+
+.hero .hero-button,
+.hero button {
+  box-shadow:
+    0 12px 28px rgba(0,255,117,.18),
+    inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* premium section headers */
+.section-kicker {
+  color: #00ed78;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.list-title {
+  font-weight: 950;
+  letter-spacing: -.4px;
+}
+
+/* cinematic match cards */
+.cinematic-match-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 92% 55%, rgba(0,255,117,.10), transparent 24%),
+    linear-gradient(125deg, #080d13 0%, #0b1119 54%, #150b18 100%);
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.cinematic-match-card::after {
+  content: "";
+  position: absolute;
+  right: -24px;
+  bottom: -38px;
+  width: 43%;
+  height: 115%;
+  background: url("/players/batzo-player-hero.svg") center bottom / contain no-repeat;
+  opacity: .26;
+  transform: scaleX(-1) scale(1.02);
+  filter: saturate(.9);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.live-match-card {
+  border-color: rgba(255,77,103,.26);
+}
+
+.upcoming-match-card {
+  border-color: rgba(0,255,117,.18);
+}
+
+.match-top,
+.teams,
+.match-meta,
+.match-bottom {
+  position: relative;
+  z-index: 3;
+}
+
+.match-top {
+  padding-right: 70px;
+}
+
+.live-match-card::before {
+  content: "LIVE";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,55,80,.13);
+  border: 1px solid rgba(255,80,100,.28);
+  color: #ff6679;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: 1.2px;
+  z-index: 4;
+}
+
+.upcoming-match-card::before {
+  content: "UPCOMING";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(0,255,117,.08);
+  border: 1px solid rgba(0,255,117,.20);
+  color: #00e875;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: 1px;
+  z-index: 4;
+}
+
+/* home action cards */
+.quick-grid button,
+.contest-card {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.quick-grid button:hover,
+.contest-card:hover {
+  border-color: rgba(0,255,117,.35);
+  transform: translateY(-2px);
+}
+
+/* premium bottom navigation */
+.bottom-nav {
+  background: rgba(5,9,14,.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-color: rgba(255,255,255,.11);
+  box-shadow: 0 -12px 34px rgba(0,0,0,.34);
+}
+
+.bottom-nav .active {
+  box-shadow:
+    0 10px 26px rgba(0,255,117,.12),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* wallet polish */
+.wallet,
+.wallet-balance {
+  background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.012));
+  border-color: rgba(255,255,255,.12);
+}
+
+/* mobile composition */
+@media (max-width: 430px) {
+  .hero {
+    min-height: 360px;
+  }
+
+  .hero::after {
+    right: -52px;
+    bottom: -52px;
+    width: 72%;
+    height: 112%;
+    opacity: .92;
+  }
+
+  .hero h1 {
+    max-width: 72%;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: .98;
+  }
+
+  .hero p {
+    max-width: 67%;
+    font-size: 13px;
+  }
+
+  .hero .hero-button,
+  .hero button {
+    position: relative;
+    z-index: 5;
+  }
+
+  .cinematic-match-card::after {
+    width: 50%;
+    right: -34px;
+    opacity: .23;
+  }
+}
+
+.teams .team {
+  position: relative;
+  z-index: 4;
+}
+
+.team-badge {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    0 8px 20px rgba(0,0,0,.30);
+}
+
+.match-meta {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.match-bottom button,
+.match-bottom a {
+  box-shadow: 0 8px 18px rgba(0,0,0,.24);
+}
+
+.cinematic-match-card:active,
+.quick-grid button:active,
+.contest-card:active {
+  transform: scale(.985);
+}
+
+/* ============================================================
+   BATZO FINAL UI POLISH
+   FULLSCREEN + HEADER + LIVE + BOTTOM NAV
+   ============================================================ */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+body {
+  background: #03070b;
+  overscroll-behavior-x: none;
+}
+
+/* Android safe-area handling */
+.page,
+.app,
+.home-page,
+.main-content {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+}
+
+/* Header stays clean and fully inside screen */
+header,
+.topbar,
+.app-header,
+.header {
+  position: relative;
+  z-index: 50;
+  padding-top: max(8px, env(safe-area-inset-top, 0px));
+}
+
+/* Notification button */
+.notification,
+.notifications,
+.notification-btn,
+.icon-button,
+.header-actions button:first-child {
+  position: relative;
+  z-index: 60;
+  transform: translateY(-2px);
+}
+
+/* Notification red count stays on top */
+.notification-badge,
+.notification-count,
+.badge {
+  z-index: 70;
+}
+
+/* Wallet remains aligned with notification */
+.wallet,
+.wallet-balance,
+.wallet-card {
+  position: relative;
+  z-index: 55;
+}
+
+/* Hero player becomes clearly visible */
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 360px;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  bottom: -25px;
+  width: 62%;
+  height: 112%;
+  background: url("/players/batzo-player-hero.svg") center bottom / contain no-repeat;
+  opacity: 1;
+  z-index: 1;
+  pointer-events: none;
+  filter: saturate(1.15) contrast(1.08);
+}
+
+.hero::before {
+  z-index: 0;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 3;
+}
+
+.hero h1,
+.hero p,
+.hero button,
+.hero .hero-button {
+  position: relative;
+  z-index: 4;
+}
+
+/* Hero text stays readable over player */
+.hero h1 {
+  max-width: 62%;
+  text-shadow: 0 8px 30px rgba(0,0,0,.55);
+}
+
+.hero p {
+  max-width: 58%;
+  text-shadow: 0 4px 16px rgba(0,0,0,.65);
+}
+
+/* LIVE badge stays inside match card and lower than top header */
+.cinematic-match-card .live-dot,
+.live-match-card .live-dot {
+  position: relative;
+  z-index: 20;
+}
+
+.live-match-card::before {
+  top: 22px;
+  right: 18px;
+  z-index: 25;
+}
+
+/* Match card content never gets covered */
+.cinematic-match-card .match-top,
+.cinematic-match-card .teams,
+.cinematic-match-card .match-meta,
+.cinematic-match-card .match-bottom {
+  position: relative;
+  z-index: 10;
+}
+
+/* Full-width premium live match */
+.live-match-card {
+  overflow: hidden;
+}
+
+/* Bottom navigation is always inside the viewport */
+.bottom-nav,
+.bottom-navigation,
+nav.bottom-nav {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  width: auto;
+  z-index: 999;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+  background: rgba(5,9,14,.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  box-shadow:
+    0 -8px 30px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* Prevent Android navigation bar from covering app */
+.page {
+  padding-bottom: 110px;
+}
+
+/* Mobile final composition */
+@media (max-width: 430px) {
+
+  .hero {
+    min-height: 370px;
+    border-radius: 28px;
+  }
+
+  .hero::after {
+    right: -32px;
+    bottom: -28px;
+    width: 69%;
+    height: 112%;
+    opacity: 1;
+  }
+
+  .hero h1 {
+    max-width: 70%;
+    font-size: clamp(34px, 10vw, 48px);
+    line-height: .98;
+  }
+
+  .hero p {
+    max-width: 67%;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .live-match-card::before {
+    top: 18px;
+    right: 14px;
+  }
+
+  .bottom-nav,
+  .bottom-navigation,
+  nav.bottom-nav {
+    left: 10px;
+    right: 10px;
+    bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    border-radius: 22px;
+  }
+
+  .page {
+    padding-bottom: 112px;
+  }
+}
+
+/* very small screens */
+@media (max-width: 360px) {
+
+  .hero {
+    min-height: 350px;
+  }
+
+  .hero::after {
+    right: -38px;
+    width: 72%;
+  }
+
+  .hero h1 {
+    max-width: 68%;
+    font-size: 34px;
+  }
+
+  .hero p {
+    max-width: 64%;
+    font-size: 12px;
+  }
+}
+
+
+/* ============================================================
+   BATZO FINAL — FULL WIDTH BOTTOM NAVIGATION
+   ============================================================ */
+
+.bottom-nav,
+.bottom-navigation,
+.bottom-nav-container,
+nav.bottom-nav,
+nav.bottom-navigation {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 9999 !important;
+}
+
+.bottom-nav > *,
+.bottom-navigation > *,
+.bottom-nav-container > * {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+.bottom-nav,
+.bottom-navigation,
+.bottom-nav-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  padding-left: max(8px, env(safe-area-inset-left)) !important;
+  padding-right: max(8px, env(safe-area-inset-right)) !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+}
+
+/* Remove old floating-card sizing */
+.bottom-nav[style],
+.bottom-navigation[style],
+.bottom-nav-container[style] {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: none !important;
+}
+
+/* Keep page content above the fixed navigation */
+body {
+  padding-bottom: 0 !important;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+
+/* ============================================================
+   BATZO — HOME + LIVE / UPCOMING PREMIUM POLISH
+   ============================================================ */
+
+:root {
+  --batzo-bg: #070b0f;
+  --batzo-card: #10161c;
+  --batzo-card-2: #151d24;
+  --batzo-green: #22c55e;
+  --batzo-green-dark: #16a34a;
+  --batzo-text: #f5f7fa;
+  --batzo-muted: #9aa5b1;
+  --batzo-border: rgba(255,255,255,.08);
+}
+
+/* Main app background */
+html,
+body,
+#root {
+  background: var(--batzo-bg) !important;
+}
+
+body {
+  color: var(--batzo-text) !important;
+  overflow-x: hidden !important;
+}
+
+/* Main content breathing room */
+main,
+.home,
+.home-page,
+.page,
+.app-content,
+.content {
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+/* Premium cards */
+.match-card,
+.matchcard,
+.match-item,
+.game-card,
+.fixture-card,
+.contest-card,
+.featured-match,
+.upcoming-match,
+.live-match,
+[class*="match-card"],
+[class*="matchCard"],
+[class*="fixture"] {
+  background: linear-gradient(
+    145deg,
+    rgba(21,29,36,.98),
+    rgba(10,15,20,.98)
+  ) !important;
+  border: 1px solid var(--batzo-border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.28) !important;
+  overflow: hidden !important;
+}
+
+/* Match card spacing */
+.match-card,
+.matchcard,
+.match-item,
+.game-card,
+.fixture-card,
+[class*="match-card"],
+[class*="matchCard"] {
+  margin-bottom: 12px !important;
+  padding: 14px !important;
+}
+
+/* Live section */
+.live,
+.live-section,
+.live-matches,
+[class*="live-section"],
+[class*="liveMatches"] {
+  width: 100% !important;
+}
+
+/* LIVE badge */
+.live-badge,
+.live-label,
+[class*="live-badge"],
+[class*="liveBadge"] {
+  color: #fff !important;
+  background: rgba(220,38,38,.16) !important;
+  border: 1px solid rgba(248,113,113,.30) !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  letter-spacing: .4px !important;
+}
+
+/* Green live indicator */
+.live-dot,
+[class*="live-dot"],
+[class*="liveDot"] {
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  border-radius: 50% !important;
+  background: #22c55e !important;
+  box-shadow: 0 0 10px rgba(34,197,94,.7) !important;
+}
+
+/* Team names */
+.team-name,
+.team,
+[class*="team-name"],
+[class*="teamName"] {
+  color: var(--batzo-text) !important;
+  font-weight: 750 !important;
+}
+
+/* Scores */
+.score,
+.team-score,
+[class*="score"] {
+  color: #fff !important;
+  font-weight: 850 !important;
+}
+
+/* Upcoming section */
+.upcoming,
+.upcoming-section,
+.upcoming-matches,
+[class*="upcoming-section"],
+[class*="upcomingMatches"] {
+  width: 100% !important;
+}
+
+/* Status text */
+.status,
+.match-status,
+[class*="status"] {
+  color: var(--batzo-muted) !important;
+}
+
+/* Green action buttons */
+button,
+.btn,
+.primary-btn,
+[class*="primary"] {
+  border-radius: 12px !important;
+}
+
+/* Hero / featured area */
+.hero,
+.hero-section,
+.featured,
+.featured-section,
+[class*="hero"] {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+/* Section headings */
+.section-title,
+.section-heading,
+h2,
+h3 {
+  letter-spacing: -.2px !important;
+}
+
+/* Bottom navigation — keep previous full-width fix */
+.bottom-nav,
+.bottom-navigation,
+.bottom-nav-container,
+nav.bottom-nav,
+nav.bottom-navigation {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  padding-left: max(8px, env(safe-area-inset-left)) !important;
+  padding-right: max(8px, env(safe-area-inset-right)) !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+}
+
+.bottom-nav > *,
+.bottom-navigation > *,
+.bottom-nav-container > * {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  text-align: center !important;
+}
+
+/* Mobile spacing */
+@media (max-width: 600px) {
+  .match-card,
+  .matchcard,
+  .match-item,
+  .game-card,
+  .fixture-card,
+  [class*="match-card"],
+  [class*="matchCard"] {
+    border-radius: 16px !important;
+    padding: 13px !important;
+  }
+
+  h1 {
+    font-size: 28px !important;
+  }
+
+  h2 {
+    font-size: 21px !important;
+  }
+}
+
+/* Prevent content from hiding behind bottom navigation */
+body,
+#root {
+  padding-bottom: 0 !important;
+}
+
+
+/* ============================================================
+   BATZO — PLAYER UI + MATCH DETAILS PREMIUM DESIGN
+   Existing Home / Live / Upcoming UI remains untouched.
+   ============================================================ */
+
+/* ---------- MATCH DETAILS ---------- */
+
+.match-details,
+.match-detail,
+.match-details-page,
+.match-detail-page,
+[class*="match-details"],
+[class*="match-detail"] {
+  width: 100% !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(34,197,94,.10), transparent 35%),
+    #070b0f !important;
+  color: #f5f7fa !important;
+  padding: 16px !important;
+}
+
+/* Match header */
+.match-header,
+.match-detail-header,
+[class*="match-header"],
+[class*="matchHeader"] {
+  background: linear-gradient(145deg,#121a20,#080d12) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 22px !important;
+  padding: 20px !important;
+  box-shadow: 0 14px 35px rgba(0,0,0,.30) !important;
+}
+
+/* Teams area */
+.match-teams,
+.teams-section,
+.team-vs,
+[class*="teams-section"],
+[class*="team-vs"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.team-logo,
+.team-logo img,
+[class*="team-logo"] img {
+  width: 58px !important;
+  height: 58px !important;
+  object-fit: contain !important;
+  border-radius: 16px !important;
+  background: #111923 !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+}
+
+.vs,
+.vs-badge,
+[class*="vs-badge"] {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  background: #111820 !important;
+  color: #aab4bf !important;
+  font-weight: 800 !important;
+}
+
+/* Live status */
+.match-live,
+.live-status,
+[class*="live-status"],
+[class*="liveStatus"] {
+  color: #22c55e !important;
+  font-weight: 850 !important;
+  letter-spacing: .5px !important;
+}
+
+/* Score highlight */
+.match-score,
+.score-board,
+.scoreboard,
+[class*="score-board"],
+[class*="scoreBoard"] {
+  color: #22c55e !important;
+  font-weight: 900 !important;
+  font-size: clamp(24px,6vw,36px) !important;
+}
+
+/* Match tabs */
+.match-tabs,
+.detail-tabs,
+[class*="match-tabs"],
+[class*="detail-tabs"] {
+  display: flex !important;
+  gap: 6px !important;
+  padding: 5px !important;
+  margin: 14px 0 !important;
+  background: #10161c !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 14px !important;
+}
+
+.match-tabs button,
+.detail-tabs button,
+[class*="match-tabs"] button,
+[class*="detail-tabs"] button {
+  flex: 1 !important;
+  min-height: 44px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #8e99a5 !important;
+  font-weight: 750 !important;
+}
+
+.match-tabs button.active,
+.detail-tabs button.active,
+.match-tabs .active,
+.detail-tabs .active {
+  background: rgba(34,197,94,.14) !important;
+  color: #22c55e !important;
+  border-radius: 10px !important;
+}
+
+/* ---------- PLAYER UI ---------- */
+
+.player-section,
+.players-section,
+.player-list,
+.players-list,
+[class*="player-section"],
+[class*="players-section"],
+[class*="player-list"],
+[class*="players-list"] {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Player card */
+.player-card,
+.player-item,
+.player-row,
+[class*="player-card"],
+[class*="playerCard"],
+[class*="player-item"],
+[class*="playerItem"] {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 8px 0 !important;
+  padding: 13px !important;
+  background: linear-gradient(145deg,#121a20,#0b1015) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22) !important;
+  transition: transform .15s ease, border-color .15s ease !important;
+}
+
+.player-card:active,
+.player-item:active,
+.player-row:active {
+  transform: scale(.985) !important;
+}
+
+/* Player image */
+.player-image,
+.player-avatar,
+.player-photo,
+.player-card img,
+.player-item img,
+[class*="player-image"],
+[class*="playerImage"] {
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  border-radius: 16px !important;
+  object-fit: cover !important;
+  background: linear-gradient(145deg,#18222a,#0c1218) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+}
+
+/* Player name */
+.player-name,
+.player-card h3,
+.player-item h3,
+[class*="player-name"],
+[class*="playerName"] {
+  color: #f5f7fa !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+/* Player role/team */
+.player-role,
+.player-team,
+.player-card small,
+.player-item small,
+[class*="player-role"],
+[class*="playerRole"] {
+  color: #9aa5b1 !important;
+  font-size: 12px !important;
+}
+
+/* Player stats */
+.player-stats,
+.player-stat,
+.stats,
+[class*="player-stats"],
+[class*="playerStats"] {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-left: auto !important;
+  text-align: right !important;
+}
+
+.player-stats strong,
+.player-stat strong {
+  color: #fff !important;
+  font-weight: 850 !important;
+}
+
+.player-stats span,
+.player-stat span {
+  color: #8f9aa6 !important;
+  font-size: 11px !important;
+}
+
+/* Fantasy points */
+.player-points,
+.fantasy-points,
+.points,
+[class*="fantasy-points"],
+[class*="fantasyPoints"] {
+  color: #22c55e !important;
+  font-weight: 900 !important;
+}
+
+/* Captain / Vice Captain */
+.captain,
+.vice-captain,
+.captain-badge,
+.vice-captain-badge,
+[class*="captain-badge"],
+[class*="vice-captain"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  padding: 0 7px !important;
+  border-radius: 9px !important;
+  background: rgba(34,197,94,.14) !important;
+  border: 1px solid rgba(34,197,94,.35) !important;
+  color: #22c55e !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+}
+
+/* Select player button */
+.select-player,
+.select-btn,
+.add-player,
+[class*="select-player"],
+[class*="selectPlayer"] {
+  min-width: 76px !important;
+  min-height: 38px !important;
+  border-radius: 11px !important;
+  border: 1px solid rgba(34,197,94,.38) !important;
+  background: rgba(34,197,94,.10) !important;
+  color: #22c55e !important;
+  font-weight: 800 !important;
+}
+
+/* Selected player */
+.selected,
+.player-selected,
+.selected-player,
+[class*="selected-player"],
+[class*="selectedPlayer"] {
+  border-color: rgba(34,197,94,.65) !important;
+  background: linear-gradient(145deg,rgba(34,197,94,.13),#0b1115) !important;
+}
+
+/* Player category filters */
+.player-filters,
+.player-categories,
+[class*="player-filter"],
+[class*="playerFilter"] {
+  display: flex !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  padding: 4px 0 10px !important;
+  scrollbar-width: none !important;
+}
+
+.player-filters button,
+.player-categories button,
+[class*="player-filter"] button,
+[class*="playerFilter"] button {
+  flex: 0 0 auto !important;
+  min-height: 40px !important;
+  padding: 0 15px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  background: #10161c !important;
+  color: #9aa5b1 !important;
+  font-weight: 750 !important;
+}
+
+.player-filters button.active,
+.player-categories button.active {
+  background: rgba(34,197,94,.15) !important;
+  border-color: rgba(34,197,94,.45) !important;
+  color: #22c55e !important;
+}
+
+/* Player detail stats grid */
+.player-detail-stats,
+.stats-grid,
+.performance-grid,
+[class*="stats-grid"],
+[class*="performance-grid"] {
+  display: grid !important;
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+  gap: 10px !important;
+}
+
+.player-detail-stats > *,
+.stats-grid > *,
+.performance-grid > * {
+  background: #10161c !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 15px !important;
+  padding: 13px !important;
+}
+
+/* Generic premium detail cards */
+.detail-card,
+.info-card,
+.performance-card,
+[class*="detail-card"],
+[class*="performance-card"] {
+  background: linear-gradient(145deg,#121a20,#0b1015) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 18px !important;
+  padding: 15px !important;
+  margin: 10px 0 !important;
+}
+
+/* Mobile optimization */
+@media (max-width:600px) {
+  .match-details,
+  .match-detail,
+  .match-details-page,
+  .match-detail-page {
+    padding: 12px !important;
+  }
+
+  .player-card,
+  .player-item,
+  .player-row {
+    padding: 11px !important;
+    gap: 9px !important;
+  }
+
+  .player-image,
+  .player-avatar,
+  .player-photo,
+  .player-card img,
+  .player-item img {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+  }
+
+  .player-stats {
+    gap: 8px !important;
+  }
+
+  .player-stats span {
+    font-size: 10px !important;
+  }
+}
+
+/* Keep full-width bottom navigation */
+.bottom-nav,
+.bottom-navigation,
+.bottom-nav-container,
+nav.bottom-nav,
+nav.bottom-navigation {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+}
+

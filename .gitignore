@@ -11,3 +11,9 @@ android-sdk/
 .DS_Store
 .env
 .env.*
+backend/.env
+serviceAccountKey.json
+google-services.json
+backend/secrets/
+auth-code.txt
+backend/data/otp.json

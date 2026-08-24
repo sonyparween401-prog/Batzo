@@ -1,0 +1,234 @@
+.bz-player-section{
+  width:100%;
+  margin:24px 0 20px;
+}
+
+.bz-player-section-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:13px;
+}
+
+.bz-player-section-head h2{
+  margin:2px 0 3px;
+  color:#f5f7fa;
+  font-size:20px;
+  line-height:1.05;
+  font-weight:950;
+  letter-spacing:-.5px;
+}
+
+.bz-player-section-head p{
+  margin:0;
+  color:#7f8b96;
+  font-size:11px;
+}
+
+.bz-player-kicker{
+  color:#27e878;
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:1.2px;
+}
+
+.bz-player-count{
+  flex:0 0 auto;
+  padding:7px 9px;
+  border-radius:999px;
+  color:#27e878;
+  background:rgba(39,232,120,.08);
+  border:1px solid rgba(39,232,120,.18);
+  font-size:8px;
+  font-weight:950;
+}
+
+.bz-player-carousel{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none;
+  padding:2px 2px 12px;
+}
+
+.bz-player-carousel::-webkit-scrollbar{
+  display:none;
+}
+
+.bz-player-card-real{
+  position:relative;
+  flex:0 0 calc(50% - 6px);
+  min-width:156px;
+  max-width:245px;
+  overflow:hidden;
+  scroll-snap-align:start;
+  border-radius:19px;
+  background:#0d1318;
+  border:1px solid rgba(255,255,255,.075);
+  box-shadow:0 14px 34px rgba(0,0,0,.32);
+}
+
+.bz-player-action{
+  position:relative;
+  height:178px;
+  overflow:hidden;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 15%,rgba(39,232,120,.22),transparent 34%),
+    linear-gradient(155deg,#1d2930,#070b0e 75%);
+}
+
+.bz-player-action:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,transparent 45%,rgba(0,0,0,.92) 100%),
+    repeating-linear-gradient(
+      105deg,
+      transparent 0 16px,
+      rgba(255,255,255,.025) 17px 18px
+    );
+}
+
+.bz-stadium-glow{
+  position:absolute;
+  top:20px;
+  width:105px;
+  height:105px;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  filter:blur(17px);
+}
+
+.bz-player-silhouette{
+  position:relative;
+  z-index:2;
+  width:112px;
+  height:145px;
+  display:grid;
+  place-items:center;
+  border-radius:54% 54% 28% 28%;
+  background:
+    radial-gradient(circle at 50% 25%,#aeb7bd 0 11%,transparent 12%),
+    linear-gradient(145deg,#27353d,#10161a 70%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 12px 28px rgba(0,0,0,.45);
+  font-size:34px;
+  transform:skew(-3deg);
+}
+
+.bz-player-number{
+  position:absolute;
+  z-index:3;
+  left:10px;
+  bottom:10px;
+  color:rgba(255,255,255,.15);
+  font-size:25px;
+  font-weight:950;
+}
+
+.bz-team-pill{
+  position:absolute;
+  z-index:4;
+  top:10px;
+  right:10px;
+  padding:5px 7px;
+  border-radius:7px;
+  color:#07100a;
+  background:#27e878;
+  font-size:8px;
+  font-weight:950;
+}
+
+.bz-player-info{
+  padding:11px;
+}
+
+.bz-player-name-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:7px;
+}
+
+.bz-player-name-row strong{
+  display:block;
+  color:#f4f7f8;
+  font-size:12px;
+  line-height:1.15;
+  font-weight:950;
+}
+
+.bz-player-name-row small{
+  display:block;
+  margin-top:4px;
+  color:#7f8b96;
+  font-size:8px;
+  font-weight:800;
+}
+
+.bz-form{
+  padding:4px 6px;
+  border-radius:7px;
+  color:#07100a;
+  background:#27e878;
+  font-size:8px;
+  font-weight:950;
+}
+
+.bz-player-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  margin-top:10px;
+}
+
+.bz-player-stats div{
+  padding:6px 3px;
+  border-radius:7px;
+  text-align:center;
+  background:rgba(255,255,255,.035);
+}
+
+.bz-player-stats small{
+  display:block;
+  color:#68747e;
+  font-size:6px;
+  font-weight:900;
+}
+
+.bz-player-stats b{
+  display:block;
+  margin-top:2px;
+  color:#e9eef1;
+  font-size:9px;
+  font-weight:950;
+}
+
+.bz-action-1{background:linear-gradient(145deg,#182b36,#080c10)}
+.bz-action-2{background:linear-gradient(145deg,#2a2418,#090c0e)}
+.bz-action-3{background:linear-gradient(145deg,#162b23,#080c0e)}
+.bz-action-4{background:linear-gradient(145deg,#26202f,#080b0e)}
+.bz-action-5{background:linear-gradient(145deg,#202c25,#080c0e)}
+
+@media(max-width:380px){
+  .bz-player-card-real{
+    flex-basis:calc(50% - 6px);
+    min-width:145px;
+  }
+
+  .bz-player-action{
+    height:160px;
+  }
+
+  .bz-player-silhouette{
+    width:96px;
+    height:130px;
+  }
+}

@@ -1,0 +1,29 @@
+html {
+  background: #f4f6fb;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* BATZO DARK PREMIUM BASE */
+html {
+  background: #070b12 !important;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #070b12 !important;
+}
+
+#root {
+  min-height: 100vh;
+  background: #070b12;
+}
+

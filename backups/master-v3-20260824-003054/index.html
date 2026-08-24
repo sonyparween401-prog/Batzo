@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  
+<!-- BATZO_CREATE_JOIN_WALLET_FIX_V1 -->
+<script>
+(function(){
+  function install(){
+    if(window.__BATZO_CREATE_JOIN_FIX_V1__) return;
+    window.__BATZO_CREATE_JOIN_FIX_V1__=true;
+
+    function parsePlayer(card,index){
+      const img=card.querySelector('img');
+      const name=(card.querySelector('.bz-flow-player-name')?.textContent||'Player '+(index+1)).trim();
+      const meta=(card.querySelector('.bz-flow-player-meta')?.textContent||'IND • BAT').trim();
+      const parts=meta.split('•').map(x=>x.trim());
+      const creditText=(card.querySelector('.bz-flow-credit')?.textContent||'9 Credits');
+      const m=creditText.match(/[0-9]+(?:\.[0-9]+)?/);
+      const credits=m?Number(m[0]):0;
+
+      return {
+        id:String(index),
+        name:name,
+        team:parts[0]||'IND',
+        role:parts[1]||'BAT',
+        credits:credits,
+        credit:credits,
+        photo:img?.getAttribute('src')||''
+      };
+    }
+
+    /*
+      OLD CREATE TEAM FLOW:
+      CONTINUE • 11/11 was only showing an alert.
+      Send the selected XI into the existing Captain/VC flow.
+    */
+    document.addEventListener('click',function(ev){
+      const btn=ev.target?.closest?.('#bzTeamContinue');
+      if(!btn) return;
+
+      const cards=[...document.querySelectorAll('#bzPlayers .bz-flow-card')];
+      const selected=cards.filter(c =>
+        c.querySelector('.bz-flow-select.active')
+      );
+
+      if(selected.length!==11) return;
+      if(!window.BatzoFantasyFlow?.captainSelect) return;
+
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+
+      const players=selected.map((card,index)=>
+        parsePlayer(card,index)
+      );
+
+      window.BatzoFantasyFlow.captainSelect(players);
+    },true);
+
+    /*
+      AFTER CAPTAIN/VC CONFIRM:
+      Replace MY TEAMS with JOIN NOW.
+      Sync the saved team into the V3 wallet/join system.
+    */
+    function promoteJoin(){
+      const confirmed=document.getElementById('bzConfirmedList');
+      const btn=document.getElementById('bzMyTeams');
+
+      if(!confirmed || !btn) return;
+      if(btn.dataset.batzoJoinFixed==='1') return;
+
+      let saved=[];
+      try{
+        saved=JSON.parse(
+          localStorage.getItem('batzo_saved_teams')||'[]'
+        );
+      }catch(e){
+        saved=[];
+      }
+
+      const team=saved[saved.length-1];
+      if(!team) return;
+
+      try{
+        if(window.BatzoFlow?.saveTeam){
+          window.BatzoFlow.saveTeam(team);
+        }
+      }catch(e){
+        console.warn('BATZO team V3 sync failed',e);
+      }
+
+      /*
+        Put the newly-created team FIRST so the existing
+        JOIN NOW wallet logic uses this exact team.
+      */
+      try{
+        const key='batzo_my_teams_v3';
+        const old=JSON.parse(localStorage.getItem(key)||'[]');
+
+        const normalized={
+          ...team,
+          id:String(team.id||('team-'+Date.now())),
+          name:'Team 1'
+        };
+
+        const rest=old.filter(x =>
+          String(x?.id)!==String(normalized.id)
+        );
+
+        localStorage.setItem(
+          key,
+          JSON.stringify([normalized,...rest])
+        );
+      }catch(e){
+        console.warn('BATZO V3 storage sync failed',e);
+      }
+
+      btn.dataset.batzoJoinFixed='1';
+      btn.id='bzDirectJoin';
+      btn.textContent='JOIN NOW • ₹49';
+
+      btn.style.background=
+        'linear-gradient(135deg,#24ef7b,#0fc966)';
+      btn.style.color='#031009';
+      btn.style.fontWeight='900';
+    }
+
+    function watchConfirmed(){
+      promoteJoin();
+
+      if(!document.getElementById('bzDirectJoin')){
+        setTimeout(watchConfirmed,150);
+      }
+    }
+
+    document.addEventListener('click',function(ev){
+      if(ev.target?.closest?.('#bzConfirm')){
+        setTimeout(watchConfirmed,80);
+      }
+    },true);
+
+    setTimeout(watchConfirmed,300);
+  }
+
+  if(document.readyState==='complete'){
+    install();
+  }else{
+    window.addEventListener('load',install,{once:true});
+  }
+})();
+</script>
+<!-- /BATZO_CREATE_JOIN_WALLET_FIX_V1 -->
+
+</body>
+</html>

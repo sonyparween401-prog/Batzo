@@ -1,0 +1,3170 @@
+(function(){
+  'use strict';
+
+  if(window.__BATZO_MASTER_FLOW__) return;
+  window.__BATZO_MASTER_FLOW__=true;
+
+  const PLAYERS = [
+  {name:'Rohit Sharma', team:'IND', role:'BAT', credit:9.5},
+  {name:'Virat Kohli', team:'IND', role:'BAT', credit:9.5},
+  {name:'Shubman Gill', team:'IND', role:'BAT', credit:9.0},
+  {name:'KL Rahul', team:'IND', role:'WK', credit:9.0},
+  {name:'Rishabh Pant', team:'IND', role:'WK', credit:8.5},
+  {name:'Hardik Pandya', team:'IND', role:'AR', credit:9.0},
+  {name:'Ravindra Jadeja', team:'IND', role:'AR', credit:9.0},
+  {name:'Axar Patel', team:'IND', role:'AR', credit:8.5},
+  {name:'Jasprit Bumrah', team:'IND', role:'BOWL', credit:9.5},
+  {name:'Kuldeep Yadav', team:'IND', role:'BOWL', credit:8.5},
+  {name:'Mohammed Siraj', team:'IND', role:'BOWL', credit:8.5},
+  {name:'Arshdeep Singh', team:'IND', role:'BOWL', credit:8.0},
+  {name:'David Warner', team:'AUS', role:'BAT', credit:9.0},
+  {name:'Travis Head', team:'AUS', role:'BAT', credit:9.5},
+  {name:'Steve Smith', team:'AUS', role:'BAT', credit:8.5},
+  {name:'Josh Inglis', team:'AUS', role:'WK', credit:8.0},
+  {name:'Glenn Maxwell', team:'AUS', role:'AR', credit:9.0},
+  {name:'Marcus Stoinis', team:'AUS', role:'AR', credit:8.5},
+  {name:'Mitchell Marsh', team:'AUS', role:'AR', credit:8.5},
+  {name:'Pat Cummins', team:'AUS', role:'BOWL', credit:9.0},
+  {name:'Mitchell Starc', team:'AUS', role:'BOWL', credit:9.0},
+  {name:'Adam Zampa', team:'AUS', role:'BOWL', credit:8.5},
+  {name:'Josh Hazlewood', team:'AUS', role:'BOWL', credit:8.5},
+  {name:'Nathan Ellis', team:'AUS', role:'BOWL', credit:7.5},
+];
+
+  const wallet=()=>{
+    const n=Number(localStorage.getItem(WALLET_KEY)||0);
+    return Number.isFinite(n)&&n>=0?n:0;
+  };
+
+  const setWallet=n=>{
+    localStorage.setItem(
+      WALLET_KEY,
+      String(Math.max(0,Number(n)||0).toFixed(2))
+    );
+  };
+
+  const esc=s=>String(s??'').replace(
+    /[&<>"']/g,
+    c=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[c])
+  );
+
+  const playerName=i=>PLAYERS[i]?.name||'';
+
+  function shell(title,sub,body,bottom=''){
+    const r=root();
+    if(!r)return;
+
+    r.innerHTML=`
+      <div class="bzm-screen">
+        <div class="bzm-head">
+          <div>
+            <div class="bzm-brand">BATZO CRICKET</div>
+            <h1>${esc(title)}</h1>
+            ${sub?`<div class="bz-sub">${esc(sub)}</div>`:''}
+          </div>
+        </div>
+
+        <div class="bzm-body">${body}</div>
+
+        ${
+          bottom
+          ? `<div class="bzm-bottom">${bottom}</div>`
+          : ''
+        }
+      </div>
+    `;
+
+    r.scrollTop=0;
+
+    // MASTER V2: remove legacy back controls injected by older flows.
+    document
+      .querySelectorAll(
+        '.bz-flow-back,' +
+        '[id*="Back"],' +
+        '[id*="back"],' +
+        'button[aria-label*="Back" i]'
+      )
+      .forEach(x => {
+        try { x.remove(); } catch(e) {}
+      });
+  }
+
+  function toast(msg,ok=false){
+    const old=document.getElementById('bzMasterToast');
+    if(old)old.remove();
+
+    const d=document.createElement('div');
+    d.id='bzMasterToast';
+    d.textContent=msg;
+
+    d.style.cssText=
+      'position:fixed;left:14px;right:14px;bottom:92px;'+
+      'z-index:2147483647;padding:14px 16px;border-radius:15px;'+
+      'background:'+(ok?'#123d26':'#461b1b')+';color:#fff;'+
+      'font-weight:900;text-align:center;'+
+      'box-shadow:0 10px 35px rgba(0,0,0,.5)';
+
+    document.body.appendChild(d);
+
+    setTimeout(()=>d.remove(),2600);
+  }
+
+  function teamsPage(){
+
+    window.__BATZO_CONTEST_LOCKED__=false;
+
+    const list=teams();
+
+    let body=`
+      <div class="bzm-card">
+        <div class="bz-label">MY TEAMS</div>
+
+        <div class="bz-big">
+          ${list.length}
+          TEAM${list.length===1?'':'S'}
+        </div>
+
+        <div class="bz-muted">
+          Create or manage your fantasy cricket teams.
+          Every team must contain exactly 11 players.
+        </div>
+      </div>
+    `;
+
+    if(list.length===0){
+
+      body+=`
+        <div class="bzm-card">
+
+          <div class="bz-empty">
+            No saved teams yet.
+          </div>
+
+          <div class="bz-muted"
+               style="margin-top:8px">
+            Start by creating your first team.
+          </div>
+
+        </div>
+      `;
+
+    }else{
+
+      list.forEach((t,i)=>{
+
+        const ps=
+          Array.isArray(t.players)
+          ? t.players
+          : [];
+
+        body+=`
+          <div class="bzm-card team-card">
+
+            <div class="team-title">
+              <b>TEAM ${i+1}</b>
+              <span>${ps.length}/11 PLAYERS</span>
+            </div>
+
+            <div class="team-names">
+
+              ${
+                ps.slice(0,11).map(
+                  (pl,j)=>`
+
+                    <span>
+                      ${esc(
+                        typeof pl==='string'
+                        ? pl
+                        : (pl.name||'Player')
+                      )}
+
+                      ${
+                        j===t.captain
+                        ? ' <b>(C)</b>'
+                        : ''
+                      }
+
+                      ${
+                        j===t.viceCaptain
+                        ? ' <b>(VC)</b>'
+                        : ''
+                      }
+
+                    </span>
+
+                  `
+                ).join('')
+              }
+
+            </div>
+
+            <div class="team-actions">
+
+              <button
+                type="button"
+                class="bz-edit"
+                data-edit="${i}">
+                EDIT TEAM
+              </button>
+
+              <button
+                type="button"
+                class="bz-delete"
+                data-delete="${i}">
+                DELETE
+              </button>
+
+            </div>
+
+          </div>
+        `;
+
+      });
+
+    }
+
+    /*
+      IMPORTANT:
+      There is EXACTLY ONE CREATE TEAM button.
+      It is outside the team list.
+    */
+
+    shell(
+      'My Teams',
+      'Create and manage your fantasy teams',
+      body,
+      `
+        <button
+          type="button"
+          class="bz-primary"
+          id="bzCreate">
+          CREATE TEAM →
+        </button>
+      `
+    );
+
+    const create=
+      document.getElementById('bzCreate');
+
+    if(create){
+
+      create.onclick=function(ev){
+
+        if(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+
+        window.__BATZO_CONTEST_LOCKED__=false;
+
+        teamBuilder(null);
+
+      };
+
+    }
+
+    document
+      .querySelectorAll('[data-edit]')
+      .forEach(btn=>{
+
+        btn.onclick=function(ev){
+
+          if(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+
+          window.__BATZO_CONTEST_LOCKED__=false;
+
+          teamBuilder(
+            Number(btn.dataset.edit)
+          );
+
+        };
+
+      });
+
+    document
+      .querySelectorAll('[data-delete]')
+      .forEach(btn=>{
+
+        btn.onclick=function(ev){
+
+          if(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+
+          const i=
+            Number(btn.dataset.delete);
+
+          const a=teams();
+
+          if(!a[i])return;
+
+          if(
+            !confirm(
+              'Delete Team '+(i+1)+'?'
+            )
+          ){
+            return;
+          }
+
+          a.splice(i,1);
+
+          write(
+            TEAM_KEY,
+            a
+          );
+
+          const selected=
+            read(
+              SELECTED_KEY,
+              null
+            );
+
+          if(
+            selected &&
+            !a.some(
+              x=>x.id===selected.id
+            )
+          ){
+
+            localStorage.removeItem(
+              SELECTED_KEY
+            );
+
+            localStorage.removeItem(
+              ACTIVE_KEY
+            );
+
+          }
+
+          toast(
+            'TEAM DELETED',
+            true
+          );
+
+          setTimeout(
+            teamsPage,
+            150
+          );
+
+        };
+
+      });
+
+  }
+
+
+  function teamBuilder(editIndex){
+
+    window.__BATZO_CONTEST_LOCKED__=false;
+
+    const old=
+      editIndex===null
+      ? null
+      : teams()[editIndex];
+
+    let selected=
+      new Set();
+
+    if(
+      old &&
+      Array.isArray(old.players)
+    ){
+
+      old.players.forEach(p=>{
+
+        const name=
+          typeof p==='string'
+          ? p
+          : p?.name;
+
+        const ix=
+          PLAYERS.findIndex(
+            x=>x.name===name
+          );
+
+        if(ix>=0){
+          selected.add(ix);
+        }
+
+      });
+
+    }
+
+    const body=`
+
+      <div class="bzm-card">
+
+        <div class="bz-label">
+          PLAYER SELECTION
+        </div>
+
+        <div class="bz-big"
+             id="bzCount">
+          ${selected.size}/11
+        </div>
+
+        <div class="bz-muted">
+          Select exactly 11 players.
+          Maximum 11 players allowed.
+        </div>
+
+      </div>
+
+      <div class="bzm-card">
+
+        <div class="bz-label">
+          AVAILABLE PLAYERS
+        </div>
+
+        <div class="bz-big">
+          ${PLAYERS.length}
+        </div>
+
+        <div class="bz-muted">
+          Choose 11 players from the list below.
+        </div>
+
+      </div>
+
+      <div id="bzPlayerList"></div>
+    `;
+
+    shell(
+      editIndex===null
+      ? 'Create Team'
+      : 'Edit Team',
+      'Select exactly 11 players',
+      body,
+      `
+        <button
+          type="button"
+          class="bz-primary"
+          id="bzPlayersNext">
+          CONTINUE • ${selected.size}/11
+        </button>
+      `
+    );
+
+    const list=
+      document.getElementById(
+        'bzPlayerList'
+      );
+
+    if(!list){
+      throw new Error(
+        'BATZO ERROR: player list missing'
+      );
+    }
+
+    PLAYERS.forEach(
+      (p,i)=>{
+
+        const row=
+          document.createElement(
+            'div'
+          );
+
+        row.className=
+          'bz-player '+
+          (
+            selected.has(i)
+            ? 'picked'
+            : ''
+          );
+
+        row.innerHTML=`
+
+          <div class="bz-player-info">
+
+            <b>
+              ${esc(p.name)}
+            </b>
+
+            <small>
+              ${esc(p.team)}
+              •
+              ${esc(p.role)}
+              •
+              ${p.credit} Cr
+            </small>
+
+          </div>
+
+          <button
+            type="button"
+            class="bz-player-add">
+            ${
+              selected.has(i)
+              ? '✓'
+              : 'ADD'
+            }
+          </button>
+
+        `;
+
+        const add=
+          row.querySelector(
+            '.bz-player-add'
+          );
+
+        add.onclick=function(ev){
+
+          if(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+
+          if(
+            selected.has(i)
+          ){
+
+            selected.delete(i);
+
+          }else{
+
+            if(
+              selected.size>=11
+            ){
+
+              toast(
+                'Maximum 11 players'
+              );
+
+              return;
+            }
+
+            selected.add(i);
+
+          }
+
+          row.classList.toggle(
+            'picked',
+            selected.has(i)
+          );
+
+          add.textContent=
+            selected.has(i)
+            ? '✓'
+            : 'ADD';
+
+          const count=
+            document.getElementById(
+              'bzCount'
+            );
+
+          if(count){
+            count.textContent=
+              selected.size+'/11';
+          }
+
+          const next=
+            document.getElementById(
+              'bzPlayersNext'
+            );
+
+          if(next){
+            next.textContent=
+              'CONTINUE • '+
+              selected.size+
+              '/11';
+          }
+
+        };
+
+        list.appendChild(row);
+
+      }
+    );
+
+    const next=
+      document.getElementById(
+        'bzPlayersNext'
+      );
+
+    if(next){
+
+      next.onclick=function(ev){
+
+        if(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+
+        if(
+          selected.size!==11
+        ){
+
+          toast(
+            'Please select exactly 11 players'
+          );
+
+          return;
+        }
+
+        captainStep(
+          editIndex,
+          [...selected]
+        );
+
+      };
+
+    }
+
+  }
+
+
+  function captainStep(editIndex,idxs){
+
+    window.__BATZO_CONTEST_LOCKED__=false;
+
+    const old=
+      editIndex===null
+      ? null
+      : teams()[editIndex];
+
+    let captain=null;
+    let viceCaptain=null;
+
+    if(
+      old &&
+      Array.isArray(old.players)
+    ){
+
+      const cp=
+        old.players[old.captain];
+
+      const vp=
+        old.players[old.viceCaptain];
+
+      const cn=
+        typeof cp==='string'
+        ? cp
+        : cp?.name;
+
+      const vn=
+        typeof vp==='string'
+        ? vp
+        : vp?.name;
+
+      const ci=
+        PLAYERS.findIndex(
+          x=>x.name===cn
+        );
+
+      const vi=
+        PLAYERS.findIndex(
+          x=>x.name===vn
+        );
+
+      if(idxs.includes(ci)){
+        captain=ci;
+      }
+
+      if(idxs.includes(vi)){
+        viceCaptain=vi;
+      }
+
+    }
+
+    const body=`
+
+      <div class="bzm-card">
+
+        <div class="bz-label">
+          TEAM FINALIZATION
+        </div>
+
+        <div class="bz-big">
+          ${idxs.length}/11
+        </div>
+
+        <div class="bz-muted">
+          Select one Captain and one
+          different Vice-Captain.
+        </div>
+
+      </div>
+
+      <div id="bzCVList"></div>
+
+    `;
+
+    shell(
+      'Captain & Vice-Captain',
+      'Confirm your fantasy team',
+      body,
+      `
+        <button
+          type="button"
+          id="bzConfirm"
+          class="bz-primary"
+          style="
+            position:relative;
+            z-index:99999;
+            pointer-events:auto;
+            touch-action:manipulation;
+          ">
+          CONFIRM TEAM
+        </button>
+      `
+    );
+
+    const list=
+      document.getElementById(
+        'bzCVList'
+      );
+
+    if(!list){
+      throw new Error(
+        'BATZO: C/VC list missing'
+      );
+    }
+
+    idxs.forEach(i=>{
+
+      const p=PLAYERS[i];
+
+      const row=
+        document.createElement('div');
+
+      row.className='bz-player';
+
+      row.innerHTML=`
+
+        <div class="bz-player-info">
+
+          <b>${esc(p.name)}</b>
+
+          <small>
+            ${esc(p.team)}
+            •
+            ${esc(p.role)}
+            •
+            ${p.credit} Cr
+          </small>
+
+        </div>
+
+        <div class="cv">
+
+          <button
+            type="button"
+            data-c
+            style="touch-action:manipulation">
+            ${captain===i?'✓ ':''}C
+          </button>
+
+          <button
+            type="button"
+            data-vc
+            style="touch-action:manipulation">
+            ${viceCaptain===i?'✓ ':''}VC
+          </button>
+
+        </div>
+      `;
+
+      const c=
+        row.querySelector('[data-c]');
+
+      const vc=
+        row.querySelector('[data-vc]');
+
+      c.onclick=function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        captain=i;
+
+        document
+          .querySelectorAll('[data-c]')
+          .forEach(x=>{
+            x.classList.remove('on');
+            x.textContent='C';
+          });
+
+        c.classList.add('on');
+        c.textContent='✓ C';
+
+      };
+
+      vc.onclick=function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        viceCaptain=i;
+
+        document
+          .querySelectorAll('[data-vc]')
+          .forEach(x=>{
+            x.classList.remove('on');
+            x.textContent='VC';
+          });
+
+        vc.classList.add('on');
+        vc.textContent='✓ VC';
+
+      };
+
+      list.appendChild(row);
+
+    });
+
+
+    const confirm=
+      document.getElementById(
+        'bzConfirm'
+      );
+
+    if(!confirm){
+      throw new Error(
+        'BATZO: CONFIRM TEAM button missing'
+      );
+    }
+
+
+    /*
+      One shared confirm function.
+      Both click and touch use the same path.
+    */
+    let confirming=false;
+
+    function doConfirm(e){
+
+      if(e){
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      if(confirming){
+        return;
+      }
+
+      if(idxs.length!==11){
+
+        toast(
+          'Team must contain exactly 11 players'
+        );
+
+        return;
+      }
+
+      if(captain===null){
+
+        toast(
+          'Select Captain first'
+        );
+
+        return;
+      }
+
+      if(viceCaptain===null){
+
+        toast(
+          'Select Vice-Captain first'
+        );
+
+        return;
+      }
+
+      if(captain===viceCaptain){
+
+        toast(
+          'Captain and Vice-Captain must be different'
+        );
+
+        return;
+      }
+
+      confirming=true;
+
+      confirm.disabled=true;
+
+      confirm.style.pointerEvents='none';
+
+      confirm.textContent=
+        'SAVING TEAM...';
+
+
+      const a=teams();
+
+      const team={
+
+        id:
+          old?.id ||
+          ('team-'+Date.now()),
+
+        players:
+          idxs.map(
+            i=>PLAYERS[i]
+          ),
+
+        captain:
+          idxs.indexOf(captain),
+
+        viceCaptain:
+          idxs.indexOf(viceCaptain),
+
+        createdAt:
+          old?.createdAt ||
+          Date.now(),
+
+        updatedAt:
+          Date.now()
+
+      };
+
+
+      /*
+        Save team permanently.
+      */
+      if(editIndex===null){
+
+        a.unshift(team);
+
+      }else{
+
+        a[editIndex]=team;
+
+      }
+
+      write(
+        TEAM_KEY,
+        a
+      );
+
+      write(
+        SELECTED_KEY,
+        team
+      );
+
+      write(
+        ACTIVE_KEY,
+        team
+      );
+
+      window.BATZO_PENDING_TEAM=
+        team;
+
+      window.BATZO_SELECTED_TEAM=
+        team;
+
+
+      toast(
+        'TEAM CONFIRMED',
+        true
+      );
+
+
+      /*
+        Give localStorage a moment,
+        then open contest directly.
+      */
+      setTimeout(()=>{
+
+        try{
+
+          window.__BATZO_CONTEST_LOCKED__=false;
+
+          contestPage();
+
+        }catch(err){
+
+          console.error(
+            'BATZO CONTEST OPEN ERROR',
+            err
+          );
+
+          confirming=false;
+
+          confirm.disabled=false;
+
+          confirm.style.pointerEvents=
+            'auto';
+
+          confirm.textContent=
+            'CONFIRM TEAM';
+
+          toast(
+            'Team saved. Contest could not open.'
+          );
+
+        }
+
+      },250);
+
+    }
+
+
+    /*
+      IMPORTANT:
+      Attach direct click handler.
+    */
+    confirm.addEventListener(
+      'click',
+      doConfirm,
+      false
+    );
+
+
+    /*
+      Android WebView touch fallback.
+    */
+    confirm.addEventListener(
+      'touchend',
+      doConfirm,
+      {
+        passive:false
+      }
+    );
+
+
+    /*
+      Keyboard / accessibility.
+    */
+    confirm.addEventListener(
+      'keydown',
+      function(e){
+
+        if(
+          e.key==='Enter' ||
+          e.key===' '
+        ){
+          doConfirm(e);
+        }
+
+      }
+    );
+
+  }
+
+
+
+  function contestPage(){
+
+    window.__BATZO_CONTEST_LOCKED__=true;
+
+    try{
+      history.pushState(
+        {batzoContest:true},
+        '',
+        location.href
+      );
+    }catch(e){}
+
+    const t=CONTEST;
+
+    const team=
+      read(
+        SELECTED_KEY,
+        null
+      );
+
+    if(
+      !team ||
+      !Array.isArray(team.players) ||
+      team.players.length!==11
+    ){
+      return teamsPage();
+    }
+
+    const joined=
+      read(JOINED_KEY,[]);
+
+    const already=
+      Array.isArray(joined) &&
+      joined.some(x=>
+        String(x.contestId)===String(t.id) &&
+        String(x.team?.id)===String(team.id)
+      );
+
+    const body=`
+
+      <div class="bzm-card">
+
+        <div class="bz-label">
+          CONTEST
+        </div>
+
+        <div class="bz-big">
+          ${esc(t.name)}
+        </div>
+
+        <div class="prize">
+          ${esc(t.prize)}
+        </div>
+
+        <div class="stats">
+
+          <span>
+            <b>${esc(t.entry)}</b>
+            <small>ENTRY</small>
+          </span>
+
+          <span>
+            <b>${esc(t.spots)}</b>
+            <small>SPOTS</small>
+          </span>
+
+          <span>
+            <b>11</b>
+            <small>PLAYERS</small>
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="bzm-card">
+
+        <div class="bz-label">
+          TEAM READY
+        </div>
+
+        <div class="bz-muted">
+          ${esc(
+            team.players[team.captain]?.name ||
+            'Captain'
+          )}
+          (C)
+          •
+          ${esc(
+            team.players[team.viceCaptain]?.name ||
+            'Vice-Captain'
+          )}
+          (VC)
+        </div>
+
+        <div class="bz-wallet">
+          Wallet ₹${wallet().toFixed(2)}
+        </div>
+
+      </div>
+
+      ${
+        already
+        ? `
+          <div class="bzm-card ok">
+            THIS TEAM IS ALREADY JOINED.
+          </div>
+        `
+        : ''
+      }
+    `;
+
+    /*
+      IMPORTANT:
+      NO BACK BUTTON HERE.
+    */
+
+    shell(
+      t.name,
+      'Confirmed team is ready to join',
+      body,
+      already
+      ? `
+        <button
+          class="bz-primary"
+          disabled>
+          ALREADY JOINED
+        </button>
+      `
+      : `
+        <button
+          class="bz-primary"
+          id="bzJoinMaster">
+          JOIN CONTEST • ${esc(t.entry)}
+        </button>
+      `
+    );
+
+    const j=
+      document.getElementById(
+        'bzJoinMaster'
+      );
+
+    if(j){
+      j.onclick=()=>{
+        joinContest();
+      };
+    }
+
+    removeLegacyBackButtons();
+    lockContestBack();
+  }
+
+  function joinContest(){
+
+    const team=
+      read(
+        SELECTED_KEY,
+        null
+      );
+
+    if(
+      !team ||
+      !Array.isArray(team.players) ||
+      team.players.length!==11
+    ){
+      return toast(
+        'Create and confirm a team first'
+      );
+    }
+
+    const fee=49;
+    const bal=wallet();
+
+    if(bal<fee){
+      return toast(
+        'Insufficient wallet balance • Required ₹49'
+      );
+    }
+
+    let joined=
+      read(
+        JOINED_KEY,
+        []
+      );
+
+    if(!Array.isArray(joined)){
+      joined=[];
+    }
+
+    if(
+      joined.some(x=>
+        String(x.contestId)===CONTEST.id &&
+        String(x.team?.id)===String(team.id)
+      )
+    ){
+      return toast(
+        'This team is already joined'
+      );
+    }
+
+    setWallet(
+      bal-fee
+    );
+
+    joined.push({
+      contestId:CONTEST.id,
+      contestName:CONTEST.name,
+      entry:fee,
+      team:team,
+      joinedAt:Date.now()
+    });
+
+    write(
+      JOINED_KEY,
+      joined
+    );
+
+    write(
+      'batzo_last_joined_contest',
+      CONTEST
+    );
+
+    toast(
+      'CONTEST JOINED • ₹49 deducted',
+      true
+    );
+
+    setTimeout(
+      contestPage,
+      900
+    );
+  }
+
+  function removeLegacyBackButtons(){
+    document
+      .querySelectorAll(
+        '.bz-flow-back,' +
+        '#bzBack,' +
+        '#bzCaptainBack,' +
+        '#bzContestBack,' +
+        '#batzoFinalContestBack,' +
+        '#batzoContestBack,' +
+        '#batzoTeamsBack,' +
+        '#batzoCaptainBack,' +
+        '[id*="Back"],' +
+        '[id*="back"],' +
+        'button[aria-label*="Back" i]'
+      )
+      .forEach(x=>{
+        try{x.remove()}catch(e){}
+      });
+  }
+
+  function lockContestBack(){
+    try{
+      history.pushState(
+        {batzoContest:true},
+        '',
+        location.href
+      );
+    }catch(e){}
+
+    window.__BATZO_CONTEST_LOCKED__=true;
+
+    removeLegacyBackButtons();
+  }
+
+  window.addEventListener(
+    'popstate',
+    function(){
+      if(window.__BATZO_CONTEST_LOCKED__){
+        try{
+          history.pushState(
+            {batzoContest:true},
+            '',
+            location.href
+          );
+        }catch(e){}
+        removeLegacyBackButtons();
+        contestPage();
+      }
+    },
+    true
+  );
+
+  document.addEventListener(
+    'click',
+    function(ev){
+
+      const el =
+        ev.target.closest &&
+        ev.target.closest('button,a,[role="button"]');
+
+      if(!el)return;
+
+      const text =
+        (
+          el.innerText ||
+          el.textContent ||
+          ''
+        )
+        .replace(/\s+/g,' ')
+        .trim()
+        .toUpperCase();
+
+      const id =
+        String(el.id||'').toUpperCase();
+
+      // NEVER allow legacy back buttons.
+      if(
+        id.includes('BACK') ||
+        text === '← BACK' ||
+        text === 'BACK' ||
+        text.includes('GO BACK')
+      ){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+        removeLegacyBackButtons();
+        return false;
+      }
+
+      // CREATE TEAM must ALWAYS open our Team Builder.
+      if(
+        text.includes('CREATE TEAM') ||
+        text.includes('BUILD YOUR XI')
+      ){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+
+        window.__BATZO_CONTEST_LOCKED__=false;
+        teamBuilder(null);
+        removeLegacyBackButtons();
+
+        return false;
+      }
+
+      // MY TEAMS must ALWAYS open our team manager.
+      if(
+        text === 'MY TEAMS' ||
+        text.includes('MY TEAMS')
+      ){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+
+        window.__BATZO_CONTEST_LOCKED__=false;
+        teamsPage();
+        removeLegacyBackButtons();
+
+        return false;
+      }
+
+      // Contest entry.
+      if(
+        text.includes('VIEW CONTEST') ||
+        text === 'CONTESTS' ||
+        text.includes('JOIN CONTEST') ||
+        text === 'JOIN NOW'
+      ){
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation();
+
+        window.__BATZO_CONTEST_LOCKED__=false;
+
+        setTimeout(()=>{
+          const t=read(SELECTED_KEY,null);
+
+          if(
+            t &&
+            Array.isArray(t.players) &&
+            t.players.length===11
+          ){
+            contestPage();
+          }else{
+            teamsPage();
+            toast(
+              'CREATE TEAM → SELECT 11 → CAPTAIN + VC → CONFIRM'
+            );
+          }
+        },0);
+
+        return false;
+      }
+
+      // Never let legacy Confirm Team handlers take control.
+      if(text.includes('CONFIRM TEAM')){
+        if(el.id !== 'bzConfirm'){
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.stopImmediatePropagation();
+          return false;
+        }
+      }
+
+    },
+    true
+  );
+
+  // Keep legacy back buttons removed even when another React render
+  // recreates them.
+  const bzBackObserver =
+    new MutationObserver(()=>{
+      removeLegacyBackButtons();
+    });
+
+  try{
+    bzBackObserver.observe(
+      document.documentElement,
+      {childList:true,subtree:true}
+    );
+  }catch(e){}
+
+  intercept=function(){};
+
+  const style=
+    document.createElement('style');
+
+  style.textContent=`
+
+    .bzm-screen{
+      min-height:100vh;
+      background:#070a0d;
+      color:#fff;
+      padding:18px 14px 110px;
+      font-family:system-ui,-apple-system,
+      Segoe UI,sans-serif;
+      box-sizing:border-box
+    }
+
+    .bzm-head{
+      padding:8px 4px 16px
+    }
+
+    .bzm-brand{
+      color:#24e778;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:2px
+    }
+
+    .bzm-head h1{
+      margin:5px 0 0;
+      font-size:28px
+    }
+
+    .bz-sub{
+      color:#8f97a5;
+      font-size:12px;
+      margin-top:4px
+    }
+
+    .bzm-body{
+      max-width:700px;
+      margin:auto
+    }
+
+    .bzm-card{
+      background:
+        linear-gradient(
+          145deg,
+          #121920,
+          #0b1014
+        );
+      border:1px solid #29323b;
+      border-radius:18px;
+      padding:16px;
+      margin:10px 0;
+      box-shadow:
+        0 8px 28px rgba(0,0,0,.22)
+    }
+
+    .bz-label{
+      font-size:10px;
+      color:#8f97a5;
+      font-weight:900;
+      letter-spacing:1.7px
+    }
+
+    .bz-big{
+      font-size:23px;
+      font-weight:950;
+      margin-top:5px
+    }
+
+    .bz-muted{
+      color:#a1a8b4;
+      font-size:13px;
+      line-height:1.5;
+      margin-top:6px
+    }
+
+    .bz-empty{
+      text-align:center;
+      color:#9aa3ae;
+      padding:20px
+    }
+
+    .team-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center
+    }
+
+    .team-title span{
+      color:#8f97a5;
+      font-size:10px
+    }
+
+    .team-names{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:7px;
+      margin-top:12px
+    }
+
+    .team-names span{
+      font-size:11px;
+      color:#d6dbe0;
+      background:#0b0f13;
+      padding:8px;
+      border-radius:9px
+    }
+
+    .team-actions{
+      display:flex;
+      gap:8px;
+      margin-top:12px
+    }
+
+    .team-actions button,
+    .cv button,
+    .bz-player button{
+      border:0;
+      border-radius:10px;
+      font-weight:900;
+      padding:10px 12px
+    }
+
+    .bz-edit{
+      background:#183b2b;
+      color:#72f0aa;
+      flex:1
+    }
+
+    .bz-delete{
+      background:#401d21;
+      color:#ff8c96
+    }
+
+    .bz-player{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:#11171c;
+      border:1px solid #242d35;
+      border-radius:14px;
+      padding:11px 12px;
+      margin:7px 0
+    }
+
+    .bz-player.picked{
+      border-color:#24e778;
+      background:#0f2118
+    }
+
+    .bz-player b{
+      display:block;
+      font-size:13px
+    }
+
+    .bz-player small{
+      display:block;
+      color:#89929e;
+      font-size:10px;
+      margin-top:3px
+    }
+
+    .bz-player>button{
+      background:#1c252c;
+      color:#dbe2e8;
+      min-width:58px
+    }
+
+    .bz-player.picked>button{
+      background:#24e778;
+      color:#06100a
+    }
+
+    .cv{
+      display:flex;
+      gap:7px
+    }
+
+    .cv button{
+      background:#20282f;
+      color:#fff
+    }
+
+    .cv button.on{
+      background:#24e778;
+      color:#06100a
+    }
+
+    .bz-primary{
+      width:100%;
+      border:0;
+      border-radius:15px;
+      padding:15px;
+      background:#24e778;
+      color:#06100a;
+      font-size:14px;
+      font-weight:950;
+      letter-spacing:.3px
+    }
+
+    .bz-primary:disabled{
+      opacity:.5
+    }
+
+    .bzm-bottom{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:
+        12px 14px
+        calc(12px + env(safe-area-inset-bottom));
+      background:rgba(7,10,13,.96);
+      border-top:1px solid #252e36;
+      z-index:9999
+    }
+
+    .prize{
+      font-size:27px;
+      font-weight:950;
+      margin:8px 0;
+      color:#24e778
+    }
+
+    .stats{
+      display:flex;
+      gap:8px;
+      margin-top:14px
+    }
+
+    .stats span{
+      flex:1;
+      background:#0a0e12;
+      border-radius:12px;
+      padding:10px;
+      text-align:center
+    }
+
+    .stats b{
+      display:block;
+      font-size:16px
+    }
+
+    .stats small{
+      display:block;
+      color:#7f8995;
+      font-size:9px;
+      margin-top:3px
+    }
+
+    .bz-wallet{
+      margin-top:14px;
+      font-size:22px;
+      font-weight:950
+    }
+
+    .ok{
+      border-color:#1d6b42;
+      color:#6ff0a5;
+      text-align:center;
+      font-weight:900
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  intercept();
+
+  window.BATZO_MASTER_FLOW={
+    teamsPage,
+    teamBuilder,
+    contestPage,
+    joinContest
+  };
+
+  console.log(
+    'BATZO MASTER TEAM/JOIN FLOW READY'
+  );
+
+})();
+
+/* ==================================================
+   BATZO FINAL CONTEST JOIN SAFETY BRIDGE
+   ================================================== */
+
+(function(){
+
+  if(
+    window.__BATZO_JOIN_BRIDGE_V1__
+  ){
+    return;
+  }
+
+  window.__BATZO_JOIN_BRIDGE_V1__=true;
+
+  function text(el){
+
+    return (
+      el?.innerText ||
+      el?.textContent ||
+      ''
+    )
+    .replace(/\s+/g,' ')
+    .trim()
+    .toUpperCase();
+
+  }
+
+
+  document.addEventListener(
+    'click',
+    function(e){
+
+      const el=
+        e.target?.closest?.(
+          'button,a,[role="button"]'
+        );
+
+      if(!el)return;
+
+      const t=text(el);
+
+      if(
+        !t.includes('JOIN CONTEST')
+      ){
+        return;
+      }
+
+      /*
+        Do not interfere with an existing
+        explicit join handler.
+      */
+      if(
+        el.dataset.batzoJoinHandled
+      ){
+        return;
+      }
+
+      el.dataset.batzoJoinHandled='1';
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+
+      try{
+
+        const active=
+          read(
+            ACTIVE_KEY,
+            null
+          );
+
+        const selected=
+          read(
+            SELECTED_KEY,
+            null
+          );
+
+        const team=
+          active ||
+          selected ||
+          window.BATZO_SELECTED_TEAM ||
+          window.BATZO_PENDING_TEAM;
+
+
+        if(
+          !team ||
+          !Array.isArray(team.players) ||
+          team.players.length!==11
+        ){
+
+          toast(
+            'Create and confirm an 11-player team first'
+          );
+
+          return;
+
+        }
+
+
+        /*
+          Re-open the selected contest
+          using existing contest data.
+        */
+        if(
+          typeof window.BATZO_JOIN_CONTEST==='function'
+        ){
+
+          window.BATZO_JOIN_CONTEST();
+
+          return;
+
+        }
+
+
+        /*
+          If the original page has a local
+          join function, trigger it through
+          the button's normal handler.
+        */
+        el.dataset.batzoJoinReady='1';
+
+        const nativeClick=
+          document.createEvent('MouseEvents');
+
+        nativeClick.initEvent(
+          'click',
+          true,
+          true
+        );
+
+        /*
+          Remove bridge marker so the second
+          click is allowed through.
+        */
+        el.dataset.batzoJoinHandled='';
+
+        el.dispatchEvent(
+          nativeClick
+        );
+
+      }catch(err){
+
+        console.error(
+          'BATZO JOIN ERROR',
+          err
+        );
+
+        toast(
+          'Unable to join contest'
+        );
+
+      }
+
+    },
+    true
+  );
+
+})();
+
+/* ==================================================
+   END BATZO FINAL CONTEST JOIN SAFETY BRIDGE
+   ================================================== */
+
+
+/* ==================================================
+   BATZO CONFIRM TEAM SAFE HANDLER
+   ================================================== */
+(function(){
+
+  if(window.__BATZO_CONFIRM_SAFE_V1__) return;
+  window.__BATZO_CONFIRM_SAFE_V1__=true;
+
+  function getTeamList(){
+
+    try{
+      if(typeof teams==="function"){
+        const x=teams();
+        return Array.isArray(x) ? x : [];
+      }
+    }catch(e){}
+
+    return [];
+
+  }
+
+  function saveTeam(team){
+
+    try{
+
+      if(typeof write==="function"){
+
+        if(typeof TEAM_KEY!=="undefined"){
+          write(TEAM_KEY,[team]);
+        }
+
+        if(typeof SELECTED_KEY!=="undefined"){
+          write(SELECTED_KEY,team);
+        }
+
+        if(typeof ACTIVE_KEY!=="undefined"){
+          write(ACTIVE_KEY,team);
+        }
+
+      }else{
+
+        localStorage.setItem(
+          "batzo_selected_team",
+          JSON.stringify(team)
+        );
+
+      }
+
+      window.BATZO_SELECTED_TEAM=team;
+      window.BATZO_PENDING_TEAM=team;
+
+      return true;
+
+    }catch(e){
+
+      console.error(
+        "BATZO TEAM SAVE ERROR",
+        e
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  document.addEventListener(
+    "click",
+    function(e){
+
+      const btn=
+        e.target?.closest?.(
+          "#bzConfirm"
+        );
+
+      if(!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      if(btn.dataset.confirmRunning){
+        return;
+      }
+
+      btn.dataset.confirmRunning="1";
+
+
+      /*
+        Locate currently selected players.
+      */
+      const selected=
+        Array.from(
+          document.querySelectorAll(
+            "[data-player-index].selected,"+
+            "[data-player-index].on"
+          )
+        )
+        .map(
+          x=>Number(
+            x.dataset.playerIndex
+          )
+        )
+        .filter(
+          Number.isInteger
+        );
+
+
+      /*
+        If C/VC screen has no selected DOM,
+        recover the active team from local state.
+      */
+      let team=null;
+
+      try{
+
+        const list=getTeamList();
+
+        if(list.length){
+          const last=list[0];
+
+          if(
+            last &&
+            Array.isArray(last.players) &&
+            last.players.length===11
+          ){
+            team=last;
+          }
+        }
+
+      }catch(e){}
+
+
+      /*
+        Find C/VC selections from buttons.
+      */
+      let captain=-1;
+      let viceCaptain=-1;
+
+      const c=
+        document.querySelector(
+          "[data-c].on"
+        );
+
+      const vc=
+        document.querySelector(
+          "[data-vc].on"
+        );
+
+      if(c){
+        const row=
+          c.closest(
+            "[data-player-index]"
+          );
+
+        if(row){
+          captain=
+            Number(
+              row.dataset.playerIndex
+            );
+        }
+      }
+
+      if(vc){
+        const row=
+          vc.closest(
+            "[data-player-index]"
+          );
+
+        if(row){
+          viceCaptain=
+            Number(
+              row.dataset.playerIndex
+            );
+        }
+      }
+
+
+      /*
+        If the existing flow already has
+        a valid team in storage, preserve it.
+      */
+      if(
+        !team &&
+        window.BATZO_PENDING_TEAM &&
+        Array.isArray(
+          window.BATZO_PENDING_TEAM.players
+        )
+      ){
+        team=
+          window.BATZO_PENDING_TEAM;
+      }
+
+
+      if(
+        !team ||
+        !Array.isArray(team.players) ||
+        team.players.length!==11
+      ){
+
+        btn.dataset.confirmRunning="";
+
+        if(typeof toast==="function"){
+          toast(
+            "Team must contain exactly 11 players"
+          );
+        }
+
+        return;
+
+      }
+
+
+      if(
+        team.captain==null ||
+        team.viceCaptain==null
+      ){
+
+        btn.dataset.confirmRunning="";
+
+        if(typeof toast==="function"){
+          toast(
+            "Select Captain and Vice-Captain"
+          );
+        }
+
+        return;
+
+      }
+
+
+      if(
+        team.captain===team.viceCaptain
+      ){
+
+        btn.dataset.confirmRunning="";
+
+        if(typeof toast==="function"){
+          toast(
+            "Captain and Vice-Captain must be different"
+          );
+        }
+
+        return;
+
+      }
+
+
+      /*
+        Save confirmed team.
+      */
+      team.confirmed=true;
+      team.updatedAt=Date.now();
+
+      const ok=saveTeam(team);
+
+      if(!ok){
+
+        btn.dataset.confirmRunning="";
+
+        if(typeof toast==="function"){
+          toast(
+            "Team could not be saved"
+          );
+        }
+
+        return;
+
+      }
+
+
+      btn.textContent="TEAM CONFIRMED";
+      btn.disabled=true;
+
+
+      if(typeof toast==="function"){
+        toast(
+          "TEAM CONFIRMED",
+          true
+        );
+      }
+
+
+      /*
+        Move to Contest only after
+        successful save.
+      */
+      setTimeout(
+        function(){
+
+          try{
+
+            if(
+              typeof contestPage==="function"
+            ){
+
+              contestPage();
+
+            }else{
+
+              console.warn(
+                "BATZO: contestPage() unavailable"
+              );
+
+              if(typeof toast==="function"){
+                toast(
+                  "Team saved successfully"
+                );
+              }
+
+            }
+
+          }catch(err){
+
+            console.error(
+              "BATZO CONTEST OPEN ERROR",
+              err
+            );
+
+            if(typeof toast==="function"){
+              toast(
+                "Team saved. Open Contest next."
+              );
+            }
+
+          }
+
+        },
+        300
+      );
+
+    },
+    true
+  );
+
+})();
+
+/* ==================================================
+   BATZO CLEAN MASTER FLOW V1
+   CREATE -> 11 -> C/VC -> CONFIRM
+   -> CONTEST -> JOIN -> ₹49 WALLET
+   ================================================== */
+
+(function(){
+
+  if(window.__BATZO_CLEAN_MASTER_V1__) return;
+  window.__BATZO_CLEAN_MASTER_V1__=true;
+
+  const BZ_TEAM_KEY="batzo_master_teams";
+  const BZ_ACTIVE_KEY="batzo_master_active_team";
+  const BZ_WALLET_KEY="batzo_master_wallet";
+  const BZ_TX_KEY="batzo_master_transactions";
+  const BZ_JOIN_KEY="batzo_master_joined";
+
+  const ENTRY_FEE=49;
+
+
+  function bzRead(key,fallback){
+
+    try{
+      const raw=localStorage.getItem(key);
+
+      if(raw===null){
+        return fallback;
+      }
+
+      return JSON.parse(raw);
+
+    }catch(e){
+
+      return fallback;
+
+    }
+
+  }
+
+
+  function bzWrite(key,value){
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
+
+  }
+
+
+  function bzToast(msg){
+
+    if(typeof toast==="function"){
+      toast(msg);
+    }else{
+      console.log("BATZO:",msg);
+    }
+
+  }
+
+
+  function bzWallet(){
+
+    const x=
+      Number(
+        bzRead(
+          BZ_WALLET_KEY,
+          1000
+        )
+      );
+
+    return Number.isFinite(x)
+      ? x
+      : 1000;
+
+  }
+
+
+  function bzTeamValid(team){
+
+    return !!(
+      team &&
+      Array.isArray(team.players) &&
+      team.players.length===11 &&
+      team.captain!==null &&
+      team.captain!==undefined &&
+      team.viceCaptain!==null &&
+      team.viceCaptain!==undefined &&
+      team.captain!==team.viceCaptain
+    );
+
+  }
+
+
+  function bzSaveTeam(team){
+
+    const list=
+      bzRead(
+        BZ_TEAM_KEY,
+        []
+      );
+
+    const oldIndex=
+      list.findIndex(
+        x=>x.id===team.id
+      );
+
+    if(oldIndex>=0){
+
+      list[oldIndex]=team;
+
+    }else{
+
+      list.unshift(team);
+
+    }
+
+    bzWrite(
+      BZ_TEAM_KEY,
+      list
+    );
+
+    bzWrite(
+      BZ_ACTIVE_KEY,
+      team
+    );
+
+    window.BATZO_MASTER_TEAM=team;
+
+  }
+
+
+  /*
+    Master confirmation helper.
+    Existing Team Builder can call this
+    directly after C/VC selection.
+  */
+  window.BATZO_CONFIRM_MASTER=
+    function(team){
+
+      if(!bzTeamValid(team)){
+
+        bzToast(
+          "Select exactly 11 players, C and VC"
+        );
+
+        return false;
+
+      }
+
+      team.confirmed=true;
+      team.updatedAt=Date.now();
+
+      bzSaveTeam(team);
+
+      bzToast(
+        "TEAM CONFIRMED"
+      );
+
+      return true;
+
+    };
+
+
+  /*
+    Master Join function.
+  */
+  window.BATZO_JOIN_MASTER=
+    function(){
+
+      const team=
+        bzRead(
+          BZ_ACTIVE_KEY,
+          window.BATZO_MASTER_TEAM || null
+        );
+
+      if(!bzTeamValid(team)){
+
+        bzToast(
+          "Confirm your 11-player team first"
+        );
+
+        return false;
+
+      }
+
+
+      const wallet=
+        bzWallet();
+
+      if(wallet<ENTRY_FEE){
+
+        bzToast(
+          "Insufficient wallet balance"
+        );
+
+        return false;
+
+      }
+
+
+      const contestId=
+        "BATZO-DEMO-CONTEST-49";
+
+
+      const joined=
+        bzRead(
+          BZ_JOIN_KEY,
+          []
+        );
+
+
+      const already=
+        joined.some(
+          x=>x.contestId===contestId
+        );
+
+
+      if(already){
+
+        bzToast(
+          "Already joined this contest"
+        );
+
+        return false;
+
+      }
+
+
+      const newBalance=
+        Math.round(
+          (wallet-ENTRY_FEE)*100
+        )/100;
+
+
+      const entry={
+
+        id:
+          "join-"+Date.now(),
+
+        contestId:
+          contestId,
+
+        teamId:
+          team.id,
+
+        entryFee:
+          ENTRY_FEE,
+
+        joinedAt:
+          Date.now()
+
+      };
+
+
+      joined.unshift(entry);
+
+
+      bzWrite(
+        BZ_JOIN_KEY,
+        joined
+      );
+
+
+      bzWrite(
+        BZ_WALLET_KEY,
+        newBalance
+      );
+
+
+      const transactions=
+        bzRead(
+          BZ_TX_KEY,
+          []
+        );
+
+
+      transactions.unshift({
+
+        id:
+          "txn-"+Date.now(),
+
+        type:
+          "CONTEST_ENTRY",
+
+        amount:
+          -ENTRY_FEE,
+
+        balanceBefore:
+          wallet,
+
+        balanceAfter:
+          newBalance,
+
+        contestId:
+          contestId,
+
+        teamId:
+          team.id,
+
+        createdAt:
+          Date.now()
+
+      });
+
+
+      bzWrite(
+        BZ_TX_KEY,
+        transactions
+      );
+
+
+      window.BATZO_JOINED=true;
+      window.BATZO_JOINED_TEAM=team;
+
+
+      bzToast(
+        "JOINED CONTEST • ₹49 DEDUCTED"
+      );
+
+
+      return true;
+
+    };
+
+
+  /*
+    Safe button bridge.
+    It does NOT replace existing team creation.
+    It only catches the final confirmation button.
+  */
+  document.addEventListener(
+    "click",
+    function(e){
+
+      const btn=
+        e.target?.closest?.(
+          "#bzConfirm"
+        );
+
+      if(!btn) return;
+
+      if(
+        btn.dataset.bzMasterHandled
+      ){
+        return;
+      }
+
+      btn.dataset.bzMasterHandled="1";
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+
+      /*
+        Recover current team from the existing
+        Team Builder state first.
+      */
+      let team=null;
+
+
+      try{
+
+        if(
+          typeof teams==="function"
+        ){
+
+          const list=
+            teams();
+
+          if(
+            Array.isArray(list) &&
+            list.length
+          ){
+
+            const candidate=
+              list[0];
+
+            if(
+              bzTeamValid(candidate)
+            ){
+
+              team=candidate;
+
+            }
+
+          }
+
+        }
+
+      }catch(err){
+
+        console.log(
+          "BATZO team recovery:",
+          err
+        );
+
+      }
+
+
+      /*
+        Existing master variables.
+      */
+      if(!team){
+
+        if(
+          window.BATZO_PENDING_TEAM &&
+          bzTeamValid(
+            window.BATZO_PENDING_TEAM
+          )
+        ){
+
+          team=
+            window.BATZO_PENDING_TEAM;
+
+        }
+
+      }
+
+
+      if(!team){
+
+        if(
+          window.BATZO_SELECTED_TEAM &&
+          bzTeamValid(
+            window.BATZO_SELECTED_TEAM
+          )
+        ){
+
+          team=
+            window.BATZO_SELECTED_TEAM;
+
+        }
+
+      }
+
+
+      if(!team){
+
+        bzToast(
+          "Team data not found"
+        );
+
+        btn.dataset.bzMasterHandled="";
+
+        return;
+
+      }
+
+
+      if(
+        !window.BATZO_CONFIRM_MASTER(team)
+      ){
+
+        btn.dataset.bzMasterHandled="";
+
+        return;
+
+      }
+
+
+      btn.disabled=true;
+      btn.textContent="TEAM CONFIRMED";
+
+
+      /*
+        Open Contest after successful save.
+      */
+      setTimeout(
+        function(){
+
+          try{
+
+            if(
+              typeof contestPage==="function"
+            ){
+
+              contestPage();
+
+            }else{
+
+              bzToast(
+                "TEAM CONFIRMED"
+              );
+
+            }
+
+          }catch(err){
+
+            console.error(
+              "BATZO contest open:",
+              err
+            );
+
+            bzToast(
+              "TEAM CONFIRMED"
+            );
+
+          }
+
+        },
+        350
+      );
+
+    },
+    true
+  );
+
+
+  /*
+    Join Contest button bridge.
+  */
+  document.addEventListener(
+    "click",
+    function(e){
+
+      const btn=
+        e.target?.closest?.(
+          "button,a,[role='button']"
+        );
+
+      if(!btn) return;
+
+      const label=
+        (
+          btn.innerText ||
+          btn.textContent ||
+          ""
+        )
+        .replace(/\s+/g," ")
+        .trim()
+        .toUpperCase();
+
+
+      if(
+        !label.includes("JOIN CONTEST")
+      ){
+
+        return;
+
+      }
+
+
+      if(
+        btn.dataset.bzJoinHandled
+      ){
+
+        return;
+
+      }
+
+
+      btn.dataset.bzJoinHandled="1";
+
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+
+      const success=
+        window.BATZO_JOIN_MASTER();
+
+
+      if(success){
+
+        btn.textContent=
+          "JOINED ✓";
+
+        btn.disabled=true;
+
+      }else{
+
+        btn.dataset.bzJoinHandled="";
+
+      }
+
+    },
+    true
+  );
+
+
+  /*
+    Android touch fallback.
+  */
+  document.addEventListener(
+    "touchend",
+    function(e){
+
+      const btn=
+        e.target?.closest?.(
+          "#bzConfirm,button,a,[role='button']"
+        );
+
+      if(!btn) return;
+
+
+      const label=
+        (
+          btn.innerText ||
+          btn.textContent ||
+          ""
+        )
+        .replace(/\s+/g," ")
+        .trim()
+        .toUpperCase();
+
+
+      if(
+        label==="CONFIRM TEAM"
+      ){
+
+        e.preventDefault();
+
+        btn.click();
+
+      }
+
+    },
+    {
+      passive:false,
+      capture:true
+    }
+  );
+
+
+  /*
+    Diagnostic.
+  */
+  window.BATZO_MASTER_TEST=
+    function(){
+
+      const team=
+        bzRead(
+          BZ_ACTIVE_KEY,
+          null
+        );
+
+      const wallet=
+        bzWallet();
+
+      const joined=
+        bzRead(
+          BZ_JOIN_KEY,
+          []
+        );
+
+      const result={
+
+        players:
+          team?.players?.length || 0,
+
+        captain:
+          team?.captain,
+
+        viceCaptain:
+          team?.viceCaptain,
+
+        confirmed:
+          !!team?.confirmed,
+
+        wallet:
+          wallet,
+
+        joined:
+          joined.length
+
+      };
+
+      console.log(
+        "BATZO MASTER TEST",
+        result
+      );
+
+      return result;
+
+    };
+
+
+  console.log(
+    "BATZO CLEAN MASTER FLOW READY"
+  );
+
+})();
+
+/* ==================================================
+   END BATZO CLEAN MASTER FLOW V1
+   ================================================== */
+
+
+/* ==================================================
+   BATZO PLAYER / TEAM MASTER
+   ================================================== */
+
+(function(){
+
+  if(window.__BATZO_PLAYER_TEAM_MASTER__) return;
+  window.__BATZO_PLAYER_TEAM_MASTER__=true;
+
+  const KEY="batzo_team_builder_v1";
+
+  const PLAYER_POOL=[
+    {id:1,name:"Player 01",role:"WK"},
+    {id:2,name:"Player 02",role:"WK"},
+    {id:3,name:"Player 03",role:"BAT"},
+    {id:4,name:"Player 04",role:"BAT"},
+    {id:5,name:"Player 05",role:"BAT"},
+    {id:6,name:"Player 06",role:"BAT"},
+    {id:7,name:"Player 07",role:"BAT"},
+    {id:8,name:"Player 08",role:"BAT"},
+    {id:9,name:"Player 09",role:"AR"},
+    {id:10,name:"Player 10",role:"AR"},
+    {id:11,name:"Player 11",role:"AR"},
+    {id:12,name:"Player 12",role:"AR"},
+    {id:13,name:"Player 13",role:"AR"},
+    {id:14,name:"Player 14",role:"BOWL"},
+    {id:15,name:"Player 15",role:"BOWL"},
+    {id:16,name:"Player 16",role:"BOWL"},
+    {id:17,name:"Player 17",role:"BOWL"},
+    {id:18,name:"Player 18",role:"BOWL"},
+    {id:19,name:"Player 19",role:"BOWL"},
+    {id:20,name:"Player 20",role:"BOWL"},
+    {id:21,name:"Player 21",role:"BOWL"},
+    {id:22,name:"Player 22",role:"BAT"},
+    {id:23,name:"Player 23",role:"AR"},
+    {id:24,name:"Player 24",role:"BOWL"}
+  ];
+
+  function getTeam(){
+    try{
+      return JSON.parse(
+        localStorage.getItem(KEY)
+      ) || {
+        players:[],
+        captain:null,
+        viceCaptain:null,
+        confirmed:false
+      };
+    }catch(e){
+      return {
+        players:[],
+        captain:null,
+        viceCaptain:null,
+        confirmed:false
+      };
+    }
+  }
+
+  function saveTeam(team){
+    localStorage.setItem(
+      KEY,
+      JSON.stringify(team)
+    );
+    window.BATZO_TEAM=team;
+  }
+
+  function selectPlayer(id){
+
+    const team=getTeam();
+
+    const index=team.players.indexOf(id);
+
+    if(index>=0){
+
+      team.players.splice(index,1);
+
+      if(team.captain===id)
+        team.captain=null;
+
+      if(team.viceCaptain===id)
+        team.viceCaptain=null;
+
+    }else{
+
+      if(team.players.length>=11){
+
+        console.warn(
+          "BATZO: MAXIMUM 11 PLAYERS"
+        );
+
+        return false;
+      }
+
+      team.players.push(id);
+    }
+
+    team.confirmed=false;
+    saveTeam(team);
+
+    return true;
+  }
+
+  function setCaptain(id){
+
+    const team=getTeam();
+
+    if(!team.players.includes(id))
+      return false;
+
+    if(team.viceCaptain===id)
+      team.viceCaptain=null;
+
+    team.captain=id;
+    team.confirmed=false;
+
+    saveTeam(team);
+
+    return true;
+  }
+
+  function setViceCaptain(id){
+
+    const team=getTeam();
+
+    if(!team.players.includes(id))
+      return false;
+
+    if(team.captain===id)
+      team.captain=null;
+
+    team.viceCaptain=id;
+    team.confirmed=false;
+
+    saveTeam(team);
+
+    return true;
+  }
+
+  function confirmTeam(){
+
+    const team=getTeam();
+
+    if(team.players.length!==11){
+      console.warn(
+        "BATZO: EXACTLY 11 PLAYERS REQUIRED"
+      );
+      return false;
+    }
+
+    if(
+      team.captain===null ||
+      team.viceCaptain===null
+    ){
+      console.warn(
+        "BATZO: CAPTAIN + VICE-CAPTAIN REQUIRED"
+      );
+      return false;
+    }
+
+    if(team.captain===team.viceCaptain){
+      console.warn(
+        "BATZO: CAPTAIN AND VC MUST DIFFER"
+      );
+      return false;
+    }
+
+    team.confirmed=true;
+    team.savedAt=Date.now();
+
+    saveTeam(team);
+
+    console.log(
+      "BATZO: TEAM CONFIRMED",
+      team
+    );
+
+    return true;
+  }
+
+  window.BATZO_PLAYER_POOL=
+    PLAYER_POOL;
+
+  window.BATZO_GET_TEAM=
+    getTeam;
+
+  window.BATZO_SELECT_PLAYER=
+    selectPlayer;
+
+  window.BATZO_SET_CAPTAIN=
+    setCaptain;
+
+  window.BATZO_SET_VICE_CAPTAIN=
+    setViceCaptain;
+
+  window.BATZO_CONFIRM_TEAM=
+    confirmTeam;
+
+  window.BATZO_PLAYER_TEAM_TEST=
+    function(){
+
+      const t=getTeam();
+
+      return {
+        pool:PLAYER_POOL.length,
+        selected:t.players.length,
+        captain:t.captain,
+        viceCaptain:t.viceCaptain,
+        confirmed:!!t.confirmed
+      };
+    };
+
+  console.log(
+    "BATZO PLAYER / TEAM MASTER READY",
+    PLAYER_POOL.length
+  );
+
+})();
+
+/* ==================================================
+   END PLAYER / TEAM MASTER
+   ================================================== */
+

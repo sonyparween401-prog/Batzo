@@ -1,0 +1,705 @@
+import RealMatches from './RealMatches';
+import { getMatches, getLiveMatches, getScorecard, getSquad, normalizeMatch, normalizePlayer } from './cricketApi';
+import React, { useState } from "react";
+import "./App.css";
+
+const matches = [
+  {
+    id: 1,
+    status: "LIVE",
+    league: "BATZO PREMIER LEAGUE",
+    team1: "Mumbai Tigers",
+    team2: "Delhi Kings",
+    short1: "MT",
+    short2: "DK",
+    score1: "148/4",
+    score2: "132/7",
+    time: "18.2 / 20 OVERS"
+  },
+  {
+    id: 2,
+    status: "UPCOMING",
+    league: "BATZO CRICKET",
+    team1: "Chennai Lions",
+    team2: "Kolkata Riders",
+    short1: "CL",
+    short2: "KR",
+    score1: "",
+    score2: "",
+    time: "Today • 7:30 PM"
+  },
+  {
+    id: 3,
+    status: "UPCOMING",
+    league: "BATZO CRICKET",
+    team1: "Bangalore Stars",
+    team2: "Hyderabad Warriors",
+    short1: "BS",
+    short2: "HW",
+    score1: "",
+    score2: "",
+    time: "Tomorrow • 3:30 PM"
+  }
+];
+
+const players = [
+  { id: 1, name: "Rohit Sharma", role: "BAT", team: "MT" },
+  { id: 2, name: "Virat Kohli", role: "BAT", team: "DK" },
+  { id: 3, name: "Shubman Gill", role: "BAT", team: "MT" },
+  { id: 4, name: "Suryakumar Yadav", role: "BAT", team: "DK" },
+  { id: 5, name: "Hardik Pandya", role: "AR", team: "MT" },
+  { id: 6, name: "Ravindra Jadeja", role: "AR", team: "DK" },
+  { id: 7, name: "Rishabh Pant", role: "WK", team: "MT" },
+  { id: 8, name: "KL Rahul", role: "WK", team: "DK" },
+  { id: 9, name: "Jasprit Bumrah", role: "BOWL", team: "MT" },
+  { id: 10, name: "Mohammed Siraj", role: "BOWL", team: "DK" },
+  { id: 11, name: "Kuldeep Yadav", role: "BOWL", team: "MT" },
+  { id: 12, name: "Arshdeep Singh", role: "BOWL", team: "DK" },
+  { id: 13, name: "Ruturaj Gaikwad", role: "BAT", team: "MT" },
+  { id: 14, name: "Shreyas Iyer", role: "BAT", team: "DK" },
+  { id: 15, name: "Axar Patel", role: "AR", team: "MT" },
+  { id: 16, name: "Ravichandran Ashwin", role: "AR", team: "DK" }
+];
+
+const contests = [
+  { id: 1, name: "Mega Contest", spots: "10,000", entry: "₹49", prize: "₹2,00,000" },
+  { id: 2, name: "Head to Head", spots: "2", entry: "₹25", prize: "₹45" },
+  { id: 3, name: "Small Contest", spots: "100", entry: "₹19", prize: "₹1,500" }
+];
+
+function App() {
+  const [page, setPage] = useState("home");
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [selectedContest, setSelectedContest] = useState(null);
+  const [team, setTeam] = useState([]);
+  const [captain, setCaptain] = useState(null);
+  const [viceCaptain, setViceCaptain] = useState(null);
+  const [saved, setSaved] = useState(false);
+
+  const openMatch = (match) => {
+    setSelectedMatch(match);
+    setPage("details");
+  };
+
+  const openContest = (contest) => {
+    setSelectedContest(contest);
+    setPage("team");
+  };
+
+  const togglePlayer = (player) => {
+    setTeam((current) => {
+      const exists = current.some((p) => p.id === player.id);
+      if (exists) return current.filter((p) => p.id !== player.id);
+      if (current.length >= 11) return current;
+      return [...current, player];
+    });
+  };
+
+  const saveTeam = () => {
+    if (team.length !== 11) {
+      alert("Please select exactly 11 players.");
+      return;
+    }
+    setPage("captain");
+  };
+
+  const saveCaptain = () => {
+    if (!captain || !viceCaptain || captain === viceCaptain) {
+      alert("Please select Captain and Vice-Captain.");
+      return;
+    }
+    setSaved(true);
+    setPage("mycontest");
+  };
+
+  const goHome = () => {
+    setPage("home");
+    setSelectedMatch(null);
+    setSelectedContest(null);
+  };
+
+  return (
+    <>
+      <div className="batzo-real-matches-entry">
+        <RealMatches />
+      </div>
+
+<div className="app-shell">
+
+      <header className="top-header">
+        <div className="brand">
+          <img
+            src="./batzo-logo.svg"
+            className="batzo-logo"
+            alt="Batzo"
+          />
+        </div>
+
+        <div className="header-actions">
+          <button className="header-btn" onClick={() => alert("Notifications coming soon")}>🔔</button>
+          <button className="header-btn" onClick={() => alert("Profile coming soon")}>👤</button>
+        </div>
+      </header>
+
+      {page === "home" && (
+        <main className="home-page">
+
+          <section className="hero-card">
+            <div className="hero-content">
+              <span className="eyebrow">🔥 BATZO CRICKET</span>
+              <h1>Play Cricket.<br /><span>Win Big.</span></h1>
+              <p>
+                Join exciting cricket contests, create your team and
+                compete with players across Batzo.
+              </p>
+
+              <div className="hero-buttons">
+                <button className="primary-btn" onClick={() => setPage("matches")}>
+                  🏏 PLAY NOW
+                </button>
+                <button className="secondary-btn" onClick={() => setPage("matches")}>
+                  VIEW MATCHES
+                </button>
+              </div>
+            </div>
+
+            <div className="hero-score">
+              <span>LIVE</span>
+              <strong>148/4</strong>
+              <small>18.2 OVERS</small>
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="section-heading">
+              <div>
+                <span>QUICK ACCESS</span>
+                <h2>Game Center</h2>
+              </div>
+            </div>
+
+            <div className="quick-grid">
+              <button onClick={() => setPage("matches")} className="quick-card">
+                <b>🏏</b>
+                <strong>Cricket</strong>
+                <small>Play matches</small>
+              </button>
+
+              <button onClick={() => setPage("matches")} className="quick-card">
+                <b>🏆</b>
+                <strong>Contests</strong>
+                <small>Join contests</small>
+              </button>
+
+              <button onClick={() => alert("Wallet coming soon")} className="quick-card">
+                <b>💰</b>
+                <strong>Wallet</strong>
+                <small>Manage balance</small>
+              </button>
+
+              <button onClick={() => alert("Rewards coming soon")} className="quick-card">
+                <b>🎁</b>
+                <strong>Rewards</strong>
+                <small>Get rewards</small>
+              </button>
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="section-heading row">
+              <div>
+                <span>CRICKET</span>
+                <h2>Live & Upcoming</h2>
+              </div>
+              <button className="link-btn" onClick={() => setPage("matches")}>
+                View All →
+              </button>
+            </div>
+
+            <div className="matches-list">
+              {matches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  onOpen={() => openMatch(match)}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="reward-card">
+            <span>BATZO REWARDS</span>
+            <h2>Invite friends.<br />Earn rewards.</h2>
+            <p>Share Batzo with your friends and unlock exciting rewards.</p>
+            <button className="secondary-btn" onClick={() => alert("Invite feature coming soon")}>
+              INVITE FRIENDS
+            </button>
+          </section>
+
+          <section className="section leaderboard">
+            <div className="section-heading">
+              <div>
+                <span>TOP PLAYERS</span>
+                <h2>Leaderboard</h2>
+              </div>
+            </div>
+
+            {[
+              ["1", "👑", "Cricket King", "Batzo Champion", "9,850"],
+              ["2", "🔥", "Super Striker", "Top Player", "8,920"],
+              ["3", "⭐", "Batzo Star", "Rising Player", "8,450"]
+            ].map((p) => (
+              <div className="leader-row" key={p[0]}>
+                <b>{p[0]}</b>
+                <span>{p[1]}</span>
+                <div>
+                  <strong>{p[2]}</strong>
+                  <small>{p[3]}</small>
+                </div>
+                <strong>{p[4]}</strong>
+              </div>
+            ))}
+          </section>
+        </main>
+      )}
+
+      {page === "matches" && (
+        <Page title="Cricket Matches" back={goHome}>
+          <div className="matches-list">
+            {matches.map((match) => (
+              <MatchCard
+                key={match.id}
+                match={match}
+                onOpen={() => openMatch(match)}
+              />
+            ))}
+          </div>
+        </Page>
+      )}
+
+      {page === "details" && selectedMatch && (
+        <Page
+          title={`${selectedMatch.team1} vs ${selectedMatch.team2}`}
+          back={() => setPage("matches")}
+        >
+          <div className="detail-card">
+            <span className="status live">{selectedMatch.status}</span>
+            <h2>{selectedMatch.team1}</h2>
+            <div className="vs-large">VS</div>
+            <h2>{selectedMatch.team2}</h2>
+            <p>{selectedMatch.time}</p>
+          </div>
+
+          <h2 className="sub-title">Available Contests</h2>
+
+          <div className="contest-list">
+            {contests.map((contest) => (
+              <button
+                className="contest-card"
+                key={contest.id}
+                onClick={() => openContest(contest)}
+              >
+                <div>
+                  <strong>{contest.name}</strong>
+                  <small>{contest.spots} spots</small>
+                </div>
+                <div>
+                  <strong>{contest.prize}</strong>
+                  <small>Prize Pool</small>
+                </div>
+                <span className="entry-btn">{contest.entry}</span>
+              </button>
+            ))}
+          </div>
+        </Page>
+      )}
+
+      {page === "team" && (
+        <Page title="Create My Team" back={() => setPage("details")}>
+          <div className="team-progress">
+            <strong>{team.length}/11 Players</strong>
+            <span>{selectedContest?.name}</span>
+          </div>
+
+          <div className="player-list">
+            {players.map((player) => {
+              const selected = team.some((p) => p.id === player.id);
+
+              return (
+                <button
+                  key={player.id}
+                  className={`player-card ${selected ? "selected" : ""}`}
+                  onClick={() => togglePlayer(player)}
+                >
+                  <span>{selected ? "✓" : "+"}</span>
+                  <div>
+                    <strong>{player.name}</strong>
+                    <small>{player.role} • {player.team}</small>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button className="primary-btn sticky-action" onClick={saveTeam}>
+            SAVE TEAM ({team.length}/11)
+          </button>
+        </Page>
+      )}
+
+      {page === "captain" && (
+        <Page title="Captain & Vice-Captain" back={() => setPage("team")}>
+          <div className="captain-info">
+            <strong>Choose Captain and Vice-Captain</strong>
+            <small>Captain gets 2x points • Vice-Captain gets 1.5x points</small>
+          </div>
+
+          {team.map((player) => (
+            <div className="captain-row" key={player.id}>
+              <div>
+                <strong>{player.name}</strong>
+                <small>{player.role}</small>
+              </div>
+
+              <div className="captain-buttons">
+                <button
+                  className={captain === player.id ? "active-c" : ""}
+                  onClick={() => setCaptain(player.id)}
+                >
+                  C
+                </button>
+
+                <button
+                  className={viceCaptain === player.id ? "active-vc" : ""}
+                  onClick={() => setViceCaptain(player.id)}
+                >
+                  VC
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <button className="primary-btn sticky-action" onClick={saveCaptain}>
+            SAVE TEAM
+          </button>
+        </Page>
+      )}
+
+      {page === "mycontest" && (
+        <Page title="My Contest" back={goHome}>
+          <div className="success-card">
+            <div className="success-icon">✓</div>
+            <h2>Team Created Successfully</h2>
+            <p>Your team has been saved for this contest.</p>
+          </div>
+
+          <div className="team-summary">
+            <div><span>Match</span><strong>{selectedMatch?.team1} vs {selectedMatch?.team2}</strong></div>
+            <div><span>Contest</span><strong>{selectedContest?.name}</strong></div>
+            <div><span>Players</span><strong>11 / 11</strong></div>
+            <div><span>Captain</span><strong>{team.find(p => p.id === captain)?.name}</strong></div>
+            <div><span>Vice-Captain</span><strong>{team.find(p => p.id === viceCaptain)?.name}</strong></div>
+          </div>
+
+          <button className="primary-btn" onClick={() => setPage("leaderboard-page")}>
+            VIEW LEADERBOARD
+          </button>
+        </Page>
+      )}
+
+      {page === "leaderboard-page" && (
+        <Page title="Leaderboard" back={() => setPage("mycontest")}>
+          <div className="leaderboard-table">
+            <div className="lb-head">
+              <span>Rank</span>
+              <span>Player</span>
+              <span>Points</span>
+            </div>
+
+            {[
+              ["1", "Cricket King", "98.5"],
+              ["2", "Super Striker", "92.2"],
+              ["3", "Batzo Star", "88.4"],
+              ["4", "Your Team", "76.8"]
+            ].map((r) => (
+              <div className="lb-row" key={r[0]}>
+                <span>{r[0]}</span>
+                <strong>{r[1]}</strong>
+                <span>{r[2]}</span>
+              </div>
+            ))}
+          </div>
+
+          <button className="secondary-btn" onClick={goHome}>
+            BACK TO HOME
+          </button>
+        </Page>
+      )}
+
+      <nav className="bottom-nav">
+        <button onClick={goHome}>🏠<small>Home</small></button>
+        <button onClick={() => setPage("matches")}>🏏<small>Matches</small></button>
+        <button className="nav-play" onClick={() => setPage("matches")}>⚡</button>
+        <button onClick={() => setPage("matches")}>🏆<small>Contests</small></button>
+        <button onClick={() => alert("Profile coming soon")}>👤<small>Profile</small></button>
+      </nav>
+    </div>
+    </>
+  );
+}
+
+function MatchCard({ match, onClick }) {
+  const [showDetails, setShowDetails] = useState(false);
+
+  const team1 =
+    match?.team1 ||
+    match?.teams?.[0] ||
+    match?.homeTeam ||
+    "Team A";
+
+  const team2 =
+    match?.team2 ||
+    match?.teams?.[1] ||
+    match?.awayTeam ||
+    "Team B";
+
+  const status =
+    match?.matchStarted
+      ? "LIVE"
+      : match?.matchEnded
+        ? "COMPLETED"
+        : String(match?.status || "").toUpperCase() === "LIVE"
+          ? "LIVE"
+          : "UPCOMING";
+
+  const dateValue =
+    match?.dateTimeGMT ||
+    match?.date ||
+    match?.startTime ||
+    "";
+
+  let matchTime = "";
+
+  if (dateValue) {
+    try {
+      matchTime = new Date(dateValue).toLocaleString([], {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } catch {}
+  }
+
+  const venue =
+    match?.venue ||
+    match?.ground ||
+    "Venue information unavailable";
+
+  const format =
+    match?.matchType ||
+    match?.format ||
+    "T20";
+
+  const handleDetails = () => {
+    setShowDetails(true);
+
+    if (typeof onClick === "function") {
+      onClick(match);
+    }
+  };
+
+  return (
+    <>
+      <article className="batzo-match-card">
+        <div className="batzo-match-card-top">
+          <span className={status === "LIVE" ? "batzo-live-dot" : ""}>
+            {status === "LIVE" ? "● LIVE" : "UPCOMING"}
+          </span>
+
+          <span>
+            {match?.seriesName ||
+             match?.series ||
+             "BATZO CRICKET"}
+          </span>
+        </div>
+
+        <div className="batzo-match-card-teams">
+          <div className="batzo-card-team">
+            <div className="batzo-card-team-logo">
+              {String(team1).slice(0, 2).toUpperCase()}
+            </div>
+            <strong>{team1}</strong>
+            {match?.score1 && <small>{match.score1}</small>}
+          </div>
+
+          <div className="batzo-card-vs">VS</div>
+
+          <div className="batzo-card-team">
+            <div className="batzo-card-team-logo">
+              {String(team2).slice(0, 2).toUpperCase()}
+            </div>
+            <strong>{team2}</strong>
+            {match?.score2 && <small>{match.score2}</small>}
+          </div>
+        </div>
+
+        <div className="batzo-match-card-bottom">
+          <span>
+            {status === "LIVE"
+              ? (match?.status || "Match is live")
+              : (matchTime || "Upcoming match")}
+          </span>
+
+          <button
+            type="button"
+            className="batzo-view-match-btn"
+            onClick={handleDetails}
+          >
+            VIEW MATCH
+          </button>
+        </div>
+      </article>
+
+      {showDetails && (
+        <div
+          className="batzo-details-overlay"
+          onClick={() => setShowDetails(false)}
+        >
+          <section
+            className="batzo-details-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="batzo-modal-header">
+              <button
+                type="button"
+                className="batzo-modal-back"
+                onClick={() => setShowDetails(false)}
+              >
+                ←
+              </button>
+
+              <div>
+                <span>BATZO CRICKET</span>
+                <h2>Match Details</h2>
+              </div>
+            </div>
+
+            <div className={`batzo-modal-status ${status.toLowerCase()}`}>
+              {status === "LIVE" ? "● LIVE" : status}
+            </div>
+
+            <div className="batzo-modal-series">
+              {match?.seriesName ||
+               match?.series ||
+               "BATZO CRICKET"}
+            </div>
+
+            <div className="batzo-modal-teams">
+              <div>
+                <div className="batzo-modal-team-logo">
+                  {String(team1).slice(0, 2).toUpperCase()}
+                </div>
+                <strong>{team1}</strong>
+              </div>
+
+              <b>VS</b>
+
+              <div>
+                <div className="batzo-modal-team-logo">
+                  {String(team2).slice(0, 2).toUpperCase()}
+                </div>
+                <strong>{team2}</strong>
+              </div>
+            </div>
+
+            <div className="batzo-modal-info">
+              <div>
+                <span>📅 DATE & TIME</span>
+                <strong>{matchTime || "Time unavailable"}</strong>
+              </div>
+
+              <div>
+                <span>🏟️ VENUE</span>
+                <strong>{venue}</strong>
+              </div>
+
+              <div>
+                <span>🏏 FORMAT</span>
+                <strong>{format}</strong>
+              </div>
+
+              <div>
+                <span>🎯 STATUS</span>
+                <strong>{match?.status || status}</strong>
+              </div>
+            </div>
+
+            <div className="batzo-fantasy-box">
+              <span>🏆 BATZO FANTASY</span>
+
+              <h3>Ready to build your team?</h3>
+
+              <p>
+                Select players, choose Captain and Vice-Captain,
+                and join a contest.
+              </p>
+
+              <button
+                type="button"
+                className="batzo-create-team"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("batzo:create-team", {
+                      detail: match
+                    })
+                  )
+                }
+              >
+                👕 CREATE TEAM
+              </button>
+
+              <button
+                type="button"
+                className="batzo-view-contests"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("batzo:view-contests", {
+                      detail: match
+                    })
+                  )
+                }
+              >
+                🏆 VIEW CONTESTS
+              </button>
+            </div>
+
+            <div className="batzo-squad-box">
+              <span>👥 TEAM INFORMATION</span>
+              <h3>Players & Squad</h3>
+
+              <p>
+                Player squad information will appear here when
+                available from the cricket feed.
+              </p>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+
+function Page({ title, back, children }) {
+  return (
+    <main className="page">
+      <div className="page-header">
+        <button onClick={back}>←</button>
+        <h1>{title}</h1>
+      </div>
+      {children}
+    </main>
+  );
+}
+
+export default App;

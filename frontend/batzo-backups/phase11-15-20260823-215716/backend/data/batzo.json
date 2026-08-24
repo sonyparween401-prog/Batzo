@@ -1,0 +1,36 @@
+{
+  "users": [],
+  "matches": [
+    {
+      "id": 1,
+      "title": "India vs Australia",
+      "status": "upcoming",
+      "start_time": "2026-08-20T17:17:01.074Z"
+    },
+    {
+      "id": 2,
+      "title": "England vs South Africa",
+      "status": "upcoming",
+      "start_time": "2026-08-21T17:17:01.076Z"
+    }
+  ],
+  "teams": [],
+  "contests": [
+    {
+      "id": 1,
+      "match_id": 1,
+      "name": "Practice Contest",
+      "entry_type": "virtual",
+      "entry_points": 100,
+      "max_users": 100
+    },
+    {
+      "id": 2,
+      "match_id": 2,
+      "name": "Practice Contest",
+      "entry_type": "virtual",
+      "entry_points": 100,
+      "max_users": 100
+    }
+  ]
+}

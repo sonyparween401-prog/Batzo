@@ -1,0 +1,84 @@
+const express = require("express");
+const router = express.Router();
+
+const cricket = require("./cricket");
+
+router.get("/matches", async (req, res) => {
+  try {
+    const data = await cricket.getCurrentMatches();
+    return res.json(data);
+  } catch (error) {
+    console.error("CRICKET MATCHES ERROR:", error);
+    return res.status(500).json({
+      status: "error",
+      error: "Unable to fetch cricket matches",
+      message: error.message
+    });
+  }
+});
+
+router.get("/live", async (req, res) => {
+  try {
+    const data = await cricket.getCurrentMatches();
+
+    let matches = [];
+
+    if (Array.isArray(data)) {
+      matches = data;
+    } else if (Array.isArray(data.data)) {
+      matches = data.data;
+    }
+
+    const live = matches.filter((match) => {
+      const text = JSON.stringify(match).toLowerCase();
+      return (
+        text.includes('"status":"live"') ||
+        text.includes("live") ||
+        text.includes("in progress")
+      );
+    });
+
+    return res.json({
+      status: "success",
+      data: live,
+      count: live.length
+    });
+  } catch (error) {
+    console.error("CRICKET LIVE ERROR:", error);
+    return res.status(500).json({
+      status: "error",
+      error: "Unable to fetch live cricket data",
+      message: error.message
+    });
+  }
+});
+
+router.get("/scorecard/:id", async (req, res) => {
+  try {
+    const data = await cricket.getScorecard(req.params.id);
+    return res.json(data);
+  } catch (error) {
+    console.error("SCORECARD ERROR:", error);
+    return res.status(500).json({
+      status: "error",
+      error: "Unable to fetch scorecard",
+      message: error.message
+    });
+  }
+});
+
+router.get("/squad/:id", async (req, res) => {
+  try {
+    const data = await cricket.getSquad(req.params.id);
+    return res.json(data);
+  } catch (error) {
+    console.error("SQUAD ERROR:", error);
+    return res.status(500).json({
+      status: "error",
+      error: "Unable to fetch squad",
+      message: error.message
+    });
+  }
+});
+
+module.exports = router;

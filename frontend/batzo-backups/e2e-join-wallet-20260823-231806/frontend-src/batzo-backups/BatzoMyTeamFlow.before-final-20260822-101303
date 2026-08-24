@@ -1,0 +1,158 @@
+import React, { useMemo, useState } from "react";
+
+const PLAYERS = [
+  ["Rohit Sharma","BAT","MI"],["Yashasvi Jaiswal","BAT","IND"],
+  ["Virat Kohli","BAT","IND"],["Suryakumar Yadav","BAT","MI"],
+  ["Shubman Gill","BAT","GT"],["Rishabh Pant","WK","IND"],
+  ["Sanju Samson","WK","IND"],["Hardik Pandya","AR","MI"],
+  ["Ravindra Jadeja","AR","CSK"],["Axar Patel","AR","DC"],
+  ["Jasprit Bumrah","BOWL","MI"],["Mohammed Siraj","BOWL","GT"],
+  ["Kuldeep Yadav","BOWL","IND"],["Arshdeep Singh","BOWL","IND"],
+  ["Trent Boult","BOWL","RR"],["Pat Cummins","BOWL","SRH"],
+  ["Mitchell Starc","BOWL","DC"],["Rashid Khan","BOWL","GT"]
+];
+
+const CONTESTS = [
+  {id:1,type:"MEGA",name:"Mega Contest",prize:"₹1 Crore",spots:"4,82,340 / 5,00,000",winners:"75,000",entry:"₹49"},
+  {id:2,type:"H2H",name:"Head-to-Head",prize:"₹1,800",spots:"1 / 2",winners:"1",entry:"₹49"},
+  {id:3,type:"POPULAR",name:"Small League",prize:"₹10 Lakh",spots:"31,240 / 50,000",winners:"7,500",entry:"₹99"}
+];
+
+export default function BatzoMyTeamFlow({ onClose }) {
+  const [screen,setScreen] = useState("contests");
+  const [contest,setContest] = useState(CONTESTS[0]);
+  const [selected,setSelected] = useState([]);
+  const [captain,setCaptain] = useState(null);
+  const [vice,setVice] = useState(null);
+  const [joined,setJoined] = useState(false);
+  const [filter,setFilter] = useState("ALL");
+
+  const counts = useMemo(() => {
+    const c={WK:0,BAT:0,AR:0,BOWL:0};
+    selected.forEach(i=>c[PLAYERS[i][1]]++);
+    return c;
+  },[selected]);
+
+  function openContest(c){
+    setContest(c);
+    setScreen("details");
+  }
+
+  function togglePlayer(i){
+    if(selected.includes(i)){
+      setSelected(selected.filter(x=>x!==i));
+      if(captain===i) setCaptain(null);
+      if(vice===i) setVice(null);
+      return;
+    }
+    if(selected.length < 11) setSelected([...selected,i]);
+  }
+
+  function saveTeam(){
+    if(selected.length!==11 || captain===null || vice===null) return;
+    setJoined(true);
+    setScreen("mycontest");
+  }
+
+  function back(){
+    if(screen==="contests"){ onClose?.(); return; }
+    if(screen==="details") setScreen("contests");
+    else if(screen==="team") setScreen("details");
+    else if(screen==="mycontest") setScreen("contests");
+    else if(screen==="leaderboard") setScreen("mycontest");
+    else if(screen==="result") setScreen("leaderboard");
+  }
+
+  const visiblePlayers = PLAYERS.filter(p => filter==="ALL" || p[1]===filter);
+
+  const css = `
+    .bz-flow{min-height:100vh;background:linear-gradient(145deg,#061b19,#09111f 55%,#11102b);color:#eef5ff;font-family:Arial,sans-serif;padding-bottom:30px}
+    .bz-head{padding:22px 20px 14px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;background:rgba(6,17,25,.96);backdrop-filter:blur(15px)}
+    .bz-back{width:52px;height:52px;border-radius:17px;border:1px solid #29434a;background:#13242b;color:white;font-size:30px}
+    .bz-brand{font-weight:900;letter-spacing:5px;color:#23e890;font-size:15px}
+    .bz-title{font-size:34px;font-weight:900;margin:3px 0}
+    .bz-sub{color:#9ba9b9;font-weight:700}
+    .bz-tabs{display:flex;gap:10px;overflow:auto;padding:12px 20px}
+    .bz-tab{border:1px solid #29404a;background:#14222b;color:#aab5c3;padding:13px 20px;border-radius:25px;font-weight:900;white-space:nowrap}
+    .bz-tab.active{background:#123f35;color:#24ee96;border-color:#1fe995}
+    .bz-card{margin:12px 20px;padding:20px;border:1px solid #24414a;border-radius:25px;background:linear-gradient(145deg,#111d27,#101725);box-shadow:0 12px 35px #0005}
+    .bz-row{display:flex;justify-content:space-between;gap:15px;align-items:center}
+    .bz-type{display:inline-block;padding:8px 13px;border-radius:13px;background:#123d34;color:#2af09b;font-weight:900}
+    .bz-prize{font-size:26px;font-weight:900;color:#28ed91}
+    .bz-name{font-size:27px;font-weight:900;margin:14px 0}
+    .bz-muted{color:#96a3b3}
+    .bz-bar{height:8px;background:#202b36;border-radius:20px;margin:18px 0;overflow:hidden}
+    .bz-bar i{display:block;height:100%;width:72%;background:linear-gradient(90deg,#20e88d,#1dd7ed,#8958ff);border-radius:20px}
+    .bz-btn{border:0;border-radius:17px;padding:15px 20px;font-size:16px;font-weight:900;background:linear-gradient(90deg,#20e58c,#1dd4e8);color:#03120d}
+    .bz-full{width:100%}
+    .bz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .bz-stat{padding:15px;border-radius:18px;background:#121d27;border:1px solid #293943;text-align:center}
+    .bz-stat b{display:block;font-size:20px;margin-top:6px}
+    .bz-player{display:flex;align-items:center;gap:12px;padding:13px;border-radius:18px;background:#121d27;border:1px solid #263942;margin:8px 0}
+    .bz-player.sel{border-color:#25e997;background:#12352e}
+    .bz-avatar{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#20e891,#6759ff);font-weight:900}
+    .bz-check{margin-left:auto;width:30px;height:30px;border-radius:50%;border:2px solid #607080;display:grid;place-items:center}
+    .bz-player.sel .bz-check{background:#21e994;color:#06130e;border-color:#21e994}
+    .bz-role{font-size:12px;color:#91a0b0;font-weight:900}
+    .bz-cvc{display:flex;gap:8px;margin-top:5px}
+    .bz-cvc button{border:1px solid #3a4a56;background:#182630;color:#9ca9b7;border-radius:10px;padding:5px 8px;font-size:11px;font-weight:900}
+    .bz-cvc button.on{background:#8b5cf6;color:white;border-color:#8b5cf6}
+    .bz-bottom{position:sticky;bottom:10px;margin:15px 20px 0;padding:10px;background:#0e1822ee;border:1px solid #30414c;border-radius:22px}
+    .bz-success{text-align:center;padding:30px}
+  `;
+
+  if(screen==="contests") return <div className="bz-flow"><style>{css}</style>
+    <div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">Contests</div><div className="bz-sub">India vs Australia</div></div></div>
+    <div className="bz-tabs">
+      {["ALL","MEGA","SMALL","H2H"].map(x=><button key={x} className={"bz-tab "+(filter===x?"active":"")} onClick={()=>setFilter(x)}>{x}</button>)}
+    </div>
+    {CONTESTS.filter(c=>filter==="ALL"||c.type===filter).map(c=><div className="bz-card" key={c.id} onClick={()=>openContest(c)}>
+      <div className="bz-row"><span className="bz-type">{c.type}</span><span className="bz-prize">{c.prize}</span></div>
+      <div className="bz-name">{c.name}</div><div className="bz-bar"><i/></div>
+      <div className="bz-row"><div><div className="bz-muted">SPOTS</div><b>{c.spots}</b></div><div><div className="bz-muted">WINNERS</div><b>{c.winners}</b></div><button className="bz-btn" onClick={e=>{e.stopPropagation();openContest(c)}}>{c.entry}</button></div>
+    </div>)}
+  </div>;
+
+  if(screen==="details") return <div className="bz-flow"><style>{css}</style>
+    <div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">Contest Details</div></div></div>
+    <div className="bz-card" style={{textAlign:"center"}}><span className="bz-type">{contest.type}</span><h1>WIN UP TO<br/><span className="bz-prize">{contest.prize}</span></h1><h2>{contest.name}</h2></div>
+    <div className="bz-grid">
+      <div className="bz-stat">ENTRY<b>{contest.entry}</b></div><div className="bz-stat">SPOTS<b>{contest.spots.split("/")[1]}</b></div><div className="bz-stat">WINNERS<b>{contest.winners}</b></div>
+    </div>
+    <div className="bz-card"><h3>Prize Pool</h3><div className="bz-row"><span className="bz-muted">{contest.prize}</span><b>{contest.prize}</b></div><hr/><h3>Entry Fee</h3><div className="bz-row"><span className="bz-muted">Contest entry</span><b>{contest.entry}</b></div></div>
+    <div className="bz-bottom"><button className="bz-btn bz-full" onClick={()=>setScreen("team")}>JOIN CONTEST • {contest.entry}</button></div>
+  </div>;
+
+  if(screen==="team") return <div className="bz-flow"><style>{css}</style>
+    <div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">My Team</div><div className="bz-sub">{selected.length}/11 Players Selected</div></div></div>
+    <div className="bz-card"><div className="bz-grid"><div className="bz-stat">WK<b>{counts.WK}</b></div><div className="bz-stat">BAT<b>{counts.BAT}</b></div><div className="bz-stat">AR/BOWL<b>{counts.AR+counts.BOWL}</b></div></div></div>
+    <div className="bz-tabs">{["ALL","WK","BAT","AR","BOWL"].map(x=><button key={x} className={"bz-tab "+(filter===x?"active":"")} onClick={()=>setFilter(x)}>{x}</button>)}</div>
+    {visiblePlayers.map((p,i)=>{
+      const real=PLAYERS.indexOf(p), sel=selected.includes(real);
+      return <div className={"bz-player "+(sel?"sel":"")} key={real} onClick={()=>togglePlayer(real)}>
+        <div className="bz-avatar">{p[0][0]}</div><div><b>{p[0]}</b><div className="bz-role">{p[1]} • {p[2]}</div>{sel&&<div className="bz-cvc">
+          <button className={captain===real?"on":""} onClick={e=>{e.stopPropagation();setCaptain(captain===real?null:real);if(vice===real)setVice(null)}}>C</button>
+          <button className={vice===real?"on":""} onClick={e=>{e.stopPropagation();setVice(vice===real?null:real);if(captain===real)setCaptain(null)}}>VC</button>
+        </div>}</div><div className="bz-check">{sel?"✓":"+"}</div>
+      </div>
+    })}
+    <div className="bz-bottom"><button className="bz-btn bz-full" disabled={selected.length!==11||captain===null||vice===null} onClick={saveTeam}>SAVE TEAM & CONTINUE →</button></div>
+  </div>;
+
+  if(screen==="mycontest") return <div className="bz-flow"><style>{css}</style>
+    <div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">My Contest</div><div className="bz-sub">India vs Australia</div></div></div>
+    <div className="bz-card"><span className="bz-type">JOINED</span><h2>{contest.name}</h2><div className="bz-row"><span className="bz-muted">Entry</span><b>{contest.entry}</b></div><div className="bz-row"><span className="bz-muted">My Team</span><b>Team 1</b></div><div className="bz-row"><span className="bz-muted">Players</span><b>11/11</b></div></div>
+    <div className="bz-card"><h2>Team 1</h2><p className="bz-muted">Captain: {PLAYERS[captain]?.[0]}</p><p className="bz-muted">Vice Captain: {PLAYERS[vice]?.[0]}</p><button className="bz-btn bz-full" onClick={()=>setScreen("leaderboard")}>VIEW LEADERBOARD →</button></div>
+    <div className="bz-card"><button className="bz-btn bz-full" onClick={()=>setScreen("team")}>EDIT MY TEAM</button></div>
+  </div>;
+
+  if(screen==="leaderboard") return <div className="bz-flow"><style>{css}</style>
+    <div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">Leaderboard</div><div className="bz-sub">{contest.name}</div></div></div>
+    {[["You • Team 1","1","₹1,00,00,000"],["Player_842","2","₹25,00,000"],["CricketKing","3","₹10,00,000"],["BatzoPro","4","₹5,00,000"],["Champion11","5","₹2,00,000"]].map((r,i)=><div className="bz-card" key={i}><div className="bz-row"><div><b>#{r[1]} {r[0]}</b><div className="bz-muted">11 Players • C/VC applied</div></div><b style={{color:"#25e995"}}>{r[2]}</b></div></div>)}
+    <div className="bz-bottom"><button className="bz-btn bz-full" onClick={()=>setScreen("result")}>RESULT PREVIEW →</button></div>
+  </div>;
+
+  return <div className="bz-flow"><style>{css}</style><div className="bz-head"><button className="bz-back" onClick={back}>←</button><div><div className="bz-brand">BATZO</div><div className="bz-title">Result Preview</div></div></div>
+    <div className="bz-card bz-success"><div style={{fontSize:60}}>🏆</div><h1>Contest Complete</h1><p className="bz-muted">Your Team 1 result preview is ready.</p><h2 style={{color:"#25e995"}}>Rank #1</h2><h2>Prize ₹1,00,00,000</h2><button className="bz-btn bz-full" onClick={()=>setScreen("mycontest")}>← MY CONTEST</button></div>
+  </div>;
+}

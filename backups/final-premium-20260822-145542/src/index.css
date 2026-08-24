@@ -1,0 +1,48 @@
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* BATZO TOUCH POLISH */
+html, body, #root {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button, a {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}

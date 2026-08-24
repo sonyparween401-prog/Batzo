@@ -1,0 +1,155 @@
+<svg width="720" height="250" viewBox="0 0 720 250"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3A3"/>
+      <stop offset=".18" stop-color="#FFD21C"/>
+      <stop offset=".48" stop-color="#FF8A00"/>
+      <stop offset=".72" stop-color="#FFB300"/>
+      <stop offset="1" stop-color="#8A4B00"/>
+    </linearGradient>
+
+    <linearGradient id="pinkBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF3D81"/>
+      <stop offset=".45" stop-color="#9B4DFF"/>
+      <stop offset="1" stop-color="#19D9FF"/>
+    </linearGradient>
+
+    <linearGradient id="letterFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF8D0"/>
+      <stop offset=".16" stop-color="#FFD84A"/>
+      <stop offset=".42" stop-color="#FF8A00"/>
+      <stop offset=".65" stop-color="#FF3D81"/>
+      <stop offset=".84" stop-color="#7B61FF"/>
+      <stop offset="1" stop-color="#19D9FF"/>
+    </linearGradient>
+
+    <linearGradient id="ball" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF5A5A"/>
+      <stop offset=".45" stop-color="#FF1F55"/>
+      <stop offset=".75" stop-color="#FF7A18"/>
+      <stop offset="1" stop-color="#FFD21C"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10"
+                    flood-color="#000000" flood-opacity=".55"/>
+    </filter>
+
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+  </defs>
+
+  <!-- neon cricket trail -->
+  <path d="M45 73 C135 20 245 20 330 63"
+        fill="none"
+        stroke="url(#pinkBlue)"
+        stroke-width="10"
+        stroke-linecap="round"
+        opacity=".85"
+        filter="url(#glow)"/>
+
+  <path d="M55 89 C145 49 235 47 322 76"
+        fill="none"
+        stroke="#19D9FF"
+        stroke-width="4"
+        stroke-linecap="round"
+        opacity=".7"/>
+
+  <!-- batsman -->
+  <circle cx="177" cy="40" r="18"
+          fill="url(#pinkBlue)"
+          filter="url(#glow)"/>
+
+  <path d="M165 61 L190 65 L220 100 L195 112 L171 86 L150 112 L128 101 Z"
+        fill="url(#pinkBlue)"
+        filter="url(#shadow)"/>
+
+  <path d="M185 68 L225 45 L250 55"
+        fill="none"
+        stroke="#FF7A18"
+        stroke-width="13"
+        stroke-linecap="round"/>
+
+  <!-- bat -->
+  <path d="M246 53 L319 5"
+        stroke="url(#gold)"
+        stroke-width="16"
+        stroke-linecap="round"
+        filter="url(#shadow)"/>
+
+  <path d="M313 5 L331 20"
+        stroke="#FFD21C"
+        stroke-width="10"
+        stroke-linecap="round"/>
+
+  <!-- cricket ball -->
+  <circle cx="346" cy="83" r="31"
+          fill="url(#ball)"
+          stroke="#FFB020"
+          stroke-width="3"
+          filter="url(#shadow)"/>
+
+  <path d="M325 67 C342 75 356 94 366 109"
+        fill="none"
+        stroke="white"
+        stroke-width="4"
+        opacity=".95"/>
+
+  <path d="M331 63 C348 72 363 91 372 104"
+        fill="none"
+        stroke="white"
+        stroke-width="2"
+        stroke-dasharray="6 5"/>
+
+  <!-- 3D extrusion -->
+  <g font-family="Arial, Helvetica, sans-serif"
+     font-size="100"
+     font-weight="900"
+     font-style="italic"
+     letter-spacing="-5">
+
+    <text x="43" y="192" fill="#241000">BATZO</text>
+    <text x="40" y="188" fill="#4B2200">BATZO</text>
+    <text x="37" y="184" fill="#8A4100">BATZO</text>
+
+    <!-- main face -->
+    <text x="32" y="176"
+          fill="url(#letterFace)"
+          stroke="#FFF1A8"
+          stroke-width="2"
+          paint-order="stroke"
+          filter="url(#shadow)">BATZO</text>
+
+    <!-- highlight -->
+    <text x="32" y="169"
+          fill="none"
+          stroke="rgba(255,255,255,.65)"
+          stroke-width="1.5">BATZO</text>
+
+  </g>
+
+  <!-- tagline -->
+  <text x="178" y="220"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="17"
+        font-weight="800"
+        letter-spacing="7"
+        fill="#F7F7FA">
+    PLAY • COMPETE • WIN
+  </text>
+
+  <!-- tiny glow -->
+  <circle cx="555" cy="105" r="4" fill="#19D9FF" filter="url(#glow)"/>
+  <circle cx="585" cy="80" r="3" fill="#FF3D81" filter="url(#glow)"/>
+  <circle cx="610" cy="120" r="3" fill="#FFD21C" filter="url(#glow)"/>
+
+</svg>

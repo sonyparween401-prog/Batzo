@@ -1,0 +1,69 @@
+<svg width="420" height="150" viewBox="0 0 420 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="batzoText" x1="35" y1="40" x2="380" y2="115" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF3D81"/>
+      <stop offset="0.28" stop-color="#FF7A18"/>
+      <stop offset="0.55" stop-color="#FFD21C"/>
+      <stop offset="0.78" stop-color="#19D9FF"/>
+      <stop offset="1" stop-color="#6C5CE7"/>
+    </linearGradient>
+
+    <linearGradient id="player" x1="80" y1="10" x2="330" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19D9FF"/>
+      <stop offset="0.45" stop-color="#7A5CFF"/>
+      <stop offset="0.75" stop-color="#FF3D81"/>
+      <stop offset="1" stop-color="#FF7A18"/>
+    </linearGradient>
+
+    <linearGradient id="ball" x1="320" y1="55" x2="365" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF4D4D"/>
+      <stop offset="0.5" stop-color="#FF7A18"/>
+      <stop offset="1" stop-color="#FFD21C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cricket swing -->
+  <path d="M58 91 C115 62 171 58 222 75 C269 91 303 95 349 75"
+        stroke="url(#player)" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- Batter body -->
+  <circle cx="168" cy="28" r="13" fill="#19D9FF"/>
+  <path d="M163 43 L183 48 L199 72 L181 78 L163 58 L151 77 L137 71 Z"
+        fill="url(#player)"/>
+
+  <!-- Arms -->
+  <path d="M177 48 L207 34 L229 42"
+        stroke="#FF7A18" stroke-width="9" stroke-linecap="round"/>
+  <path d="M177 53 L204 48 L229 42"
+        stroke="#FFD21C" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Bat -->
+  <path d="M225 42 L276 4"
+        stroke="#FFD21C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M276 4 L289 14"
+        stroke="#FF7A18" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Cricket ball -->
+  <circle cx="344" cy="80" r="25" fill="url(#ball)"/>
+  <path d="M328 66 C340 72 350 87 358 98"
+        stroke="#FFF" stroke-opacity=".9" stroke-width="3"/>
+  <path d="M333 62 C346 69 356 84 363 94"
+        stroke="#FFF" stroke-opacity=".55" stroke-width="2" stroke-dasharray="4 4"/>
+
+  <!-- BATZO -->
+  <text x="25" y="132"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="57"
+        font-weight="900"
+        font-style="italic"
+        letter-spacing="1"
+        fill="url(#batzoText)">BATZO</text>
+
+  <!-- Tagline -->
+  <text x="105" y="148"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="9"
+        font-weight="800"
+        letter-spacing="4"
+        fill="#D0D5DD">PLAY • COMPETE • WIN</text>
+</svg>

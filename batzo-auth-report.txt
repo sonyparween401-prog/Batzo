@@ -1,0 +1,230 @@
+============================================================
+          BATZO MASTER FIREBASE AUTH REPORT
+============================================================
+
+================ PROJECT ===============================
+/data/data/com.termux/files/home/Batzo
+main
+9aa5e1d
+
+================ FIREBASE PACKAGE =====================
+firebase: ^12.18.0
+
+================ APP AUTH CODE ========================
+import React, { useState } from 'react';
+import './App.css';
+
+const matches = [
+  { id: 1, status: 'LIVE', league: 'International Cricket', team1: 'IND', team2: 'AUS', team1Name: 'India', team2Name: 'Australia', score1: '156/4', score2: '—', overs: '17.2', time: 'Live now' },
+  { id: 2, status: 'UPCOMING', league: 'T20 Match', team1: 'ENG', team2: 'SA', team1Name: 'England', team2Name: 'South Africa', score1: '—', score2: '—', overs: '', time: 'Today • 7:30 PM' },
+  { id: 3, status: 'UPCOMING', league: 'Premier Cricket', team1: 'WI', team2: 'NZ', team1Name: 'West Indies', team2Name: 'New Zealand', score1: '—', score2: '—', overs: '', time: 'Tomorrow • 3:30 PM' }
+];
+
+function App() {
+  const [page, setPage] = useState('home');
+  const [mobile, setMobile] = useState('');
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [message, setMessage] = useState('');
+
+  const go = (next) => {
+    setMessage('');
+    setPage(next);
+  };
+
+  const sendOtp = async () => {
+    if (!mobile || mobile.replace(/\\D/g, '').length < 10) {
+      setMessage('Please enter a valid 10 digit mobile number.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setMessage(data.message || 'OTP service is not ready yet.');
+        return;
+      }
+
+      setMessage('6-digit OTP sent to your mobile.');
+      setPage('otp');
+    } catch {
+      setMessage('Backend is not reachable. Start the Batzo backend first.');
+    }
+  };
+
+  const submitRegister = async () => {
+    if (!name || !mobile || !password) {
+      setMessage('Please fill all registration fields.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mobile, password })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setMessage(data.message || data.error || 'Registration failed.');
+        return;
+      }
+
+      setMessage('Registration successful. Please verify your mobile OTP.');
+      setPage('otp');
+    } catch {
+      setMessage('Backend is not reachable yet. UI is ready.');
+      setPage('otp');
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!/^\\d{6}$/.test(otp)) {
+      setMessage('Please enter the 6-digit OTP.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.verified) {
+        setMessage(data.message || 'OTP verification failed.');
+        return;
+      }
+
+      setMessage('OTP verified successfully.');
+      setPage('profile');
+    } catch {
+      setMessage('Backend is not reachable.');
+    }
+  };
+
+  if (page === 'login') {
+    return (
+      <AuthShell title="Welcome back" subtitle="Login to continue to Batzo">
+        <label>Mobile Number</label>
+        <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="Enter mobile number" inputMode="numeric" />
+
+        <button className="auth-primary" onClick={sendOtp}>Continue with OTP</button>
+
+        <div className="divider"><span>OR</span></div>
+
+        <button className="social google" onClick={() => setMessage('Google Login will be connected with OAuth.')}>
+          <b>G</b> Continue with Google
+        </button>
+
+        <button className="social facebook" onClick={() => setMessage('Facebook Login will be connected with OAuth.')}>
+          <b>f</b> Continue with Facebook
+
+================ OTP UI ================================
+        </button>
+
+        {message && <div className="auth-message">{message}</div>}
+
+        <p className="switch">
+          Already have an account?
+          <button onClick={() => go('login')}> Login</button>
+        </p>
+      </AuthShell>
+    );
+  }
+
+  if (page === 'otp') {
+    return (
+      <AuthShell title="Verify mobile" subtitle={`Enter the OTP sent to ${mobile || 'your mobile number'}`}>
+        <label>OTP</label>
+        <input className="otp-input" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Enter OTP" inputMode="numeric" maxLength="6" />
+
+        <button className="auth-primary" onClick={verifyOtp}>Verify OTP</button>
+
+        <button className="link-button" onClick={sendOtp}>Resend OTP</button>
+
+        {message && <div className="auth-message">{message}</div>}
+
+        <button className="back-button" onClick={() => go('login')}>← Back to Login</button>
+      </AuthShell>
+    );
+  }
+
+  if (page === 'profile') {
+    return (
+
+================ FIREBASE SEARCH =======================
+frontend/src/firebase.js:1:import { initializeApp } from 'firebase/app';
+frontend/src/firebase.js:2:import { getAuth } from 'firebase/auth';
+frontend/src/firebase.js:4:const firebaseConfig = {
+frontend/src/firebase.js:6:  authDomain: "batzo-369df.firebaseapp.com",
+frontend/src/firebase.js:8:  storageBucket: "batzo-369df.firebasestorage.app",
+frontend/src/firebase.js:13:const app = initializeApp(firebaseConfig);
+
+================ GOOGLE SERVICES =======================
+google-services.json: PRESENT
+    "project_number": "962823937275",
+    "project_id": "batzo-369df",
+        "mobilesdk_app_id": "1:962823937275:android:bcac963ff91c4e9205e45e",
+          "package_name": "com.batzo.app"
+
+================ ANDROID FIREBASE =====================
+frontend/android/.gitignore:65:# google-services.json
+frontend/android/app/build.gradle:34:    implementation platform('com.google.firebase:firebase-bom:34.5.0')
+frontend/android/app/build.gradle:35:    implementation 'com.google.firebase:firebase-auth'
+frontend/android/app/build.gradle:51:    def servicesJSON = file('google-services.json')
+frontend/android/app/build.gradle:53:        apply plugin: 'com.google.gms.google-services'
+frontend/android/app/build.gradle:56:    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+frontend/android/build.gradle:11:        classpath 'com.google.gms:google-services:4.4.4'
+
+================ BACKEND ==============================
+backend/server.js:10:const { requestOtp, verifyOtp } = require('./otp');
+backend/server.js:57:app.post('/api/request-otp', async (req, res) => {
+backend/server.js:60:    const result = requestOtp(mobile);
+backend/server.js:73:      !!process.env.SMS_PROVIDER &&
+backend/server.js:79:        code: 'SMS_PROVIDER_NOT_CONFIGURED',
+backend/server.js:98:app.post('/api/verify-otp', async (req, res) => {
+backend/server.js:100:    const { mobile, otp } = req.body || {};
+backend/server.js:101:    const result = verifyOtp(mobile, otp);
+backend/otp.js:5:const OTP_FILE = path.join(__dirname, 'data', 'otp.json');
+backend/otp.js:34:function hashOtp(otp) {
+backend/otp.js:35:  return crypto.createHash('sha256').update(String(otp)).digest('hex');
+backend/otp.js:42:function requestOtp(mobile) {
+backend/otp.js:59:  const otp = generateOtp();
+backend/otp.js:62:    otpHash: hashOtp(otp),
+backend/otp.js:73:    otp,
+backend/otp.js:78:function verifyOtp(mobile, otp) {
+backend/otp.js:80:  const code = String(otp || '').replace(/\D/g, '');
+backend/otp.js:102:  if (hashOtp(code) !== record.otpHash) {
+backend/otp.js:115:  requestOtp,
+backend/otp.js:116:  verifyOtp
+
+================ HEALTH ===============================
+{"success":true,"service":"Batzo API","status":"healthy"}
+================ BUILD ================================
+frontend/dist: READY
+
+================ CURRENT API ==========================
+30:      const response = await fetch('http://127.0.0.1:3000/api/request-otp', {
+57:      const response = await fetch('http://127.0.0.1:3000/api/register', {
+85:      const response = await fetch('http://127.0.0.1:3000/api/verify-otp', {
+127:          <button onClick={() => go('register')}> Create account</button>
+133:  if (page === 'register') {
+312:          <button className="quick-card" onClick={() => go('register')}>
+
+============================================================
+REPORT SAVED: /data/data/com.termux/files/home/Batzo/batzo-auth-report.txt
+NO PROJECT FILES MODIFIED.
+============================================================

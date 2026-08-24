@@ -1,0 +1,30 @@
+BATZO FINAL CLEAN REPAIR REPORT
+DATE: Mon Aug 24 21:35:37 IST 2026
+
+APK: /data/data/com.termux/files/home/storage/downloads/Batzo-Final-Clean-Test.apk
+PROJECT APK: /data/data/com.termux/files/home/Batzo/apk-final/Batzo-Final-Clean-Test.apk
+BACKUP: /data/data/com.termux/files/home/Batzo/backups/final-clean-repair-20260824-213449
+
+BUILD: SUCCESS
+
+DISABLED LEGACY CONTROLLERS:
+/data/data/com.termux/files/home/Batzo/frontend/android/app/build/intermediates/assets/debug/mergeDebugAssets/public/batzo-continue-fix.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/android/app/build/intermediates/assets/debug/mergeDebugAssets/public/batzo-master-flow.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/android/app/src/main/assets/public/batzo-continue-fix.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/android/app/src/main/assets/public/batzo-master-flow.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/batzo-continue-fix.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/batzo-master-flow.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/dist/batzo-continue-fix.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/dist/batzo-master-flow.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/public/batzo-continue-fix.js.disabled
+/data/data/com.termux/files/home/Batzo/frontend/public/batzo-master-flow.js.disabled
+
+SOURCE FLOW COUNTS:
+CREATE TEAM:
+31
+MY TEAM:
+52
+CONTEST:
+129
+NAVIGATION:
+86

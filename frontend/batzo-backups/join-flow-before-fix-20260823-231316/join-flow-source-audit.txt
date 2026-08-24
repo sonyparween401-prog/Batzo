@@ -1,0 +1,1957 @@
+
+============================================================
+FILE: frontend/src/App.jsx
+============================================================
+import { BATZO_PLAYERS, BATZO_CONTESTS, openBatzoTeam, openBatzoContest } from "./batzo-flow.js";
+import React, { useMemo, useState } from "react";
+import "./App.css";
+
+const liveMatches = [
+  {
+    id: 1,
+    league: "T20",
+    a: "India",
+    ac: "IND",
+    af: "🇮🇳",
+    as: "168/4",
+    b: "Australia",
+    bc: "AUS",
+    bf: "🇦🇺",
+    bs: "142/7",
+    over: "17.2 ov",
+    viewers: "2.1L people watching"
+  }
+];
+
+const upcomingMatches = [
+  {
+    id: 2,
+    league: "T20",
+    a: "India",
+    ac: "IND",
+    af: "🇮🇳",
+    b: "Australia",
+    bc: "AUS",
+    bf: "🇦🇺",
+    time: "Today",
+    clock: "7:30 PM"
+  },
+  {
+    id: 3,
+    league: "T20",
+    a: "Pakistan",
+    ac: "PAK",
+    af: "🇵🇰",
+    b: "New Zealand",
+    bc: "NZ",
+    bf: "🇳🇿",
+    time: "Tomorrow",
+    clock: "3:30 PM"
+  },
+  {
+    id: 4,
+    league: "T20",
+    a: "England",
+    ac: "ENG",
+    af: "🏴",
+    b: "South Africa",
+    bc: "SA",
+    bf: "🇿🇦",
+    time: "Tomorrow",
+    clock: "7:30 PM"
+  }
+];
+
+const contests = [
+  { title: "Mega Contest", prize: "₹50 Lakhs", entry: "₹49", spots: "2.1L" },
+  { title: "Head To Head", prize: "₹1,800", entry: "₹49", spots: "2" },
+  { title: "Small Contest", prize: "₹25,000", entry: "₹99", spots: "1,000" }
+];
+
+function Logo() {
+  return (
+    <div className="logo-area">
+      <div className="batzo-logo">
+        <span>B</span><span>A</span><span>T</span><span>Z</span><span>O</span>
+      </div>
+      <div className="logo-line">
+        <i></i>
+        <strong>CRICKET HUB</strong>
+        <i></i>
+      </div>
+    </div>
+  );
+}
+
+function Header({ setNotice }) {
+  return (
+    <header className="top-header">
+      <Logo />
+
+      <div className="header-right">
+        <button
+          className="notification-btn"
+          onClick={() => setNotice("No new notifications")}
+          aria-label="Notifications"
+        >
+          <span className="bell">♧</span>
+          <b>3</b>
+        </button>
+
+        <button
+          className="wallet-box"
+          onClick={() => setNotice("Wallet balance: ₹0")}
+        >
+          <span className="wallet-icon">▰</span>
+          <div>
+            <small>Wallet Balance</small>
+            <strong>₹0</strong>
+          </div>
+          <em>›</em>
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function QuickCard({ icon, title, sub, type, onClick }) {
+  return (
+    <button className={`quick-card ${type || ""}`} onClick={onClick}>
+      <div className="quick-icon">{icon}</div>
+      <div className="quick-title">{title}</div>
+      <div className="quick-sub">{sub}</div>
+      <span className="quick-arrow">›</span>
+    </button>
+  );
+}
+
+function LiveMatchCard({ match, onOpen }) {
+  return (
+    <button className="live-match-card" onClick={() => onOpen(match)}>
+      <div className="live-card-top">
+        <span><i className="red-dot"></i> LIVE • {match.league}</span>
+        <b>◉ LIVE</b>
+      </div>
+
+      <div className="live-score-row">
+        <div className="side-team">
+          <div className="flag">{match.af}</div>
+          <div>
+            <strong>{match.ac}</strong>
+            <small>{match.a}</small>
+          </div>
+        </div>
+
+        <div className="score">
+          <strong>{match.as}</strong>
+          <small>{match.over}</small>
+        </div>
+
+        <div className="versus">VS</div>
+
+        <div className="score right-score">
+          <strong>{match.bs}</strong>
+          <small></small>
+        </div>
+
+        <div className="side-team right-team">
+          <div>
+            <strong>{match.bc}</strong>
+            <small>{match.b}</small>
+          </div>
+          <div className="flag">{match.bf}</div>
+        </div>
+      </div>
+
+      <div className="live-bottom">
+        <div className="watching">
+          <span>●</span>
+          <b>{match.viewers}</b>
+        </div>
+        <span className="view-button">VIEW MATCH <b>→</b></span>
+      </div>
+    </button>
+  );
+}
+
+function UpcomingCard({ match, onOpen }) {
+  return (
+    <button className="upcoming-card" onClick={() => onOpen(match)}>
+      <div className="up-team">
+        <span className="mini-flag">{match.af}</span>
+        <div>
+          <strong>{match.ac}</strong>
+          <small>{match.a}</small>
+        </div>
+      </div>
+
+      <div className="match-time-box">
+        <span>{match.time}</span>
+        <strong>{match.clock}</strong>
+      </div>
+
+      <div className="up-team away">
+        <div>
+          <strong>{match.bc}</strong>
+          <small>{match.b}</small>
+        </div>
+        <span className="mini-flag">{match.bf}</span>
+      </div>
+
+      <span className="contest-action">VIEW CONTESTS <b>→</b></span>
+    </button>
+  );
+}
+
+function ContestCard({ contest, onClick }) {
+  return (
+    <button className="contest-card" onClick={onClick}>
+      <div>
+        <small>WINNING PRIZE</small>
+        <strong>{contest.prize}</strong>
+      </div>
+      <div className="contest-info">
+        <b>{contest.title}</b>
+        <span>{contest.spots} spots</span>
+      </div>
+      <div className="join-box">
+        <small>JOIN</small>
+        <b>{contest.entry}</b>
+      </div>
+    </button>
+  );
+}
+
+export default function App() {
+  const [tab, setTab] = useState("home");
+  const [notice, setNotice] = useState("");
+  const [search, setSearch] = useState("");
+
+  const openMatch = (match) => {
+    setNotice(`${match.a} vs ${match.b} — Match Centre`);
+    setTab("matches");
+  };
+
+  const upcomingFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return upcomingMatches;
+
+    return upcomingMatches.filter((m) =>
+      `${m.a} ${m.b} ${m.ac} ${m.bc} ${m.league}`
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [search]);
+
+  const showComing = (name) => {
+    setNotice(`${name} section is ready for the next Batzo release.`);
+  };
+
+  const goHome = () => {
+    setTab("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div className="batzo-app">
+      <Header setNotice={setNotice} />
+
+      <main className="main-content">
+        {notice && (
+          <button className="notice-bar" onClick={() => setNotice("")}>
+            <span>{notice}</span>
+            <b>×</b>
+          </button>
+        )}
+
+        {tab === "home" && (
+          <>
+            <section className="hero-banner">
+              <div className="hero-copy">
+                <span className="hero-kicker">THE NEW CRICKET EXPERIENCE</span>
+                <h1>
+                  Play smart.<br />
+                  <span>Play Batzo.</span>
+                </h1>
+                <p>
+                  Create your best XI, join contests
+                  <br />
+                  and follow every ball.
+                </p>
+                <button
+                  className="hero-button"
+                  onClick={() => setTab("matches")}
+                >
+                  EXPLORE MATCHES <b>→</b>
+                </button>
+              </div>
+
+              <div className="hero-cricket">
+                <div className="stadium-lights">✦ ✦</div>
+                <div className="cricket-ring ring-one"></div>
+                <div className="cricket-ring ring-two"></div>
+                <div className="cricket-player">🏏</div>
+                <div className="cricket-ball">🏏</div>
+              </div>
+
+              <div className="hero-dots">
+                <i className="active"></i>
+                <i></i>
+                <i></i>
+                <i></i>
+              </div>
+            </section>
+
+            <section className="quick-grid">
+              <QuickCard
+                icon="🏏"
+                title="Matches"
+                sub="Live & upcoming"
+                type="green-card"
+                onClick={() => setTab("matches")}
+              />
+              <QuickCard
+                icon="🏆"
+                title="My Contests"
+                sub="Track entries"
+                type="gold-card"
+                onClick={() => setTab("contests")}
+              />
+              <QuickCard
+                icon="👥"
+                title="My Teams"
+                sub="Build your XI"
+                type="blue-card"
+                onClick={() => setTab("teams")}
+              />
+              <QuickCard
+                icon="🎁"
+                title="Rewards"
+                sub="Coming soon"
+                type="pink-card"
+                onClick={() => showComing("Rewards")}
+              />
+            </section>
+
+            <section className="section-block">
+              <div className="section-heading">
+                <div>
+                  <span>PLAY NOW</span>
+                  <h2>Live Matches</h2>
+                </div>
+                <button onClick={() => setTab("matches")}>View all →</button>
+              </div>
+
+              {liveMatches.map((m) => (
+                <LiveMatchCard
+                  key={m.id}
+                  match={m}
+                  onOpen={openMatch}
+                />
+              ))}
+            </section>
+
+            <section className="section-block">
+              <div className="section-heading">
+                <div>
+                  <span>DON'T MISS OUT</span>
+                  <h2>Upcoming Matches</h2>
+                </div>
+                <button onClick={() => setTab("matches")}>View all →</button>
+              </div>
+
+              <div className="upcoming-list">
+                {upcomingMatches.slice(0, 2).map((m) => (
+                  <UpcomingCard
+                    key={m.id}
+                    match={m}
+                    onOpen={openMatch}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="section-block">
+              <div className="section-heading">
+                <div>
+                  <span>TOP PICKS</span>
+                  <h2>Popular Contests</h2>
+                </div>
+                <button onClick={() => setTab("contests")}>View all →</button>
+              </div>
+
+              <div className="contest-list">
+                {contests.map((c) => (
+                  <ContestCard
+                    key={c.title}
+                    contest={c}
+                    onClick={() => showComing(c.title)}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {tab === "matches" && (
+          <section className="matches-page">
+            <div className="page-heading">
+              <span>BATZO CRICKET</span>
+              <h1>Matches</h1>
+              <p>Choose a match and enter the action.</p>
+            </div>
+
+            <div className="search-field">
+              <span>⌕</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search teams or matches"
+              />
+            </div>
+
+            <div className="match-section-title">LIVE</div>
+
+            {liveMatches.map((m) => (
+              <LiveMatchCard
+                key={m.id}
+                match={m}
+                onOpen={openMatch}
+              />
+            ))}
+
+            <div className="match-section-title upcoming-title">
+              UPCOMING
+            </div>
+
+            <div className="upcoming-list">
+              {upcomingFiltered.map((m) => (
+                <UpcomingCard
+                  key={m.id}
+                  match={m}
+                  onOpen={openMatch}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tab === "contests" && (
+          <section className="simple-page">
+            <div className="page-heading">
+              <span>COMPETE</span>
+              <h1>Contests</h1>
+              <p>Choose your contest and play your way.</p>
+            </div>
+
+            <div className="contest-list">
+              {contests.map((c) => (
+                <ContestCard
+                  key={c.title}
+                  contest={c}
+                  onClick={() => showComing(c.title)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tab === "teams" && (
+          <section className="empty-page">
+            <div className="empty-icon">👥</div>
+            <span>YOUR SQUADS</span>
+            <h1>My Teams</h1>
+            <p>Create and manage your fantasy cricket teams here.</p>
+            <button
+              className="hero-button"
+              onClick={() => showComing("Team Builder")}
+            >
+              CREATE TEAM →
+            </button>
+          </section>
+        )}
+
+        {tab === "profile" && (
+          <section className="empty-page">
+            <div className="profile-icon">B</div>
+            <span>BATZO ACCOUNT</span>
+            <h1>Your Profile</h1>
+            <p>Profile, wallet and account settings.</p>
+            <button
+              className="outline-button"
+              onClick={() => showComing("Account Settings")}
+            >
+              ACCOUNT SETTINGS
+            </button>
+          </section>
+        )}
+      </main>
+
+      <nav className="bottom-navigation">
+        <button
+          className={tab === "home" ? "active" : ""}
+          onClick={goHome}
+        >
+          <span>⌂</span>
+          <small>Home</small>
+        </button>
+
+        <button
+          className={tab === "matches" ? "active" : ""}
+          onClick={() => setTab("matches")}
+        >
+          <span>🏏</span>
+          <small>Matches</small>
+        </button>
+
+        <button
+          className={tab === "contests" ? "active" : ""}
+          onClick={() => setTab("contests")}
+        >
+          <span>🏆</span>
+          <small>Contests</small>
+        </button>
+
+        <button
+          className={tab === "teams" ? "active" : ""}
+          onClick={() => setTab("teams")}
+        >
+          <span>👥</span>
+          <small>My Teams</small>
+        </button>
+
+        <button
+          className={tab === "profile" ? "active" : ""}
+          onClick={() => setTab("profile")}
+        >
+          <span>◉</span>
+          <small>Profile</small>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
+
+/* BATZO_FLOW_CONTROLLER */
+(function(){
+  if(typeof window==="undefined") return;
+
+  function renderTeam(match){
+    const root=document.getElementById("root");
+    if(!root) return;
+
+    root.innerHTML=`
+      <div class="bz-flow-screen">
+        <div class="bz-flow-head">
+          <div>
+            <div style="color:#24e778;font-size:12px;font-weight:900;letter-spacing:2px">BATZO CRICKET</div>
+            <h1>Create Team</h1>
+            <div style="color:#8f97a5;margin-top:4px">${match} • Select your XI</div>
+          </div>
+          <button class="bz-flow-back" id="bzBack">← Back</button>
+        </div>
+
+        <div id="bzPlayers"></div>
+
+        <div class="bz-flow-bottom">
+          <button class="bz-flow-primary" id="bzTeamContinue">CONTINUE • 0/11</button>
+        </div>
+      </div>
+    `;
+
+    const box=document.getElementById("bzPlayers");
+    let selected=new Set();
+
+    BATZO_PLAYERS.forEach((p,i)=>{
+      const card=document.createElement("div");
+      card.className="bz-flow-card";
+      card.innerHTML=`
+        <div class="bz-flow-player">
+          <div class="bz-flow-photo">
+            <img src="${p.photo}" alt="${p.name}">
+          </div>
+          <div class="bz-flow-player-info">
+            <div class="bz-flow-player-name">${p.name}</div>
+            <div class="bz-flow-player-meta">${p.team} • ${p.role}</div>
+            <div class="bz-flow-credit">${p.credit} Credits</div>
+          </div>
+          <button class="bz-flow-select">ADD</button>
+        </div>
+      `;
+
+      const btn=card.querySelector("button");
+      btn.onclick=()=>{
+        if(selected.has(i)){
+          selected.delete(i);
+          btn.textContent="ADD";
+          btn.classList.remove("active");
+        }else if(selected.size<11){
+          selected.add(i);
+          btn.textContent="✓";
+          btn.classList.add("active");
+        }
+
+        document.getElementById("bzTeamContinue").textContent=
+          "CONTINUE • "+selected.size+"/11";
+      };
+
+      box.appendChild(card);
+    });
+
+    document.getElementById("bzBack").onclick=()=>location.reload();
+
+    document.getElementById("bzTeamContinue").onclick=()=>{
+      if(selected.size<11){
+        alert("Please select 11 players.");
+        return;
+      }
+      alert("Team selected successfully. Captain & Vice-Captain selection is next.");
+    };
+  }
+
+  function renderContest(contest){
+    const root=document.getElementById("root");
+    if(!root) return;
+
+    root.innerHTML=`
+      <div class="bz-flow-screen">
+        <div class="bz-flow-head">
+          <div>
+            <div style="color:#24e778;font-size:12px;font-weight:900;letter-spacing:2px">CONTEST</div>
+            <h1>${contest.name}</h1>
+          </div>
+          <button class="bz-flow-back" id="bzContestBack">← Back</button>
+        </div>
+
+        <div class="bz-flow-card">
+          <div style="color:#858d9a;font-size:11px;text-transform:uppercase;letter-spacing:1.5px">
+            Winning Prize
+          </div>
+
+          <div class="bz-flow-prize">${contest.prize}</div>
+
+          <div style="margin-top:12px;color:#858d9a">Entry Fee</div>
+          <div class="bz-flow-entry">${contest.entry}</div>
+
+          <div class="bz-flow-stats">
+            <div class="bz-flow-stat">
+              <strong>${contest.spots}</strong>
+              <span>SPOTS</span>
+            </div>
+            <div class="bz-flow-stat">
+              <strong>${contest.joined}</strong>
+              <span>JOINED</span>
+            </div>
+            <div class="bz-flow-stat">
+              <strong>11</strong>
+              <span>PLAYERS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bz-flow-card">
+          <h3 style="color:#fff">Winning Breakdown</h3>
+          <p style="color:#a1a8b4">Rank 1 — 40% Prize Pool</p>
+          <p style="color:#a1a8b4">Rank 2 — 20% Prize Pool</p>
+          <p style="color:#a1a8b4">Rank 3 — 10% Prize Pool</p>
+          <p style="color:#a1a8b4">Other Winners — 30% Prize Pool</p>
+        </div>
+
+        <div class="bz-flow-bottom">
+          <button class="bz-flow-primary" id="bzJoin">
+            JOIN CONTEST • ${contest.entry}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("bzContestBack").onclick=()=>location.reload();
+
+    document.getElementById("bzJoin").onclick=()=>{
+      renderTeam("IND vs AUS");
+    };
+  }
+
+  window.addEventListener("batzo:team",e=>{
+    renderTeam((e.detail&&e.detail.match)||"IND vs AUS");
+  });
+
+  window.addEventListener("batzo:contest",e=>{
+    renderContest((e.detail&&e.detail.contest)||BATZO_CONTESTS[0]);
+  });
+
+  document.addEventListener("click",e=>{
+    const el=e.target.closest("button,a");
+    if(!el) return;
+
+    const text=(el.innerText||"").trim().toUpperCase();
+
+    if(
+      text.includes("VIEW CONTEST") ||
+      text.includes("JOIN CONTEST") ||
+      text==="CONTESTS"
+    ){
+      e.preventDefault();
+      e.stopPropagation();
+      openBatzoContest(BATZO_CONTESTS[0]);
+      return;
+    }
+
+    if(
+      text.includes("CREATE TEAM") ||
+      text.includes("BUILD YOUR XI") ||
+      text==="MY TEAMS"
+    ){
+      e.preventDefault();
+      e.stopPropagation();
+      openBatzoTeam("IND vs AUS");
+      return;
+    }
+  },true);
+})();
+
+
+/* BATZO FINAL UPCOMING CONTEST REPAIR */
+(function(){
+
+  function fireContest(matchName){
+    const contests =
+      (typeof BATZO_CONTESTS !== "undefined" &&
+       Array.isArray(BATZO_CONTESTS))
+        ? BATZO_CONTESTS
+        : [{
+            id:"contest-001",
+            name:"Mega Contest",
+            prize:"₹1,00,000",
+            entry:"₹49",
+            spots:10000,
+            joined:3210
+          }];
+
+    const contest = contests[0];
+
+    window.dispatchEvent(
+      new CustomEvent("batzo:contest",{
+        detail:{
+          contest:contest,
+          match:matchName || "IND vs AUS"
+        }
+      })
+    );
+  }
+
+  function makeButton(matchName){
+
+    const btn=document.createElement("button");
+
+    btn.type="button";
+    btn.className="batzo-final-view-contests";
+
+    btn.textContent="VIEW CONTESTS";
+
+    btn.style.cssText=[
+      "display:block",
+      "width:100%",
+      "margin-top:12px",
+      "padding:12px 14px",
+      "border:0",
+      "border-radius:12px",
+      "background:linear-gradient(135deg,#24ef7b,#0fc966)",
+      "color:#031009",
+      "font-size:13px",
+      "font-weight:900",
+      "cursor:pointer",
+      "box-sizing:border-box"
+    ].join(";");
+
+    btn.addEventListener("click",function(e){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      fireContest(matchName || "IND vs AUS");
+
+    },true);
+
+    return btn;
+  }
+
+  function textOf(el){
+    return (el.innerText || el.textContent || "")
+      .replace(/\s+/g," ")
+      .trim();
+  }
+
+  function repairUpcoming(){
+
+    const all=[...document.querySelectorAll(
+      "div,section,article,main"
+    )];
+
+    let upcomingFound=false;
+
+    all.forEach(el=>{
+
+      if(!el || el.id==="root") return;
+
+      const txt=textOf(el).toUpperCase();
+
+      if(!txt.includes("UPCOMING")) return;
+
+      if(txt.length>1800) return;
+
+      upcomingFound=true;
+
+      /*
+       * Existing match card:
+       * find a reasonably small container containing
+       * UPCOMING + team information.
+       */
+      let card=el;
+
+      for(let i=0;i<4 && card.parentElement;i++){
+
+        const parent=card.parentElement;
+        const pt=textOf(parent).toUpperCase();
+
+        if(
+          pt.includes("UPCOMING") &&
+          pt.length < 900
+        ){
+          card=parent;
+        }else{
+          break;
+        }
+      }
+
+      if(
+        card.querySelector(
+          ".batzo-final-view-contests"
+        )
+      ) return;
+
+      const matchText=textOf(card);
+
+      let matchName="IND vs AUS";
+
+      if(
+        matchText.includes("IND") &&
+        matchText.includes("AUS")
+      ){
+        matchName="IND vs AUS";
+      }else if(
+        matchText.includes("IND") &&
+        matchText.includes("ENG")
+      ){
+        matchName="IND vs ENG";
+      }
+
+      card.appendChild(makeButton(matchName));
+
+    });
+
+    /*
+     * If the current Home screen has Upcoming heading
+     * but no actual contest CTA/card, create one visible
+     * fallback card. This prevents the user getting a blank
+     * Upcoming section.
+     */
+    if(
+      upcomingFound &&
+      !document.querySelector(
+        ".batzo-final-view-contests"
+      )
+    ){
+
+      const heading=[...document.querySelectorAll(
+        "h1,h2,h3,h4,div,span"
+      )].find(el =>
+        textOf(el).toUpperCase()==="UPCOMING MATCHES"
+      );
+
+      if(heading){
+
+        const section=document.createElement("div");
+
+        section.className="batzo-final-generated-match";
+
+        section.style.cssText=[
+          "margin:12px 0",
+          "padding:15px",
+          "border-radius:18px",
+          "background:linear-gradient(145deg,#121920,#090d11)",
+          "border:1px solid #29313a",
+          "color:#fff"
+        ].join(";");
+
+        section.innerHTML=`
+          <div style="
+            color:#ffd43b;
+            font-size:10px;
+            font-weight:900;
+            margin-bottom:10px;
+          ">UPCOMING</div>
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            font-weight:900;
+            font-size:16px;
+          ">
+            <span>🇮🇳 INDIA</span>
+            <span style="color:#24e778">VS</span>
+            <span>🇦🇺 AUSTRALIA</span>
+          </div>
+
+          <div style="
+            color:#818b97;
+            font-size:10px;
+            text-align:center;
+            margin:9px 0;
+          ">
+            Upcoming Cricket Match
+          </div>
+        `;
+
+        section.appendChild(
+          makeButton("IND vs AUS")
+        );
+
+        heading.parentElement?.appendChild(section);
+      }
+    }
+  }
+
+  /*
+   * Existing listener in the project catches
+   * VIEW CONTESTS. This final listener is deliberately
+   * installed after the existing app logic and directly
+   * opens the existing batzo:contest flow.
+   */
+  window.addEventListener(
+    "batzo:open-upcoming-contest",
+    function(e){
+      fireContest(
+        e.detail?.match || "IND vs AUS"
+      );
+    }
+  );
+
+  /*
+   * Run after React renders.
+   */
+  function run(){
+    try{
+      repairUpcoming();
+    }catch(err){
+      console.warn(
+        "BATZO upcoming repair:",
+        err
+      );
+    }
+  }
+
+  if(
+    document.readyState==="complete" ||
+    document.readyState==="interactive"
+  ){
+    setTimeout(run,250);
+    setTimeout(run,1000);
+    setTimeout(run,2500);
+  }else{
+    document.addEventListener(
+      "DOMContentLoaded",
+      function(){
+        setTimeout(run,250);
+        setTimeout(run,1000);
+        setTimeout(run,2500);
+      }
+    );
+  }
+
+  /*
+   * React/Vite can repaint the Home screen.
+   * Keep the CTA attached after repaint.
+   */
+  let timer=0;
+
+  const observer=new MutationObserver(function(){
+
+    clearTimeout(timer);
+
+    timer=setTimeout(run,120);
+
+  });
+
+  observer.observe(
+    document.documentElement,
+    {
+      childList:true,
+      subtree:true
+    }
+  );
+
+})();
+
+
+============================================================
+FILE: frontend/src/services/team-store.js
+============================================================
+const KEY = "batzo_fantasy_teams";
+
+export function getMyTeams() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function saveMyTeam(team) {
+  const teams = getMyTeams();
+
+  const item = {
+    id:"team-" + Date.now(),
+    createdAt:new Date().toISOString(),
+    ...team
+  };
+
+  teams.push(item);
+
+  localStorage.setItem(KEY,JSON.stringify(teams));
+
+  return item;
+}
+
+export function updateMyTeam(id,changes) {
+  const teams = getMyTeams().map(team =>
+    team.id === id
+      ? {...team,...changes}
+      : team
+  );
+
+  localStorage.setItem(KEY,JSON.stringify(teams));
+
+  return teams;
+}
+
+export function deleteMyTeam(id) {
+  const teams = getMyTeams()
+    .filter(team => team.id !== id);
+
+  localStorage.setItem(KEY,JSON.stringify(teams));
+
+  return teams;
+}
+
+============================================================
+FILE: frontend/src/services/contest-store.js
+============================================================
+const KEY = "batzo_contest_entries";
+
+export function getContestEntries() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function joinContest({
+  contestId,
+  teamId,
+  entryFee,
+  balance
+}) {
+
+  const fee = Number(entryFee);
+  const wallet = Number(balance);
+
+  if (!contestId)
+    throw new Error("Contest required");
+
+  if (!teamId)
+    throw new Error("Team required");
+
+  if (!Number.isFinite(fee) || fee <= 0)
+    throw new Error("Invalid entry fee");
+
+  if (!Number.isFinite(wallet) || wallet < fee)
+    throw new Error("Insufficient wallet balance");
+
+  const entries = getContestEntries();
+
+  const entry = {
+    id:"entry-" + Date.now(),
+    contestId,
+    teamId,
+    entryFee:fee,
+    createdAt:new Date().toISOString()
+  };
+
+  entries.push(entry);
+
+  localStorage.setItem(KEY,JSON.stringify(entries));
+
+  return entry;
+}
+
+============================================================
+FILE: frontend/src/services/wallet-store.js
+============================================================
+const BALANCE = "batzo_wallet_balance";
+const TX = "batzo_wallet_transactions";
+
+export function getWalletBalance() {
+  const value = Number(localStorage.getItem(BALANCE));
+  return Number.isFinite(value) ? value : 0;
+}
+
+export function getWalletTransactions() {
+  try {
+    return JSON.parse(localStorage.getItem(TX) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function recordDemoTransaction(type,amount) {
+
+  const value = Number(amount);
+
+  if (!Number.isFinite(value) || value <= 0)
+    throw new Error("Invalid amount");
+
+  let balance = getWalletBalance();
+
+  if (type === "CREDIT") {
+    balance += value;
+  }
+
+  if (type === "DEBIT") {
+    if (balance < value)
+      throw new Error("Insufficient balance");
+
+    balance -= value;
+  }
+
+  localStorage.setItem(BALANCE,String(balance));
+
+  const tx = getWalletTransactions();
+
+  tx.unshift({
+    id:"tx-" + Date.now(),
+    type,
+    amount:value,
+    createdAt:new Date().toISOString()
+  });
+
+  localStorage.setItem(TX,JSON.stringify(tx));
+
+  return balance;
+}
+
+============================================================
+FILE: frontend/src/services/fantasy-validator.js
+============================================================
+import { TEAM_RULES } from "../data/fantasy-players.js";
+
+export function validateFantasyTeam(players, captainId, viceCaptainId) {
+
+  if (!Array.isArray(players)) {
+    return {ok:false,error:"Invalid player list"};
+  }
+
+  if (players.length !== TEAM_RULES.totalPlayers) {
+    return {ok:false,error:"Exactly 11 players required"};
+  }
+
+  const ids = players.map(p => p.id);
+
+  if (new Set(ids).size !== ids.length) {
+    return {ok:false,error:"Duplicate player selected"};
+  }
+
+  const credits = players.reduce(
+    (sum,p) => sum + Number(p.credits || 0),0
+  );
+
+  if (credits > TEAM_RULES.maxCredits) {
+    return {ok:false,error:"Maximum 100 credits allowed"};
+  }
+
+  const count = role =>
+    players.filter(p => p.role === role).length;
+
+  const wk = count("WK");
+  const bat = count("BAT");
+  const ar = count("AR");
+  const bowl = count("BOWL");
+
+  if (wk < TEAM_RULES.minWK || wk > TEAM_RULES.maxWK)
+    return {ok:false,error:"Invalid wicket-keeper combination"};
+
+  if (bat < TEAM_RULES.minBAT || bat > TEAM_RULES.maxBAT)
+    return {ok:false,error:"Invalid batter combination"};
+
+  if (ar < TEAM_RULES.minAR || ar > TEAM_RULES.maxAR)
+    return {ok:false,error:"Invalid all-rounder combination"};
+
+  if (bowl < TEAM_RULES.minBOWL || bowl > TEAM_RULES.maxBOWL)
+    return {ok:false,error:"Invalid bowler combination"};
+
+  const ind = players.filter(p => p.team === "IND").length;
+  const aus = players.filter(p => p.team === "AUS").length;
+
+  if (ind > TEAM_RULES.maxFromOneTeam ||
+      aus > TEAM_RULES.maxFromOneTeam) {
+    return {ok:false,error:"Maximum 7 players from one team"};
+  }
+
+  if (!captainId || !viceCaptainId)
+    return {ok:false,error:"Captain and Vice-Captain required"};
+
+  if (captainId === viceCaptainId)
+    return {ok:false,error:"Captain and Vice-Captain must be different"};
+
+  if (!ids.includes(captainId))
+    return {ok:false,error:"Captain must be selected"};
+
+  if (!ids.includes(viceCaptainId))
+    return {ok:false,error:"Vice-Captain must be selected"};
+
+  return {
+    ok:true,
+    credits,
+    roles:{wk,bat,ar,bowl},
+    teams:{IND:ind,AUS:aus}
+  };
+}
+
+============================================================
+FILE: frontend/src/fantasy/fantasyEngine.js
+============================================================
+export const FANTASY_RULES = {
+  run: 1,
+  fourBonus: 1,
+  sixBonus: 2,
+  wicket: 25,
+  catch: 8,
+  stumping: 12,
+  runOut: 6,
+  captainMultiplier: 2,
+  viceCaptainMultiplier: 1.5
+};
+
+export function playerPoints(stats = {}) {
+  let points = 0;
+
+  points += Number(stats.runs || 0) * FANTASY_RULES.run;
+  points += Number(stats.fours || 0) * FANTASY_RULES.fourBonus;
+  points += Number(stats.sixes || 0) * FANTASY_RULES.sixBonus;
+  points += Number(stats.wickets || 0) * FANTASY_RULES.wicket;
+  points += Number(stats.catches || 0) * FANTASY_RULES.catch;
+  points += Number(stats.stumpings || 0) * FANTASY_RULES.stumping;
+  points += Number(stats.runOuts || 0) * FANTASY_RULES.runOut;
+
+  if (stats.isCaptain) {
+    points *= FANTASY_RULES.captainMultiplier;
+  } else if (stats.isViceCaptain) {
+    points *= FANTASY_RULES.viceCaptainMultiplier;
+  }
+
+  return Number(points.toFixed(2));
+}
+
+export function teamPoints(players = []) {
+  return players.reduce(
+    (sum, player) => sum + playerPoints(player),
+    0
+  );
+}
+
+============================================================
+FILE: frontend/src/fantasy/teamRules.js
+============================================================
+export function validateFantasyTeam(players = []) {
+  if (players.length !== 11) {
+    return { valid: false, error: "Select exactly 11 players." };
+  }
+
+  const captain = players.filter(p => p.isCaptain);
+  const vice = players.filter(p => p.isViceCaptain);
+
+  if (captain.length !== 1) {
+    return { valid: false, error: "Select one Captain." };
+  }
+
+  if (vice.length !== 1) {
+    return { valid: false, error: "Select one Vice-Captain." };
+  }
+
+  if (captain[0].id === vice[0].id) {
+    return {
+      valid: false,
+      error: "Captain and Vice-Captain must be different."
+    };
+  }
+
+  return { valid: true, error: null };
+}
+
+============================================================
+FILE: frontend/src/contest/ContestSystem.jsx
+============================================================
+import React, { useMemo, useState } from "react";
+import { batzoContestTypes, batzoPrizeBreakup } from "./contestData";
+import "./ContestSystem.css";
+
+export default function ContestSystem({ match, onBack }) {
+  const [screen, setScreen] = useState("list");
+  const [selected, setSelected] = useState(null);
+  const [joined, setJoined] = useState([]);
+  const [tab, setTab] = useState("ALL");
+
+  const contests = useMemo(() => {
+    if (tab === "ALL") return batzoContestTypes;
+    return batzoContestTypes.filter(
+      c => c.short === tab
+    );
+  }, [tab]);
+
+  const openContest = contest => {
+    setSelected(contest);
+    setScreen("details");
+  };
+
+  const joinContest = () => {
+    if (!selected) return;
+    if (!joined.find(c => c.id === selected.id)) {
+      setJoined(prev => [...prev, selected]);
+    }
+    setScreen("joined");
+  };
+
+  if (screen === "details" && selected) {
+    const prizes = batzoPrizeBreakup[selected.id] || [];
+
+    return (
+      <main className="bz-contest-page">
+        <header className="bz-contest-header">
+          <button onClick={() => setScreen("list")}>←</button>
+          <div>
+            <small>BATZO CONTEST</small>
+            <h1>{selected.name}</h1>
+          </div>
+        </header>
+
+        <section className="bz-match-banner">
+          <b>{match?.team1 || "INDIA"}</b>
+          <span>VS</span>
+          <b>{match?.team2 || "AUSTRALIA"}</b>
+        </section>
+
+        <section className="bz-contest-hero">
+          <span>PRIZE POOL</span>
+          <strong>₹{selected.prizePool}</strong>
+          <small>Guaranteed Contest</small>
+        </section>
+
+        <section className="bz-info-grid">
+          <div>
+            <small>ENTRY</small>
+            <b>₹{selected.entryFee}</b>
+          </div>
+          <div>
+            <small>SPOTS</small>
+            <b>{selected.filled}/{selected.spots}</b>
+          </div>
+          <div>
+            <small>WINNERS</small>
+            <b>{selected.winners}</b>
+          </div>
+        </section>
+
+        <section className="bz-panel">
+          <h2>Prize Breakup</h2>
+          {prizes.map(([rank, amount]) => (
+            <div className="bz-prize-row" key={rank}>
+              <span>{rank}</span>
+              <b>₹{amount}</b>
+            </div>
+          ))}
+        </section>
+
+        <button className="bz-join-btn" onClick={joinContest}>
+          JOIN CONTEST · ₹{selected.entryFee}
+        </button>
+      </main>
+    );
+  }
+
+  if (screen === "joined") {
+    return (
+      <main className="bz-contest-page">
+        <header className="bz-contest-header">
+          <button onClick={() => setScreen("list")}>←</button>
+          <div>
+            <small>BATZO</small>
+            <h1>My Contest</h1>
+          </div>
+        </header>
+
+        {joined.length === 0 ? (
+          <section className="bz-empty">
+            <div>🏆</div>
+            <h2>No Joined Contest</h2>
+            <p>Join a contest to see it here.</p>
+            <button onClick={() => setScreen("list")}>
+              VIEW CONTESTS
+            </button>
+          </section>
+        ) : (
+          <>
+            {joined.map(c => (
+              <section className="bz-joined-card" key={c.id}>
+                <div>
+                  <span>{c.name}</span>
+                  <strong>₹{c.prizePool}</strong>
+                </div>
+                <div>
+                  <small>Entry ₹{c.entryFee}</small>
+                  <small>My Team · 1</small>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelected(c);
+                    setScreen("leaderboard");
+                  }}
+                >
+                  VIEW LEADERBOARD
+                </button>
+              </section>
+            ))}
+          </>
+        )}
+
+        <button className="bz-back-home" onClick={onBack}>
+          ← BACK TO MATCH
+        </button>
+      </main>
+    );
+  }
+
+  if (screen === "leaderboard" && selected) {
+    return (
+      <main className="bz-contest-page">
+        <header className="bz-contest-header">
+          <button onClick={() => setScreen("joined")}>←</button>
+          <div>
+            <small>CONTEST</small>
+            <h1>Leaderboard</h1>
+          </div>
+        </header>
+
+        <section className="bz-leaderboard">
+          {[
+            ["1", "BATZO PLAYER", "842"],
+            ["2", "CRICKET KING", "811"],
+            ["3", "SUPER BAT", "786"],
+            ["4", "MY TEAM", "742"]
+          ].map(([rank, name, points]) => (
+            <div
+              className={`bz-rank ${name === "MY TEAM" ? "mine" : ""}`}
+              key={rank}
+            >
+              <b>#{rank}</b>
+              <span>{name}</span>
+              <strong>{points} pts</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="bz-result-preview">
+          <span>RESULT</span>
+          <b>Contest is LIVE</b>
+          <small>Final winnings will appear after match result.</small>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="bz-contest-page">
+      <header className="bz-contest-header">
+        <button onClick={onBack}>←</button>
+        <div>
+          <small>BATZO CRICKET</small>
+          <h1>Contests</h1>
+        </div>
+        <button onClick={() => setScreen("joined")}>🏆</button>
+      </header>
+
+      <section className="bz-match-banner">
+        <b>{match?.team1 || "INDIA"}</b>
+        <span>VS</span>
+        <b>{match?.team2 || "AUSTRALIA"}</b>
+      </section>
+
+      <div className="bz-tabs">
+        {["ALL", "MEGA", "SMALL", "H2H", "STARTER"].map(t => (
+          <button
+            className={tab === t ? "active" : ""}
+            key={t}
+            onClick={() => setTab(t)}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <section className="bz-contest-list">
+        {contests.map(c => {
+          const percent = Math.min(
+            100,
+            Math.round((c.filled / c.spots) * 100)
+          );
+
+          return (
+            <article
+              className="bz-contest-card"
+              key={c.id}
+              onClick={() => openContest(c)}
+            >
+              <div className="bz-card-top">
+                <span>{c.name}</span>
+                <b>₹{c.prizePool}</b>
+              </div>
+
+              <div className="bz-card-middle">
+                <div>
+                  <small>ENTRY</small>
+                  <strong>₹{c.entryFee}</strong>
+                </div>
+                <div>
+                  <small>SPOTS</small>
+                  <strong>{c.spots}</strong>
+                </div>
+                <div>
+                  <small>WINNERS</small>
+                  <strong>{c.winners}</strong>
+                </div>
+              </div>
+
+              <div className="bz-progress">
+                <span style={{ width: `${percent}%` }} />
+              </div>
+
+              <div className="bz-card-bottom">
+                <small>{c.filled} spots filled</small>
+                <b>VIEW CONTEST →</b>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+    </main>
+  );
+}
+
+============================================================
+FILE: frontend/src/contest/contestFoundation.js
+============================================================
+export const contestRules = {
+  minPlayers: 11,
+  maxPlayers: 11,
+  captainRequired: true,
+  viceCaptainRequired: true,
+  captainMultiplier: 2,
+  viceCaptainMultiplier: 1.5
+};
+
+export function validateContestTeam(team = []) {
+  if (team.length !== 11) {
+    return { valid: false, error: "Exactly 11 players are required." };
+  }
+
+  const captain = team.filter(p => p.isCaptain);
+  const viceCaptain = team.filter(p => p.isViceCaptain);
+
+  if (captain.length !== 1) {
+    return { valid: false, error: "Exactly one Captain is required." };
+  }
+
+  if (viceCaptain.length !== 1) {
+    return { valid: false, error: "Exactly one Vice-Captain is required." };
+  }
+
+  if (captain[0].id === viceCaptain[0].id) {
+    return { valid: false, error: "Captain and Vice-Captain must be different." };
+  }
+
+  return { valid: true };
+}
+
+============================================================
+FILE: frontend/src/contest/contestData.js
+============================================================
+export const batzoContestTypes = [
+  {
+    id: "mega",
+    name: "Mega Contest",
+    short: "MEGA",
+    entryFee: 49,
+    prizePool: 450,
+    spots: 20,
+    filled: 7,
+    winners: 8,
+    guaranteed: true
+  },
+  {
+    id: "small",
+    name: "Small League",
+    short: "SMALL",
+    entryFee: 20,
+    prizePool: 180,
+    spots: 10,
+    filled: 4,
+    winners: 4,
+    guaranteed: true
+  },
+  {
+    id: "h2h",
+    name: "Head to Head",
+    short: "H2H",
+    entryFee: 10,
+    prizePool: 18,
+    spots: 2,
+    filled: 1,
+    winners: 1,
+    guaranteed: true
+  },
+  {
+    id: "starter",
+    name: "Starter Contest",
+    short: "STARTER",
+    entryFee: 5,
+    prizePool: 9,
+    spots: 2,
+    filled: 1,
+    winners: 1,
+    guaranteed: true
+  }
+];
+
+export const batzoPrizeBreakup = {
+  mega: [
+    ["1st", 180],
+    ["2nd", 90],
+    ["3rd", 54],
+    ["4th", 36],
+    ["5th", 27],
+    ["6th-8th", 21]
+  ],
+  small: [
+    ["1st", 90],
+    ["2nd", 45],
+    ["3rd", 27],
+    ["4th", 18]
+  ],
+  h2h: [
+    ["1st", 18]
+  ],
+  starter: [
+    ["1st", 9]
+  ]
+};
+
+============================================================
+FILE: frontend/src/wallet/walletFoundation.js
+============================================================
+export const walletTypes = {
+  DEPOSIT: "deposit",
+  WITHDRAWAL: "withdrawal",
+  ENTRY_FEE: "entry_fee",
+  WINNING: "winning",
+  REFUND: "refund"
+};
+
+export function validateWalletTransaction(tx) {
+  if (!tx || Number(tx.amount) <= 0) {
+    return { valid: false, error: "Invalid transaction amount." };
+  }
+
+  if (!walletTypes[tx.type?.toUpperCase()]) {
+    return { valid: false, error: "Invalid transaction type." };
+  }
+
+  return { valid: true };
+}
+
+============================================================
+FILE: frontend/src/services/cricketService.js
+============================================================
+import { API_CONFIG } from "../api/config";
+
+async function request(path, options = {}) {
+  const response = await fetch(
+    `${API_CONFIG.baseUrl}${path}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      },
+      ...options
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`API ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export const cricketService = {
+  live: () => request("/matches/live"),
+  upcoming: () => request("/matches/upcoming"),
+  results: () => request("/matches/results"),
+  players: (matchId) => request(`/matches/${matchId}/players`),
+  scorecard: (matchId) => request(`/matches/${matchId}/scorecard`)
+};
+
+============================================================
+FILE: frontend/src/services/cricketApi.js
+============================================================
+const BASE =
+  import.meta.env.VITE_CRICKET_API_URL ||
+  "http://127.0.0.1:3101/api";
+
+async function api(path, options = {}) {
+  const response = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cricket API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export const cricketApi = {
+  live: () => api("/matches/live"),
+  upcoming: () => api("/matches/upcoming"),
+  results: () => api("/matches/results"),
+  match: id => api(`/matches/${id}`),
+  players: id => api(`/matches/${id}/players`),
+  scorecard: id => api(`/matches/${id}/scorecard`)
+};
+
+============================================================
+FILE: backend/src/services/contestService.js
+============================================================
+function canJoinContest(contest) {
+  if (!contest) {
+    return { ok: false, error: "Contest not found." };
+  }
+
+  if (contest.status !== "open") {
+    return { ok: false, error: "Contest is not open." };
+  }
+
+  if (
+    Number(contest.joinedSpots || 0) >=
+    Number(contest.maxSpots || 0)
+  ) {
+    return { ok: false, error: "Contest is full." };
+  }
+
+  return { ok: true };
+}
+
+function calculateRank(entries = []) {
+  return [...entries]
+    .sort((a, b) => Number(b.points || 0) - Number(a.points || 0))
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1
+    }));
+}
+
+module.exports = {
+  canJoinContest,
+  calculateRank
+};
+
+============================================================
+FILE: backend/src/services/walletService.js
+============================================================
+function validAmount(amount) {
+  const n = Number(amount);
+
+  if (!Number.isFinite(n) || n <= 0) {
+    throw new Error("Invalid amount.");
+  }
+
+  return Number(n.toFixed(2));
+}
+
+function debit(balance, amount) {
+  const value = validAmount(amount);
+
+  if (Number(balance || 0) < value) {
+    throw new Error("Insufficient wallet balance.");
+  }
+
+  return Number((Number(balance || 0) - value).toFixed(2));
+}
+
+function credit(balance, amount) {
+  return Number(
+    (Number(balance || 0) + validAmount(amount)).toFixed(2)
+  );
+}
+
+module.exports = {
+  validAmount,
+  debit,
+  credit
+};
+
+============================================================
+FILE: backend/src/services/settlementService.js
+============================================================
+function calculatePrizePool(entryFee, joinedSpots) {
+  return Number(entryFee || 0) * Number(joinedSpots || 0);
+}
+
+function settlementTemplate(contest) {
+  return {
+    contestId: contest.id,
+    status: "pending",
+    prizePool: calculatePrizePool(
+      contest.entryFee,
+      contest.joinedSpots
+    ),
+    winners: []
+  };
+}
+
+module.exports = {
+  calculatePrizePool,
+  settlementTemplate
+};
+
+============================================================
+FILE: backend/src/models/contest.model.js
+============================================================
+const ContestModel = {
+  fields: {
+    id: "string",
+    matchId: "string",
+    name: "string",
+    entryFee: "number",
+    prizePool: "number",
+    maxSpots: "number",
+    joinedSpots: "number",
+    status: "open|full|live|completed",
+    createdAt: "datetime",
+    updatedAt: "datetime"
+  }
+};
+
+module.exports = ContestModel;
+
+============================================================
+FILE: backend/src/models/contestEntry.model.js
+============================================================
+const ContestEntryModel = {
+  fields: {
+    id: "string",
+    contestId: "string",
+    userId: "string",
+    teamId: "string",
+    entryFee: "number",
+    points: "number",
+    rank: "number",
+    prize: "number",
+    status: "joined|ranked|settled"
+  }
+};
+
+module.exports = ContestEntryModel;
+
+============================================================
+FILE: backend/src/models/team.model.js
+============================================================
+const TeamModel = {
+  fields: {
+    id: "string",
+    userId: "string",
+    matchId: "string",
+    players: "array",
+    captainId: "string",
+    viceCaptainId: "string",
+    createdAt: "datetime"
+  }
+};
+
+module.exports = TeamModel;
+
+============================================================
+FILE: backend/src/models/match.model.js
+============================================================
+const MatchModel = {
+  fields: {
+    id: "string",
+    externalId: "string",
+    team1: "object",
+    team2: "object",
+    status: "upcoming|live|completed",
+    venue: "string",
+    startTime: "datetime",
+    score: "object",
+    updatedAt: "datetime"
+  }
+};
+
+module.exports = MatchModel;
+
+============================================================
+FILE: backend/src/models/wallet.model.js
+============================================================
+const WalletModel = {
+  fields: {
+    userId: "string",
+    balance: "number",
+    winningBalance: "number",
+    bonusBalance: "number",
+    updatedAt: "datetime"
+  }
+};
+
+module.exports = WalletModel;
+
+============================================================
+FILE: backend/src/models/transaction.model.js
+============================================================
+const TransactionModel = {
+  fields: {
+    id: "string",
+    userId: "string",
+    type: "deposit|withdrawal|entry_fee|winning|refund",
+    amount: "number",
+    status: "pending|success|failed|reversed",
+    reference: "string",
+    createdAt: "datetime"
+  }
+};
+
+module.exports = TransactionModel;

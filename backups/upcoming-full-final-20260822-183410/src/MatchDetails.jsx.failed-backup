@@ -1,0 +1,249 @@
+import React, { useState } from "react";
+
+export default function MatchDetails({ match, onBack }) {
+  const [tab, setTab] = useState("contests");
+
+  const team1 =
+    match?.team1?.name ||
+    match?.team1 ||
+    match?.homeTeam?.name ||
+    match?.homeTeam ||
+    "TEAM A";
+
+  const team2 =
+    match?.team2?.name ||
+    match?.team2 ||
+    match?.awayTeam?.name ||
+    match?.awayTeam ||
+    "TEAM B";
+
+  const score1 =
+    match?.team1?.score ||
+    match?.homeTeam?.score ||
+    match?.score1 ||
+    "0/0";
+
+  const score2 =
+    match?.team2?.score ||
+    match?.awayTeam?.score ||
+    match?.score2 ||
+    "0/0";
+
+  const status = String(match?.status || "UPCOMING").toUpperCase();
+  const venue = match?.venue || match?.ground || "Cricket Stadium";
+
+  return (
+    <div className="batzo-safe-match">
+
+      <header className="safe-match-header">
+        <button className="safe-back" onClick={onBack}>‹</button>
+
+        <div>
+          <strong>Match Details</strong>
+          <small>BATZO CRICKET</small>
+        </div>
+
+        <span className="safe-status">
+          ● {status}
+        </span>
+      </header>
+
+      <section className="safe-score-card">
+
+        <div className="safe-card-label">
+          🏏 {status === "LIVE" ? "LIVE MATCH" : "UPCOMING MATCH"}
+        </div>
+
+        <div className="safe-teams">
+
+          <div className="safe-team">
+            <div className="safe-team-logo">🏏</div>
+            <strong>{team1}</strong>
+            <b>{score1}</b>
+            <small>20 OVERS</small>
+          </div>
+
+          <div className="safe-vs">
+            <span>VS</span>
+            <small>•</small>
+          </div>
+
+          <div className="safe-team">
+            <div className="safe-team-logo blue">🏏</div>
+            <strong>{team2}</strong>
+            <b>{score2}</b>
+            <small>20 OVERS</small>
+          </div>
+
+        </div>
+
+        <div className="safe-live-box">
+          <div>
+            <small>LIVE SCORE</small>
+            <strong>{score1} <em>vs</em> {score2}</strong>
+          </div>
+
+          <div>
+            <small>OVERS</small>
+            <strong>0.0</strong>
+          </div>
+        </div>
+
+        <div className="safe-match-meta">
+          <span>📍 {venue}</span>
+          <span>🏏 T20</span>
+        </div>
+
+      </section>
+
+      <section className="safe-join-card">
+        <div>
+          <small>MEGA CONTEST</small>
+          <strong>₹1 Crore+</strong>
+          <span>Prize Pool</span>
+        </div>
+
+        <button onClick={() => setTab("contests")}>
+          JOIN CONTEST
+        </button>
+      </section>
+
+      <div className="safe-tabs">
+
+        <button
+          className={tab === "contests" ? "active" : ""}
+          onClick={() => setTab("contests")}
+        >
+          🏆
+          <small>Contests</small>
+        </button>
+
+        <button
+          className={tab === "team" ? "active" : ""}
+          onClick={() => setTab("team")}
+        >
+          👥
+          <small>My Team</small>
+        </button>
+
+        <button
+          className={tab === "info" ? "active" : ""}
+          onClick={() => setTab("info")}
+        >
+          ℹ️
+          <small>Match Info</small>
+        </button>
+
+      </div>
+
+      {tab === "contests" && (
+        <section className="safe-content">
+
+          <div className="safe-title">
+            <div>
+              <small>CONTESTS</small>
+              <h2>Choose your contest</h2>
+            </div>
+
+            <button>View All</button>
+          </div>
+
+          <div className="safe-contest">
+            <div className="safe-contest-top">
+              <div>
+                <small>MEGA CONTEST</small>
+                <strong>₹1 Crore</strong>
+              </div>
+              <span>🔥 HOT</span>
+            </div>
+
+            <div className="safe-contest-bottom">
+              <div>
+                <small>ENTRY</small>
+                <b>₹49</b>
+              </div>
+
+              <div>
+                <small>SPOTS</small>
+                <b>1,00,000</b>
+              </div>
+
+              <div>
+                <small>WINNERS</small>
+                <b>12,500</b>
+              </div>
+
+              <button>JOIN</button>
+            </div>
+          </div>
+
+          <div className="safe-contest">
+            <div className="safe-contest-top">
+              <div>
+                <small>SMALL CONTEST</small>
+                <strong>₹10,000</strong>
+              </div>
+              <span className="safe-blue">SAFE</span>
+            </div>
+
+            <div className="safe-contest-bottom">
+              <div>
+                <small>ENTRY</small>
+                <b>₹19</b>
+              </div>
+
+              <div>
+                <small>SPOTS</small>
+                <b>500</b>
+              </div>
+
+              <div>
+                <small>WINNERS</small>
+                <b>100</b>
+              </div>
+
+              <button>JOIN</button>
+            </div>
+          </div>
+
+        </section>
+      )}
+
+      {tab === "team" && (
+        <section className="safe-empty">
+          <div>👥</div>
+          <h2>My Team</h2>
+          <p>Create your fantasy cricket team and select your players.</p>
+          <button>CREATE TEAM</button>
+        </section>
+      )}
+
+      {tab === "info" && (
+        <section className="safe-info">
+
+          <div>
+            <span>🏟️ Venue</span>
+            <strong>{venue}</strong>
+          </div>
+
+          <div>
+            <span>🏏 Format</span>
+            <strong>T20</strong>
+          </div>
+
+          <div>
+            <span>📊 Status</span>
+            <strong>{status}</strong>
+          </div>
+
+          <div>
+            <span>👥 Teams</span>
+            <strong>{team1} vs {team2}</strong>
+          </div>
+
+        </section>
+      )}
+
+    </div>
+  );
+}
