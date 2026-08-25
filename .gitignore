@@ -17,3 +17,11 @@ google-services.json
 backend/secrets/
 auth-code.txt
 backend/data/otp.json
+
+# Firebase / Google Cloud secrets
+backend/secrets/
+**/firebase-service-account.json
+*.pem
+*.key
+.env
+.env.*
