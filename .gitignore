@@ -25,3 +25,9 @@ backend/secrets/
 *.key
 .env
 .env.*
+
+# Firebase / Google Cloud credentials
+backend/secrets/firebase-service-account.json
+**/firebase-service-account.json
+*.pem
+*.key
