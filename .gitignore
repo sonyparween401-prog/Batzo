@@ -31,3 +31,13 @@ backend/secrets/firebase-service-account.json
 **/firebase-service-account.json
 *.pem
 *.key
+
+# Batzo secret protection
+**/firebase-service-account.json
+**/*.pem
+**/*.key
+*.p12
+*.keystore
+*.jks
+apk-final/
+backups/

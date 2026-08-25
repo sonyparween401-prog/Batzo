@@ -1,7 +1,14 @@
+import { pushScreen, replaceScreen, backScreen, clearNavigation, recordScreen, initBatzoNavigation } from "./core/batzo-navigation-controller.js";
 import './services/batzo-flow.js';
 import BatzoPlayerShowcase from './BatzoPlayerShowcase';
 import { BATZO_PLAYERS, BATZO_CONTESTS, openBatzoTeam, openBatzoContest } from "./batzo-flow.js";
-import React, { useMemo, useState } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef
+} from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import "./App.css";
 import { installJoinFlow } from "./services/join-flow-ui";
 
@@ -221,8 +228,126 @@ function ContestCard({ contest, onClick }) {
   );
 }
 
-export default function App() {
+
+/* BATZO_PHASE18_TEAM_MIGRATION */
+(function(){
+  try {
+    const keys = [
+      "batzo_active_team",
+      "batzo_saved_team",
+      "batzo_selected_team",
+      "batzo_pending_team"
+    ];
+
+    let team = null;
+
+    for (const key of keys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+
+        const parsed = JSON.parse(raw);
+
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          (
+            Array.isArray(parsed.players) ||
+            Array.isArray(parsed.playerIds) ||
+            parsed.captain !== undefined ||
+            parsed.viceCaptain !== undefined
+          )
+        ) {
+          team = parsed;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    if (team) {
+      const serialized = JSON.stringify(team);
+
+      [
+        "batzo_active_team",
+        "batzo_selected_team",
+        "batzo_pending_team"
+      ].forEach(function(key){
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, serialized);
+        }
+      });
+
+      window.BATZO_ACTIVE_TEAM = team;
+      window.BATZO_PENDING_TEAM = team;
+
+      console.log(
+        "BATZO PHASE 18: EXISTING TEAM MIGRATED"
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "BATZO PHASE 18 team migration:",
+      error
+    );
+  }
+})();
+
+function App() {
   const [tab, setTab] = useState("home");
+
+  /*
+   * BATZO CLEAN TAB + ANDROID BACK NAVIGATION
+   * IMPORTANT: this code is AFTER tab declaration.
+   */
+  const batzoTabHistory = useRef([]);
+  const batzoPreviousTab = useRef(tab);
+
+  useEffect(() => {
+    if (batzoPreviousTab.current !== tab) {
+      batzoTabHistory.current.push(batzoPreviousTab.current);
+      batzoPreviousTab.current = tab;
+    }
+  }, [tab]);
+
+  useEffect(() => {
+    let active = true;
+
+    CapacitorApp.addListener("backButton", async () => {
+      if (!active) return;
+
+      try {
+        if (batzoTabHistory.current.length > 0) {
+          const previous = batzoTabHistory.current.pop();
+          batzoPreviousTab.current = previous;
+          setTab(previous);
+          return;
+        }
+
+        if (tab !== "home") {
+          batzoPreviousTab.current = "home";
+          setTab("home");
+          return;
+        }
+
+        await CapacitorApp.exitApp();
+      } catch (error) {
+        console.warn("BATZO Android back:", error);
+      }
+    }).then((handle) => {
+      window.__BATZO_BACK_HANDLE__ = handle;
+    });
+
+    return () => {
+      active = false;
+
+      if (window.__BATZO_BACK_HANDLE__) {
+        window.__BATZO_BACK_HANDLE__.remove();
+        window.__BATZO_BACK_HANDLE__ = null;
+      }
+    };
+  }, []);
+
+
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
 
@@ -754,140 +879,7 @@ export default function App() {
     };
   }
 
-  function renderContest(contest){
-    const root=document.getElementById("root");
-    if(!root) return;
-
-    root.innerHTML=`
-      <div class="bz-flow-screen">
-        <div class="bz-flow-head">
-          <div>
-            <div style="color:#24e778;font-size:12px;font-weight:900;letter-spacing:2px">CONTEST</div>
-            <h1>${contest.name}</h1>
-          </div>
-          <button class="bz-flow-back" id="bzContestBack">← Back</button>
-        </div>
-
-        <div class="bz-flow-card">
-          <div style="color:#858d9a;font-size:11px;text-transform:uppercase;letter-spacing:1.5px">
-            Winning Prize
-          </div>
-
-          <div class="bz-flow-prize">${contest.prize}</div>
-
-          <div style="margin-top:12px;color:#858d9a">Entry Fee</div>
-          <div class="bz-flow-entry">${contest.entry}</div>
-
-          <div class="bz-flow-stats">
-            <div class="bz-flow-stat">
-              <strong>${contest.spots}</strong>
-              <span>SPOTS</span>
-            </div>
-            <div class="bz-flow-stat">
-              <strong>${contest.joined}</strong>
-              <span>JOINED</span>
-            </div>
-            <div class="bz-flow-stat">
-              <strong>11</strong>
-              <span>PLAYERS</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="bz-flow-card">
-          <h3 style="color:#fff">Winning Breakdown</h3>
-          <p style="color:#a1a8b4">Rank 1 — 40% Prize Pool</p>
-          <p style="color:#a1a8b4">Rank 2 — 20% Prize Pool</p>
-          <p style="color:#a1a8b4">Rank 3 — 10% Prize Pool</p>
-          <p style="color:#a1a8b4">Other Winners — 30% Prize Pool</p>
-        </div>
-
-        <div class="bz-flow-bottom">
-          <button class="bz-flow-primary" id="bzJoin">
-            JOIN CONTEST • ${contest.entry}
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById("bzContestBack").onclick=()=>location.reload();
-
-    document.getElementById("bzJoin").onclick=()=>{
-      let savedTeam=null;
-
-      try{
-        savedTeam=JSON.parse(
-          localStorage.getItem("batzo_selected_team") || "null"
-        );
-      }catch(e){
-        savedTeam=null;
-      }
-
-      /*
-       * If a team is already saved, NEVER send the user
-       * back to Create Team.
-       */
-      if(savedTeam){
-        try{
-          localStorage.setItem(
-            "batzo_pending_join_team",
-            JSON.stringify(savedTeam)
-          );
-        }catch(e){}
-
-        window.dispatchEvent(
-          new CustomEvent("batzo:join-request",{
-            detail:{
-              contest:contest,
-              team:savedTeam,
-              entry:contest.entry
-            }
-          })
-        );
-
-        /*
-         * Let the existing application wallet/join layer
-         * handle the actual balance/entry validation.
-         */
-        const walletButton=[...document.querySelectorAll("button,a")]
-          .find(x=>{
-            const t=(x.innerText||x.textContent||"")
-              .replace(/\\s+/g," ")
-              .trim()
-              .toUpperCase();
-
-            return (
-              t.includes("WALLET") ||
-              t.includes("ADD CASH") ||
-              t.includes("JOIN NOW")
-            );
-          });
-
-        if(walletButton){
-          walletButton.click();
-        }else{
-          const joinBox=document.querySelector(".bz-flow-bottom");
-          if(joinBox){
-            const msg=document.createElement("div");
-            msg.style.cssText=
-              "margin-top:10px;color:#24e778;font-size:12px;font-weight:800;text-align:center";
-            msg.textContent=
-              "Team selected. Checking wallet balance...";
-            joinBox.appendChild(msg);
-          }
-        }
-
-        return;
-      }
-
-      /*
-       * No saved team = normal Create Team flow.
-       */
-      renderTeam("IND vs AUS");
-    };
-  }
-
-  window.addEventListener("batzo:team",e=>{
+    window.addEventListener("batzo:team",e=>{
     renderTeam((e.detail&&e.detail.match)||"IND vs AUS");
   });
 
@@ -3008,10 +3000,8 @@ if (typeof window !== "undefined") {
     );
   }
 
-  setInterval(
-    bindCreateTeam,
-    500
-  );
+  // Phase 20: single Team-flow binding; no repeated 500ms rebinding.
+
 
   window.BATZO_FINAL_APP_CONTROLLER={
     teams:renderMyTeams,
@@ -3027,3 +3017,4 @@ if (typeof window !== "undefined") {
 
 })();
 
+export default App;

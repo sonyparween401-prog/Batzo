@@ -1,28 +1,36 @@
-import { API_CONFIG } from "../api/config";
+import { normalizeMatches } from "../batzoMatchNormalizer.js";
 
-async function request(path, options = {}) {
-  const response = await fetch(
-    `${API_CONFIG.baseUrl}${path}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-      },
-      ...options
-    }
-  );
+const API_BASE =
+  (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+
+async function request(path) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { Accept: "application/json" }
+  });
 
   if (!response.ok) {
-    throw new Error(`API ${response.status}`);
+    throw new Error(`Cricket API ${response.status}`);
   }
 
   return response.json();
 }
 
-export const cricketService = {
-  live: () => request("/matches/live"),
-  upcoming: () => request("/matches/upcoming"),
-  results: () => request("/matches/results"),
-  players: (matchId) => request(`/matches/${matchId}/players`),
-  scorecard: (matchId) => request(`/matches/${matchId}/scorecard`)
-};
+export async function getMatches() {
+  try {
+    const result = await request("/api/cricket/matches");
+    return normalizeMatches(result?.data || result?.matches || result || []);
+  } catch (error) {
+    console.warn("Batzo cricket API unavailable:", error.message);
+    return [];
+  }
+}
+
+export async function getLiveMatches() {
+  try {
+    const result = await request("/api/cricket/live");
+    return normalizeMatches(result?.data || result?.matches || result || []);
+  } catch (error) {
+    console.warn("Batzo live cricket API unavailable:", error.message);
+    return [];
+  }
+}

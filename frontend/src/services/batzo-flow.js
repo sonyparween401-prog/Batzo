@@ -229,7 +229,7 @@ export function installBatzoFlow() {
       "[class*='contest'],[class*='card'],article,section,li,div"
     ) || el?.parentElement;
 
-  document.addEventListener(
+  (()=>{})(
     "click",
     e => {
       const button = e.target.closest?.("button,[role='button'],a");

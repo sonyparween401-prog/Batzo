@@ -198,7 +198,7 @@
     document.body.style.overflow = "";
   }
 
-  document.addEventListener("click", function (e) {
+  (()=>{})("click", function (e) {
     const el = e.target.closest("button,a,[role='button'],div");
     if (!el) return;
 

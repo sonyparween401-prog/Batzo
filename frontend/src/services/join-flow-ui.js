@@ -66,7 +66,7 @@ export function installJoinFlow() {
 
   window.__BATZO_JOIN_FLOW_INSTALLED__ = true;
 
-  document.addEventListener(
+  (()=>{})(
     "click",
     event => {
       const button =

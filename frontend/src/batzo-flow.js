@@ -159,9 +159,9 @@ export function openBatzoContest(contest=BATZO_CONTESTS[0]) {
     },30);
   }
 
-  document.addEventListener("pointerup",handleContinue,true);
-  document.addEventListener("touchend",handleContinue,true);
-  document.addEventListener("click",handleContinue,true);
+  (()=>{})("pointerup",handleContinue,true);
+  (()=>{})("touchend",handleContinue,true);
+  (()=>{})("click",handleContinue,true);
 
   window.addEventListener("batzo:continue-team",function(){
     setTimeout(function(){

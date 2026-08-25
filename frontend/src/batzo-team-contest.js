@@ -111,7 +111,7 @@ export function batzoContestDetailsHTML(contest = BATZO_CONTESTS[0]) {
 
 /* BATZO_MASTER_JOIN_BRIDGE */
 (function(){
-  document.addEventListener("click",function(e){
+  (()=>{})("click",function(e){
     const el=e.target && e.target.closest ? e.target.closest("button") : null;
     if(!el) return;
     const t=(el.innerText||"").trim().toUpperCase();

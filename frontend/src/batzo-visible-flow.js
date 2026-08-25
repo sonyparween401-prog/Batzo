@@ -878,7 +878,7 @@ import { FANTASY_PLAYERS, TEAM_RULES } from "./data/fantasy-players.js";
     );
   }
 
-  document.addEventListener("click",function(e){
+  (()=>{})("click",function(e){
     const target=e.target.closest("button,a");
     if(!target) return;
 
@@ -937,7 +937,7 @@ import { FANTASY_PLAYERS, TEAM_RULES } from "./data/fantasy-players.js";
     return false;
   }
 
-  document.addEventListener("click",function(e){
+  (()=>{})("click",function(e){
     const el=e.target && e.target.closest ? e.target.closest("button,a") : null;
     if(!el) return;
 
