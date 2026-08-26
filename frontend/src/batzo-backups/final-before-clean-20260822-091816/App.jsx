@@ -212,7 +212,7 @@ function App() {
       }
     };
 
-    document.addEventListener("click", batzoTap, true);
+    (()=>{})("click", batzoTap, true);
 
     return () => {
       document.removeEventListener("click", batzoTap, true);

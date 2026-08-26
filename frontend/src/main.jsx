@@ -5,6 +5,7 @@ import "./batzo-visible-flow.js";
 import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import "./batzo-master-flow-fix.js";
 
 const root = document.getElementById('root');
 

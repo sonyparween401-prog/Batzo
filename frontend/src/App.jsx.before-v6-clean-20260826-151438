@@ -303,19 +303,19 @@ function App() {
   const batzoPreviousTab = useRef(tab);
 
   useEffect(() => {
+    if (batzoPreviousTab.current !== tab) {
+      batzoTabHistory.current.push(batzoPreviousTab.current);
+      batzoPreviousTab.current = tab;
+    }
+  }, [tab]);
+
+  useEffect(() => {
     let active = true;
 
     CapacitorApp.addListener("backButton", async () => {
       if (!active) return;
 
       try {
-        if (
-          typeof window.__BATZO_FLOW_BACK__ === "function" &&
-          window.__BATZO_FLOW_BACK__() === true
-        ) {
-          return;
-        }
-
         if (batzoTabHistory.current.length > 0) {
           const previous = batzoTabHistory.current.pop();
           batzoPreviousTab.current = previous;
@@ -331,7 +331,7 @@ function App() {
 
         await CapacitorApp.exitApp();
       } catch (error) {
-        console.warn("BATZO V7 Android Back:", error);
+        console.warn("BATZO Android back:", error);
       }
     }).then((handle) => {
       window.__BATZO_BACK_HANDLE__ = handle;
@@ -3013,305 +3013,97 @@ if (typeof window !== "undefined") {
 
 })();
 
-
-/*
- * BATZO V6 SINGLE TEAM/CONTEST FLOW AUTHORITY
- * One binding only. No timers. No duplicate overlays.
- */
-(function () {
-  "use strict";
-
-  if (window.__BATZO_V6_SINGLE_FLOW__) return;
-  window.__BATZO_V6_SINGLE_FLOW__ = true;
-
-  function clickBack() {
-    const selectors = [
-      "#bzCvcBack",
-      "#bzCaptainBack",
-      "#bzBack",
-      "#batzoContestBack",
-      "#batzoFinalContestBack",
-      ".bz-flow-back"
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        el.click();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  console.log("BATZO V6 SINGLE FLOW READY");
-})();
-
-
-/*
- * BATZO V7 SINGLE FLOW AUTHORITY
- *
- * Existing React Team/Contest logic remains authoritative.
- * This block only provides one Android hardware-back bridge.
- */
-(function () {
-  "use strict";
-
-  if (window.__BATZO_V7_BACK_AUTHORITY__) return;
-  window.__BATZO_V7_BACK_AUTHORITY__ = true;
-
-  window.__BATZO_FLOW_BACK__ = function () {
-    const selectors = [
-      "#bzCvcBack",
-      "#bzCaptainBack",
-      "#bzBack",
-      "#batzoContestBack",
-      "#batzoFinalContestBack",
-      ".bz-flow-back"
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        el.click();
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  console.log("BATZO V7 SINGLE BACK AUTHORITY READY");
-})();
-
-
-
-
-/* BATZO_FINAL_NAV_CONTROLLER_V2 */
-(function(){
-  if(window.__BATZO_FINAL_NAV_CONTROLLER_V2__) return;
-  window.__BATZO_FINAL_NAV_CONTROLLER_V2__ = true;
-
-  function norm(v){
-    return (v || "")
-      .replace(/\s+/g," ")
-      .trim()
-      .toLowerCase();
-  }
-
-  function label(el){
-    return norm(
-      el.getAttribute("aria-label") ||
-      el.textContent ||
-      ""
-    );
-  }
-
-  function isBottom(el){
-    if(!el) return false;
-
-    const r = el.getBoundingClientRect();
-
-    /* Bottom navigation is physically near the bottom. */
-    if(
-      window.innerHeight > 0 &&
-      r.top > window.innerHeight * 0.70
-    ){
-      return true;
-    }
-
-    const cls = norm(el.className);
-    const parent = el.closest(
-      "nav,footer,[class*='bottom'],[class*='Bottom'],[class*='navigation'],[class*='Navigation']"
-    );
-
-    return !!parent ||
-      cls.includes("bottom") ||
-      cls.includes("navigation");
-  }
-
-  function findBottomButton(kind){
-    const all = Array.from(
-      document.querySelectorAll("button,a,[role='button']")
-    );
-
-    let candidates = [];
-
-    for(const el of all){
-      if(!isBottom(el)) continue;
-
-      const t = label(el);
-
-      if(kind === "match"){
-        if(
-          t === "match" ||
-          t === "matches" ||
-          t.includes("match")
-        ){
-          candidates.push(el);
-        }
-      }
-
-      if(kind === "contest"){
-        if(
-          t === "contest" ||
-          t === "contests" ||
-          t.includes("contest")
-        ){
-          candidates.push(el);
-        }
-      }
-
-      if(kind === "team"){
-        if(
-          t === "team" ||
-          t === "teams" ||
-          t === "my team" ||
-          t === "my teams"
-        ){
-          candidates.push(el);
-        }
-      }
-    }
-
-    return candidates[0] || null;
-  }
-
-  function activate(kind){
-    const target = findBottomButton(kind);
-
-    if(!target){
-      console.error(
-        "BATZO NAV: working bottom button not found:",
-        kind
-      );
-      return false;
-    }
-
-    target.click();
-    return true;
-  }
-
-  document.addEventListener("click",function(e){
-
-    const target = e.target.closest(
-      "button,a,[role='button']"
-    );
-
-    if(!target) return;
-
-    /* NEVER interfere with the working bottom navigation. */
-    if(isBottom(target)) return;
-
-    const t = label(target);
-
-    let kind = null;
-
-    /* Upcoming match card button */
-    if(
-      t.includes("view contests") ||
-      t.includes("view contest")
-    ){
-      kind = "contest";
-    }
-
-    /* Top Match */
-    else if(
-      t === "match" ||
-      t === "matches"
-    ){
-      kind = "match";
-    }
-
-    /* Top Contest */
-    else if(
-      t === "contest" ||
-      t === "contests"
-    ){
-      kind = "contest";
-    }
-
-    /* Top My Team */
-    else if(
-      t === "my team" ||
-      t === "my teams" ||
-      t === "my team(s)"
-    ){
-      kind = "team";
-    }
-
-    if(!kind) return;
-
-    /*
-     * Stop the broken top handler.
-     * Then execute the already-working bottom handler.
-     */
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    activate(kind);
-
-  },true);
-})();
-
-
-
-/* BATZO_REAL_JOIN_CONTROLLER_FINAL */
-(function(){
-  if(window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__) return;
-  window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__=true;
-
-  document.addEventListener("click",function(e){
-
-    const btn=e.target.closest(
-      "#batzoFinalJoin,#batzoJoinContest,[data-batzo-join-contest]"
-    );
-
-    if(!btn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    try{
-
-      const contest =
-        window.BATZO_ACTIVE_CONTEST ||
-        (typeof window.contest==="function"
-          ? window.contest()
-          : null);
-
-      /*
-       * THIS IS THE ACTUAL CONTROLLER PRESENT IN THE APP.
-       */
-      if(
-        window.BATZO_FINAL_APP_CONTROLLER &&
-        typeof window.BATZO_FINAL_APP_CONTROLLER.join==="function"
-      ){
-        window.BATZO_FINAL_APP_CONTROLLER.join(contest);
-        return;
-      }
-
-      console.error(
-        "BATZO: BATZO_FINAL_APP_CONTROLLER.join unavailable"
-      );
-
-    }catch(err){
-
-      console.error(
-        "BATZO REAL JOIN ERROR:",
-        err
-      );
-
-    }
-
-  },true);
-
-  console.log(
-    "BATZO REAL JOIN CONTROLLER READY"
-  );
-})();
-
 export default App;
+
+
+/* BATZO_TEAM_FLOW_FINAL_REPAIR_V1 */
+(function(){
+  "use strict";
+  if(window.__BATZO_TEAM_FLOW_FINAL_REPAIR_V1__) return;
+  window.__BATZO_TEAM_FLOW_FINAL_REPAIR_V1__=true;
+
+  function txt(el){
+    return ((el && (el.innerText || el.textContent)) || "")
+      .replace(/\s+/g," ").trim().toUpperCase();
+  }
+
+  function countSelected(){
+    const selectors=[
+      "[data-selected='true']",
+      ".player-selected",
+      ".selected-player",
+      ".is-selected",
+      ".selected"
+    ];
+    const set=new Set();
+    selectors.forEach(sel=>{
+      document.querySelectorAll(sel).forEach(el=>set.add(el));
+    });
+    const body=txt(document.body);
+    if(set.size>=11) return set.size;
+    if(/(?:SELECTED|CONTINUE)\s*[:\-]?\s*11\s*\/\s*11/.test(body)) return 11;
+    return set.size;
+  }
+
+  function openCVC(){
+    const candidates=[
+      "#bzTeamContinue",
+      "#continue-team",
+      "#continueTeam",
+      "[data-batzo-continue]"
+    ];
+    const body=txt(document.body);
+    if(body.includes("CAPTAIN") && body.includes("VICE-CAPTAIN")) return true;
+    for(const sel of candidates){
+      const b=document.querySelector(sel);
+      if(b && txt(b).includes("CONTINUE") && countSelected()>=11){
+        try{
+          b.removeAttribute("disabled");
+          b.click();
+          return true;
+        }catch(e){}
+      }
+    }
+    return false;
+  }
+
+  document.addEventListener("click",function(e){
+    const b=e.target && e.target.closest ? e.target.closest("button,[role='button'],a") : null;
+    if(!b) return;
+    const t=txt(b);
+    const id=(b.id||"").toLowerCase();
+
+    if(id==="batzocreatenewteam"){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if(typeof window.openCreateTeam==="function"){
+        window.openCreateTeam("IND vs AUS");
+      }else{
+        window.dispatchEvent(new CustomEvent("batzo:team",{detail:{match:"IND vs AUS"}}));
+      }
+      return;
+    }
+
+    if(
+      id==="bzteamcontinue" ||
+      id==="continue-team" ||
+      id==="continueteam" ||
+      t==="CONTINUE" ||
+      t.includes("CONTINUE")
+    ){
+      if(countSelected()<11) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setTimeout(openCVC,20);
+      return;
+    }
+  },true);
+
+  window.addEventListener("batzo:team",function(){
+    setTimeout(function(){
+      if(typeof window.bindCreateTeam==="function"){
+        try{ window.bindCreateTeam(); }catch(e){}
+      }
+    },50);
+  });
+})();

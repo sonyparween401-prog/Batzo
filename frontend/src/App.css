@@ -4291,3 +4291,116 @@ nav.bottom-navigation {
     width:100%;
   }
 }
+
+
+/* BATZO FINAL CVC UI FIX */
+
+.bz-cvc-screen .bz-cvc-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding-bottom:110px;
+}
+
+.bz-cvc-screen .bz-cvc-player{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  background:#0d1218;
+}
+
+.bz-cvc-screen .bz-cvc-info{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.bz-cvc-screen .bz-cvc-info strong{
+  font-size:17px;
+  color:#fff;
+}
+
+.bz-cvc-screen .bz-cvc-info span{
+  font-size:13px;
+  color:#8f98a5;
+}
+
+.bz-cvc-screen .bz-cvc-actions{
+  display:flex;
+  gap:8px;
+  flex-shrink:0;
+}
+
+.bz-cvc-screen .bz-cvc-select{
+  width:54px;
+  height:44px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.20);
+  background:#111820;
+  color:#fff;
+  font-weight:900;
+  font-size:15px;
+}
+
+.bz-cvc-screen .bz-cvc-select.is-active{
+  background:#19e774;
+  border-color:#19e774;
+  color:#06140b;
+}
+
+.bz-cvc-screen .bz-cvc-select.bz-vc-btn.is-active{
+  background:#ffd43b;
+  border-color:#ffd43b;
+  color:#171300;
+}
+
+.bz-cvc-screen .bz-cvc-rules{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin:12px 0 16px;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;
+  color:#fff;
+}
+
+.bz-cvc-screen .bz-cvc-footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:1000;
+  padding:16px 30px 20px;
+  background:rgba(5,8,12,.96);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.bz-cvc-screen .bz-confirm-team{
+  width:100%;
+  min-height:62px;
+  border:0;
+  border-radius:20px;
+  background:#19e774;
+  color:#06140b;
+  font-size:20px;
+  font-weight:900;
+}
+
+/* Player selection screen must not show C/VC circles.
+   C/VC exists only inside .bz-cvc-screen. */
+.bz-team-select-screen [data-cvc],
+.bz-team-select-screen .bz-c-btn,
+.bz-team-select-screen .bz-vc-btn,
+.bz-team-select-screen .c-btn,
+.bz-team-select-screen .vc-btn,
+.bz-team-select-screen .captain-btn,
+.bz-team-select-screen .vice-captain-btn{
+  display:none !important;
+}

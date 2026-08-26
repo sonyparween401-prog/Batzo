@@ -176,7 +176,7 @@ function BatzoDream11Launcher(){
     setOpen(true);
    }
   };
-  document.addEventListener("click",fn,true);
+  (()=>{})("click",fn,true);
   return()=>document.removeEventListener("click",fn,true);
  },[]);
  return open ? React.createElement(BatzoDream11Flow,{close:()=>setOpen(false)}) : null;
@@ -228,7 +228,7 @@ function App() {
       }
     };
 
-    document.addEventListener("click", batzoTap, true);
+    (()=>{})("click", batzoTap, true);
 
     return () => {
       document.removeEventListener("click", batzoTap, true);

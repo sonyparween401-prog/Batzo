@@ -671,7 +671,7 @@ function App() {
       }
     };
 
-    document.addEventListener("click", handleBatzoContestClick, true);
+    (()=>{})("click", handleBatzoContestClick, true);
 
   
   if (batzoContestMatch) {

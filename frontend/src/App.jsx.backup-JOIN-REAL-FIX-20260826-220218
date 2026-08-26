@@ -3257,60 +3257,154 @@ if (typeof window !== "undefined") {
 })();
 
 
-
-/* BATZO_REAL_JOIN_CONTROLLER_FINAL */
+/* BATZO_FINAL_JOIN_CONTROLLER_V1 */
 (function(){
-  if(window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__) return;
-  window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__=true;
+  if(window.__BATZO_FINAL_JOIN_CONTROLLER_V1__) return;
+  window.__BATZO_FINAL_JOIN_CONTROLLER_V1__=true;
 
-  document.addEventListener("click",function(e){
+  function getActiveContest(){
+    try{
+      if(window.BATZO_ACTIVE_CONTEST)
+        return window.BATZO_ACTIVE_CONTEST;
 
-    const btn=e.target.closest(
-      "#batzoFinalJoin,#batzoJoinContest,[data-batzo-join-contest]"
-    );
+      if(typeof window.contest==="function")
+        return window.contest();
 
-    if(!btn) return;
+      const raw=localStorage.getItem(
+        "batzo_last_joined_contest"
+      );
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+      if(raw){
+        return JSON.parse(raw);
+      }
+    }catch(err){
+      console.error(
+        "BATZO ACTIVE CONTEST ERROR:",
+        err
+      );
+    }
+
+    return null;
+  }
+
+  function executeJoin(){
+    const c=getActiveContest();
 
     try{
+      /*
+       * Prefer the final contest flow already present
+       * in App.jsx.
+       */
+      if(typeof window.finalJoinContest==="function"){
+        window.finalJoinContest(c);
+        return true;
+      }
 
-      const contest =
-        window.BATZO_ACTIVE_CONTEST ||
-        (typeof window.contest==="function"
-          ? window.contest()
-          : null);
+      if(
+        window.BATZO_FINAL &&
+        typeof window.BATZO_FINAL.joinContest==="function"
+      ){
+        window.BATZO_FINAL.joinContest(c);
+        return true;
+      }
 
       /*
-       * THIS IS THE ACTUAL CONTROLLER PRESENT IN THE APP.
+       * Existing project fallback.
        */
-      if(
-        window.BATZO_FINAL_APP_CONTROLLER &&
-        typeof window.BATZO_FINAL_APP_CONTROLLER.join==="function"
-      ){
-        window.BATZO_FINAL_APP_CONTROLLER.join(contest);
-        return;
+      if(typeof window.joinContest==="function"){
+        window.joinContest(c);
+        return true;
       }
 
       console.error(
-        "BATZO: BATZO_FINAL_APP_CONTROLLER.join unavailable"
+        "BATZO JOIN: no existing join handler exposed"
       );
+      return false;
 
     }catch(err){
-
       console.error(
-        "BATZO REAL JOIN ERROR:",
+        "BATZO JOIN ERROR:",
         err
       );
 
-    }
+      try{
+        if(
+          window.BATZO_FINAL &&
+          typeof window.BATZO_FINAL.joinContest==="function"
+        ){
+          window.BATZO_FINAL.joinContest(c);
+          return true;
+        }
+      }catch(e2){
+        console.error(
+          "BATZO FINAL JOIN FALLBACK ERROR:",
+          e2
+        );
+      }
 
-  },true);
+      return false;
+    }
+  }
+
+  document.addEventListener(
+    "click",
+    function(e){
+
+      const el=e.target.closest(
+        "#batzoFinalJoin,#batzoJoinContest," +
+        "[data-batzo-join-contest]"
+      );
+
+      if(!el) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      /*
+       * Prevent accidental double join taps.
+       */
+      if(el.dataset.batzoJoining==="1") return;
+
+      el.dataset.batzoJoining="1";
+
+      const oldText=el.textContent;
+
+      try{
+        el.textContent="JOINING…";
+      }catch(_){}
+
+      const ok=executeJoin();
+
+      if(!ok){
+        try{
+          el.textContent=oldText;
+          el.dataset.batzoJoining="0";
+        }catch(_){}
+      }else{
+        /*
+         * Give the existing join flow time to render the next
+         * screen. If it did not navigate, restore the button.
+         */
+        setTimeout(function(){
+          try{
+            if(
+              document.body.contains(el) &&
+              !el.disabled
+            ){
+              el.textContent=oldText;
+              el.dataset.batzoJoining="0";
+            }
+          }catch(_){}
+        },1800);
+      }
+
+    },
+    true
+  );
 
   console.log(
-    "BATZO REAL JOIN CONTROLLER READY"
+    "BATZO FINAL JOIN CONTROLLER READY"
   );
 })();
 

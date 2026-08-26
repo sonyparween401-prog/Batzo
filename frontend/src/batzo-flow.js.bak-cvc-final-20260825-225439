@@ -1245,18 +1245,3 @@ if(
   };
 
 }
-
-
-/* BATZO_REMOVE_OLD_CVC_PLAYER_CONTROLS_DISABLED */
-(function(){
-  "use strict";
-  /*
-   * DISABLED permanently.
-   * The dedicated Captain & Vice-Captain screen owns its
-   * C/VC controls. No global MutationObserver is allowed
-   * to remove buttons from that flow.
-   */
-  window.__BATZO_REMOVE_OLD_CVC_PLAYER_CONTROLS_DISABLED__=true;
-})();
-
-

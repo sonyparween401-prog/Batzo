@@ -1260,3 +1260,276 @@ if(
 })();
 
 
+/* BATZO_CVC_REAL_SYNC_V3 */
+(function BATZO_CVC_REAL_SYNC_V3(){
+
+  "use strict";
+
+  if(window.__BATZO_CVC_REAL_SYNC_V3__) return;
+  window.__BATZO_CVC_REAL_SYNC_V3__ = true;
+
+  /*
+   * REAL FIX:
+   *
+   * The dedicated C/VC screen keeps its selection in a local
+   * object while older global CONFIRM TEAM handlers validate
+   * window.BATZO_PENDING_TEAM.
+   *
+   * Therefore C/VC clicks are synchronized immediately into
+   * BATZO_PENDING_TEAM BEFORE the old handlers can run.
+   */
+
+  function pending(){
+
+    return window.BATZO_PENDING_TEAM ||
+           window.BATZO_ACTIVE_TEAM ||
+           null;
+
+  }
+
+  function sync(){
+
+    var team = pending();
+
+    if(!team) return;
+
+    var root = document.getElementById("root");
+
+    if(!root) return;
+
+    /*
+     * Only operate on the dedicated Captain/Vice-Captain
+     * screen.
+     */
+    var isCVC =
+      !!root.querySelector(".bz-cvc-screen") ||
+      !!root.querySelector(".bzPickCaptain") ||
+      !!root.querySelector(".bzPickVice") ||
+      !!root.querySelector(".batzoCap") ||
+      !!root.querySelector(".batzoVC");
+
+    if(!isCVC) return;
+
+    /*
+     * Read currently active Captain button.
+     */
+    var cap =
+      root.querySelector(".batzoCap.active") ||
+      root.querySelector(".bzPickCaptain.active");
+
+    /*
+     * Read currently active Vice-Captain button.
+     */
+    var vc =
+      root.querySelector(".batzoVC.active") ||
+      root.querySelector(".bzPickVice.active");
+
+    if(cap){
+
+      var ci = Number(cap.dataset.index);
+
+      if(Number.isFinite(ci)){
+        team.captain = ci;
+      }
+
+    }
+
+    if(vc){
+
+      var vi = Number(vc.dataset.index);
+
+      if(Number.isFinite(vi)){
+        team.viceCaptain = vi;
+      }
+
+    }
+
+    window.BATZO_PENDING_TEAM = team;
+    window.BATZO_ACTIVE_TEAM = team;
+
+    try{
+
+      localStorage.setItem(
+        "batzo_pending_team",
+        JSON.stringify(team)
+      );
+
+    }catch(e){}
+
+  }
+
+  /*
+   * CAPTAIN CLICK
+   *
+   * Update pending team immediately.
+   */
+  window.addEventListener("click",function(ev){
+
+    var target = ev.target;
+
+    if(!target || !target.closest) return;
+
+    var cap =
+      target.closest(".batzoCap") ||
+      target.closest(".bzPickCaptain");
+
+    if(!cap) return;
+
+    var team = pending();
+
+    if(!team) return;
+
+    var index = Number(cap.dataset.index);
+
+    if(!Number.isFinite(index)) return;
+
+    team.captain = index;
+
+    window.BATZO_PENDING_TEAM = team;
+    window.BATZO_ACTIVE_TEAM = team;
+
+    try{
+      localStorage.setItem(
+        "batzo_pending_team",
+        JSON.stringify(team)
+      );
+    }catch(e){}
+
+    /*
+     * Do NOT stop propagation.
+     * Existing visual C selection must still run.
+     */
+
+  },true);
+
+
+  /*
+   * VICE-CAPTAIN CLICK
+   *
+   * Update pending team immediately.
+   */
+  window.addEventListener("click",function(ev){
+
+    var target = ev.target;
+
+    if(!target || !target.closest) return;
+
+    var vc =
+      target.closest(".batzoVC") ||
+      target.closest(".bzPickVice");
+
+    if(!vc) return;
+
+    var team = pending();
+
+    if(!team) return;
+
+    var index = Number(vc.dataset.index);
+
+    if(!Number.isFinite(index)) return;
+
+    team.viceCaptain = index;
+
+    window.BATZO_PENDING_TEAM = team;
+    window.BATZO_ACTIVE_TEAM = team;
+
+    try{
+      localStorage.setItem(
+        "batzo_pending_team",
+        JSON.stringify(team)
+      );
+    }catch(e){}
+
+  },true);
+
+
+  /*
+   * FINAL CONFIRM CAPTURE.
+   *
+   * Before legacy CONFIRM handlers execute, synchronize the
+   * visible C/VC state.
+   */
+  window.addEventListener("click",function(ev){
+
+    var target = ev.target;
+
+    if(!target || !target.closest) return;
+
+    var btn = target.closest(
+      "#batzoConfirmFinal," +
+      "#bzConfirmTeam," +
+      "#batzoConfirmFinalTeam"
+    );
+
+    if(!btn) return;
+
+    var text = String(
+      btn.innerText ||
+      btn.textContent ||
+      ""
+    ).replace(/\s+/g," ").trim().toUpperCase();
+
+    if(
+      btn.id !== "batzoConfirmFinal" &&
+      btn.id !== "bzConfirmTeam" &&
+      !text.includes("CONFIRM TEAM")
+    ){
+      return;
+    }
+
+    /*
+     * First synchronize current C/VC state.
+     */
+    sync();
+
+    /*
+     * Do NOT block the existing final confirmation handler.
+     *
+     * We only repair the state before it reads
+     * BATZO_PENDING_TEAM.
+     */
+
+  },true);
+
+
+  /*
+   * Keep state synchronized if a UI framework changes the
+   * active class after the click.
+   */
+  var observer = new MutationObserver(function(){
+
+    var root = document.getElementById("root");
+
+    if(!root) return;
+
+    if(
+      root.querySelector(".batzoCap.active") ||
+      root.querySelector(".batzoVC.active") ||
+      root.querySelector(".bzPickCaptain.active") ||
+      root.querySelector(".bzPickVice.active")
+    ){
+      sync();
+    }
+
+  });
+
+  if(document.documentElement){
+
+    observer.observe(
+      document.documentElement,
+      {
+        childList:true,
+        subtree:true,
+        attributes:true,
+        attributeFilter:["class","style"]
+      }
+    );
+
+  }
+
+  console.log(
+    "BATZO CVC REAL SYNC V3 READY"
+  );
+
+})();
+
