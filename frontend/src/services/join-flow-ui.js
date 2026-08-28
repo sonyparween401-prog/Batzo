@@ -12,6 +12,8 @@ function getSelectedTeamId() {
 }
 
 export function openJoinContest(contest = {}) {
+  window.__BATZO_PENDING_CONTEST__ = contest;
+
   const selectedTeamId = getSelectedTeamId();
 
   const normalized = {

@@ -120,6 +120,12 @@ function handleDynamicBack() {
 }
 
 export function initBatzoNavigation(options = {}) {
+  if (typeof window !== "undefined" && window.__BATZO_NAV_CONTROLLER_ACTIVE__) {
+    return;
+  }
+  if (typeof window !== "undefined") {
+    window.__BATZO_NAV_CONTROLLER_ACTIVE__ = true;
+  }
   if (options.getTab) getTab = options.getTab;
   if (options.setTab) setTab = options.setTab;
 
@@ -174,7 +180,7 @@ export function initBatzoNavigation(options = {}) {
         }
 
         /*
-         * Root screen: Android is allowed to exit.
+         * Root screen: Android stays on root.
          */
         console.log(
           "BATZO: ROOT SCREEN — ALLOW ANDROID EXIT"

@@ -1,5 +1,4 @@
 import { pushScreen, replaceScreen, backScreen, clearNavigation, recordScreen, initBatzoNavigation } from "./core/batzo-navigation-controller.js";
-import './services/batzo-flow.js';
 import BatzoPlayerShowcase from './BatzoPlayerShowcase';
 import { BATZO_PLAYERS, BATZO_CONTESTS, openBatzoTeam, openBatzoContest } from "./batzo-flow.js";
 import React, {
@@ -77,14 +76,11 @@ const contests = [
 function Logo() {
   return (
     <div className="logo-area">
-      <div className="batzo-logo">
-        <span>B</span><span>A</span><span>T</span><span>Z</span><span>O</span>
-      </div>
-      <div className="logo-line">
-        <i></i>
-        <strong>CRICKET HUB</strong>
-        <i></i>
-      </div>
+      <img
+        src="/batzo-assets/Batzo-3D-Header-Logo.png?v=14"
+        className="batzo-final-header-logo"
+        alt="BATZO Cricket Hub"
+      />
     </div>
   );
 }
@@ -280,9 +276,7 @@ function ContestCard({ contest, onClick }) {
       window.BATZO_ACTIVE_TEAM = team;
       window.BATZO_PENDING_TEAM = team;
 
-      console.log(
-        "BATZO PHASE 18: EXISTING TEAM MIGRATED"
-      );
+      console.log("PHASE 18: EXISTING TEAM MIGRATED");
     }
   } catch (error) {
     console.warn(
@@ -304,11 +298,13 @@ function App() {
 
   useEffect(() => {
     let active = true;
+    let handle = null;
 
-    CapacitorApp.addListener("backButton", async () => {
+    const onBack = async () => {
       if (!active) return;
 
       try {
+        /* Custom Batzo flow gets first priority. */
         if (
           typeof window.__BATZO_FLOW_BACK__ === "function" &&
           window.__BATZO_FLOW_BACK__() === true
@@ -316,6 +312,7 @@ function App() {
           return;
         }
 
+        /* Normal React tab history. */
         if (batzoTabHistory.current.length > 0) {
           const previous = batzoTabHistory.current.pop();
           batzoPreviousTab.current = previous;
@@ -323,37 +320,75 @@ function App() {
           return;
         }
 
+        /* Any non-home tab returns to Home. */
         if (tab !== "home") {
           batzoPreviousTab.current = "home";
           setTab("home");
           return;
         }
 
-        await CapacitorApp.exitApp();
+        /* At Home there is nothing inside Batzo to go back to.
+           Let Android handle the final exit. */
       } catch (error) {
-        console.warn("BATZO V7 Android Back:", error);
+        console.warn("BATZO Android Back:", error);
       }
-    }).then((handle) => {
-      window.__BATZO_BACK_HANDLE__ = handle;
+    };
+
+    import("@capacitor/app").then(({ App }) => {
+      if (!active) return;
+
+      App.addListener("backButton", onBack).then((h) => {
+        if (active) {
+          handle = h;
+          window.__BATZO_BACK_HANDLE__ = h;
+        } else {
+          h.remove();
+        }
+      });
+    }).catch((error) => {
+      console.warn("BATZO Back listener:", error);
     });
 
     return () => {
       active = false;
+
+      if (handle) {
+        handle.remove();
+        handle = null;
+      }
 
       if (window.__BATZO_BACK_HANDLE__) {
         window.__BATZO_BACK_HANDLE__.remove();
         window.__BATZO_BACK_HANDLE__ = null;
       }
     };
-  }, []);
+  }, [tab]);
 
 
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
 
   const openMatch = (match) => {
-    setNotice(`${match.a} vs ${match.b} — Match Centre`);
-    setTab("matches");
+    try {
+      // Preserve the exact match selected by the user.
+      window.BATZO_ACTIVE_MATCH = match;
+
+      try {
+        localStorage.setItem(
+          "batzo_selected_match",
+          JSON.stringify(match)
+        );
+      } catch (e) {
+        console.warn("BATZO selected match storage:", e);
+      }
+
+      // Open the existing contest tab with the selected match context.
+      setSelectedMatch?.(match);
+      setTab("contests");
+    } catch (e) {
+      console.warn("BATZO match -> contest flow:", e);
+      setTab("contests");
+    }
   };
 
   const upcomingFiltered = useMemo(() => {
@@ -368,7 +403,33 @@ function App() {
   }, [search]);
 
   const showComing = (name) => {
-    setNotice(`${name} section is ready for the next Batzo release.`);
+    // BATZO CONTEST NAVIGATION FIX
+    // Popular / Complete must open the real contest screen.
+    setNotice("");
+    setTab("contests");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Open the existing contest renderer when available.
+    setTimeout(() => {
+      try {
+        if (typeof showContest === "function") {
+          showContest();
+        } else if (
+          typeof window !== "undefined" &&
+          typeof window.BATZO_ACTIVE_CONTEST !== "undefined"
+        ) {
+          window.dispatchEvent(
+            new CustomEvent("batzo:contest", {
+              detail: {
+                contest: window.BATZO_ACTIVE_CONTEST
+              }
+            })
+          );
+        }
+      } catch (e) {
+        console.warn("BATZO contest navigation:", e);
+      }
+    }, 0);
   };
 
   const goHome = () => {
@@ -428,38 +489,9 @@ function App() {
               </div>
             </section>
 
-            <section className="quick-grid">
-              <QuickCard
-                icon="🏏"
-                title="Matches"
-                sub="Live & upcoming"
-                type="green-card"
-                onClick={() => setTab("matches")}
-              />
-              <QuickCard
-                icon="🏆"
-                title="My Contests"
-                sub="Track entries"
-                type="gold-card"
-                onClick={() => setTab("contests")}
-              />
-              <QuickCard
-                icon="👥"
-                title="My Teams"
-                sub="Build your XI"
-                type="blue-card"
-                onClick={() => setTab("teams")}
-              />
-              <QuickCard
-                icon="🎁"
-                title="Rewards"
-                sub="Coming soon"
-                type="pink-card"
-                onClick={() => showComing("Rewards")}
-              />
-            </section>
 
-            <section className="section-block">
+
+            <section className="section-block batzo-hidden-home-section">
               <div className="section-heading">
                 <div>
                   <span>PLAY NOW</span>
@@ -477,7 +509,7 @@ function App() {
               ))}
             </section>
 
-            <section className="section-block">
+            <section className="section-block batzo-hidden-home-section">
               <div className="section-heading">
                 <div>
                   <span>DON'T MISS OUT</span>
@@ -503,7 +535,7 @@ function App() {
                   <span>TOP PICKS</span>
                   <h2>Popular Contests</h2>
                 </div>
-                <button onClick={() => setTab("contests")}>View all →</button>
+                <button onClick={() => window.dispatchEvent(new CustomEvent("batzo:open-contests"))}>View all →</button>
               </div>
 
               <div className="contest-list">
@@ -635,7 +667,7 @@ function App() {
           onClick={() => setTab("contests")}
         >
           <span>🏆</span>
-          <small>Contests</small>
+          <small>Contest</small>
         </button>
 
         <button
@@ -643,7 +675,7 @@ function App() {
           onClick={() => setTab("teams")}
         >
           <span>👥</span>
-          <small>My Teams</small>
+          <small>My Team</small>
         </button>
 
         <button
@@ -659,2659 +691,1234 @@ function App() {
 }
 
 
-/* BATZO_FLOW_CONTROLLER */
-(function(){
-  if(typeof window==="undefined") return;
-
-  function renderTeam(match){
-    const root=document.getElementById("root");
-    if(!root) return;
-
-    root.innerHTML=`
-      <div class="bz-flow-screen">
-        <div class="bz-flow-head">
-          <div>
-            <div style="color:#24e778;font-size:12px;font-weight:900;letter-spacing:2px">BATZO CRICKET</div>
-            <h1>Create Team</h1>
-            <div style="color:#8f97a5;margin-top:4px">${match} • Select your XI</div>
-          </div>
-          <button class="bz-flow-back" id="bzBack">← Back</button>
-        </div>
-
-        <div id="bzPlayers"></div>
-
-        <div class="bz-flow-bottom">
-          <button class="bz-flow-primary" id="bzTeamContinue">CONTINUE • 0/11</button>
-        </div>
-      </div>
-    `;
-
-    const box=document.getElementById("bzPlayers");
-    let selected=new Set();
-
-    BATZO_PLAYERS.forEach((p,i)=>{
-      const card=document.createElement("div");
-      card.className="bz-flow-card";
-      card.innerHTML=`
-        <div class="bz-flow-player">
-          <div class="bz-flow-photo">
-            <img src="${p.photo}" alt="${p.name}">
-          </div>
-          <div class="bz-flow-player-info">
-            <div class="bz-flow-player-name">${p.name}</div>
-            <div class="bz-flow-player-meta">${p.team} • ${p.role}</div>
-            <div class="bz-flow-credit">${p.credit} Credits</div>
-          </div>
-          <button class="bz-flow-select">ADD</button>
-        </div>
-      `;
-
-      const btn=card.querySelector("button");
-      btn.onclick=()=>{
-        if(selected.has(i)){
-          selected.delete(i);
-          btn.textContent="ADD";
-          btn.classList.remove("active");
-        }else if(selected.size<11){
-          selected.add(i);
-          btn.textContent="✓";
-          btn.classList.add("active");
-        }
-
-        document.getElementById("bzTeamContinue").textContent=
-          "CONTINUE • "+selected.size+"/11";
-      };
-
-      box.appendChild(card);
-    });
-
-    document.getElementById("bzBack").onclick=()=>location.reload();
-
-    document.getElementById("bzTeamContinue").onclick=()=>{
-      if(selected.size<11){
-        alert("Please select 11 players.");
-        return;
-      }
-
-      const players=[...selected].map(i=>PLAYERS[i]).filter(Boolean);
-
-      window.BATZO_PENDING_TEAM={
-        id:"team-"+Date.now(),
-        players:players,
-        captain:null,
-        viceCaptain:null,
-        createdAt:Date.now()
-      };
-
-      root.innerHTML=`
-        <div class="bz-flow-screen">
-          <div class="bz-flow-head">
-            <div>
-              <div style="color:#24e778;font-size:12px;font-weight:900;letter-spacing:2px">
-                CREATE TEAM
-              </div>
-              <h1>Captain & Vice-Captain</h1>
-            </div>
-            <button class="bz-flow-back" id="bzCaptainBack">← Back</button>
-          </div>
-
-          <div class="bz-flow-card">
-            <div style="color:#858d9a;font-size:11px;text-transform:uppercase;letter-spacing:1.5px">
-              SELECT C & VC
-            </div>
-            <div style="color:#fff;margin-top:8px">
-              Choose one Captain and one Vice-Captain.
-            </div>
-          </div>
-
-          <div id="bzCaptainList">
-            ${players.map((p,i)=>`
-              <div class="bz-flow-card bz-cv-card" data-player="${i}">
-                <div style="font-weight:900;color:#fff">
-                  ${p.name || ("Player "+(i+1))}
-                </div>
-                <div style="font-size:11px;color:#858d9a;margin-top:4px">
-                  ${p.team || ""} • ${p.role || ""}
-                </div>
-                <div style="display:flex;gap:8px;margin-top:12px">
-                  <button type="button"
-                    class="bz-flow-small bzPickCaptain"
-                    data-index="${i}">
-                    C
-                  </button>
-                  <button type="button"
-                    class="bz-flow-small bzPickVice"
-                    data-index="${i}">
-                    VC
-                  </button>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-
-          <div class="bz-flow-bottom">
-            <button class="bz-flow-primary" id="bzConfirmTeam">
-              CONFIRM TEAM
-            </button>
-          </div>
-        </div>
-      `;
-
-      document.getElementById("bzCaptainBack").onclick=()=>{
-        renderTeam("IND vs AUS");
-      };
-
-      document.querySelectorAll(".bzPickCaptain").forEach(btn=>{
-        btn.onclick=()=>{
-          window.BATZO_PENDING_TEAM.captain=Number(btn.dataset.index);
-          document.querySelectorAll(".bzPickCaptain").forEach(x=>{
-            x.classList.remove("active");
-          });
-          btn.classList.add("active");
-        };
-      });
-
-      document.querySelectorAll(".bzPickVice").forEach(btn=>{
-        btn.onclick=()=>{
-          window.BATZO_PENDING_TEAM.viceCaptain=Number(btn.dataset.index);
-          document.querySelectorAll(".bzPickVice").forEach(x=>{
-            x.classList.remove("active");
-          });
-          btn.classList.add("active");
-        };
-      });
-
-      document.getElementById("bzConfirmTeam").onclick=()=>{
-        const team=window.BATZO_PENDING_TEAM;
-
-        if(!team.captain && team.captain!==0){
-          alert("Please select Captain.");
-          return;
-        }
-
-        if(!team.viceCaptain && team.viceCaptain!==0){
-          alert("Please select Vice-Captain.");
-          return;
-        }
-
-        if(team.captain===team.viceCaptain){
-          alert("Captain and Vice-Captain must be different.");
-          return;
-        }
-
-        try{
-          const oldTeams=JSON.parse(
-            localStorage.getItem("batzo_saved_teams") || "[]"
-          );
-
-          localStorage.setItem(
-            "batzo_saved_teams",
-            JSON.stringify([team,...oldTeams])
-          );
-
-          localStorage.setItem(
-            "batzo_selected_team",
-            JSON.stringify(team)
-          );
-
-          localStorage.setItem(
-            "batzo_active_team",
-            JSON.stringify(team)
-          );
-        }catch(e){
-          console.error("Team save error",e);
-        }
-
-        /*
-         * IMPORTANT:
-         * Do NOT go Back.
-         * Keep the current contest in memory and
-         * directly return to the contest screen.
-         */
-        window.BATZO_ACTIVE_CONTEST =
-          window.BATZO_ACTIVE_CONTEST ||
-          (typeof contest !== "undefined" ? contest : BATZO_CONTESTS[0]);
-
-        renderContest(
-          window.BATZO_ACTIVE_CONTEST || BATZO_CONTESTS[0]
-        );
-      };
-    };
-  }
-
-    window.addEventListener("batzo:team",e=>{
-    renderTeam((e.detail&&e.detail.match)||"IND vs AUS");
-  });
-
-  window.addEventListener("batzo:contest",e=>{
-    renderContest((e.detail&&e.detail.contest)||BATZO_CONTESTS[0]);
-  });
-
-  document.addEventListener("click",e=>{
-    const el=e.target.closest("button,a");
-    if(!el) return;
-
-    const text=(el.innerText||"").trim().toUpperCase();
-
-    if(
-      text.includes("VIEW CONTEST") ||
-      text.includes("JOIN CONTEST") ||
-      text==="CONTESTS"
-    ){
-      e.preventDefault();
-      e.stopPropagation();
-      openBatzoContest(BATZO_CONTESTS[0]);
-      return;
-    }
-
-    if(
-      text.includes("CREATE TEAM") ||
-      text.includes("BUILD YOUR XI") ||
-      text==="MY TEAMS"
-    ){
-      e.preventDefault();
-      e.stopPropagation();
-      openBatzoTeam("IND vs AUS");
-      return;
-    }
-  },true);
-})();
-
-
-/* BATZO FINAL UPCOMING CONTEST REPAIR */
-(function(){
-
-  function fireContest(matchName){
-    const contests =
-      (typeof BATZO_CONTESTS !== "undefined" &&
-       Array.isArray(BATZO_CONTESTS))
-        ? BATZO_CONTESTS
-        : [{
-            id:"contest-001",
-            name:"Mega Contest",
-            prize:"₹1,00,000",
-            entry:"₹49",
-            spots:10000,
-            joined:3210
-          }];
-
-    const contest = contests[0];
-
-    window.dispatchEvent(
-      new CustomEvent("batzo:contest",{
-        detail:{
-          contest:contest,
-          match:matchName || "IND vs AUS"
-        }
-      })
-    );
-  }
-
-  function makeButton(matchName){
-
-    const btn=document.createElement("button");
-
-    btn.type="button";
-    btn.className="batzo-final-view-contests";
-
-    btn.textContent="VIEW CONTESTS";
-
-    btn.style.cssText=[
-      "display:block",
-      "width:100%",
-      "margin-top:12px",
-      "padding:12px 14px",
-      "border:0",
-      "border-radius:12px",
-      "background:linear-gradient(135deg,#24ef7b,#0fc966)",
-      "color:#031009",
-      "font-size:13px",
-      "font-weight:900",
-      "cursor:pointer",
-      "box-sizing:border-box"
-    ].join(";");
-
-    btn.addEventListener("click",function(e){
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      fireContest(matchName || "IND vs AUS");
-
-    },true);
-
-    return btn;
-  }
-
-  function textOf(el){
-    return (el.innerText || el.textContent || "")
-      .replace(/\s+/g," ")
-      .trim();
-  }
-
-  function repairUpcoming(){
-
-    const all=[...document.querySelectorAll(
-      "div,section,article,main"
-    )];
-
-    let upcomingFound=false;
-
-    all.forEach(el=>{
-
-      if(!el || el.id==="root") return;
-
-      const txt=textOf(el).toUpperCase();
-
-      if(!txt.includes("UPCOMING")) return;
-
-      if(txt.length>1800) return;
-
-      upcomingFound=true;
-
-      /*
-       * Existing match card:
-       * find a reasonably small container containing
-       * UPCOMING + team information.
-       */
-      let card=el;
-
-      for(let i=0;i<4 && card.parentElement;i++){
-
-        const parent=card.parentElement;
-        const pt=textOf(parent).toUpperCase();
-
-        if(
-          pt.includes("UPCOMING") &&
-          pt.length < 900
-        ){
-          card=parent;
-        }else{
-          break;
-        }
-      }
-
-      if(
-        card.querySelector(
-          ".batzo-final-view-contests"
-        )
-      ) return;
-
-      const matchText=textOf(card);
-
-      let matchName="IND vs AUS";
-
-      if(
-        matchText.includes("IND") &&
-        matchText.includes("AUS")
-      ){
-        matchName="IND vs AUS";
-      }else if(
-        matchText.includes("IND") &&
-        matchText.includes("ENG")
-      ){
-        matchName="IND vs ENG";
-      }
-
-      card.appendChild(makeButton(matchName));
-
-    });
-
-    /*
-     * If the current Home screen has Upcoming heading
-     * but no actual contest CTA/card, create one visible
-     * fallback card. This prevents the user getting a blank
-     * Upcoming section.
-     */
-    if(
-      upcomingFound &&
-      !document.querySelector(
-        ".batzo-final-view-contests"
-      )
-    ){
-
-      const heading=[...document.querySelectorAll(
-        "h1,h2,h3,h4,div,span"
-      )].find(el =>
-        textOf(el).toUpperCase()==="UPCOMING MATCHES"
-      );
-
-      if(heading){
-
-        const section=document.createElement("div");
-
-        section.className="batzo-final-generated-match";
-
-        section.style.cssText=[
-          "margin:12px 0",
-          "padding:15px",
-          "border-radius:18px",
-          "background:linear-gradient(145deg,#121920,#090d11)",
-          "border:1px solid #29313a",
-          "color:#fff"
-        ].join(";");
-
-        section.innerHTML=`
-          <div style="
-            color:#ffd43b;
-            font-size:10px;
-            font-weight:900;
-            margin-bottom:10px;
-          ">UPCOMING</div>
-
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            font-weight:900;
-            font-size:16px;
-          ">
-            <span>🇮🇳 INDIA</span>
-            <span style="color:#24e778">VS</span>
-            <span>🇦🇺 AUSTRALIA</span>
-          </div>
-
-          <div style="
-            color:#818b97;
-            font-size:10px;
-            text-align:center;
-            margin:9px 0;
-          ">
-            Upcoming Cricket Match
-          </div>
-        `;
-
-        section.appendChild(
-          makeButton("IND vs AUS")
-        );
-
-        heading.parentElement?.appendChild(section);
-      }
-    }
-  }
-
-  /*
-   * Existing listener in the project catches
-   * VIEW CONTESTS. This final listener is deliberately
-   * installed after the existing app logic and directly
-   * opens the existing batzo:contest flow.
-   */
-  window.addEventListener(
-    "batzo:open-upcoming-contest",
-    function(e){
-      fireContest(
-        e.detail?.match || "IND vs AUS"
-      );
-    }
-  );
-
-  /*
-   * Run after React renders.
-   */
-  function run(){
-    try{
-      repairUpcoming();
-    }catch(err){
-      console.warn(
-        "BATZO upcoming repair:",
-        err
-      );
-    }
-  }
-
-  if(
-    document.readyState==="complete" ||
-    document.readyState==="interactive"
-  ){
-    setTimeout(run,250);
-    setTimeout(run,1000);
-    setTimeout(run,2500);
-  }else{
-    document.addEventListener(
-      "DOMContentLoaded",
-      function(){
-        setTimeout(run,250);
-        setTimeout(run,1000);
-        setTimeout(run,2500);
-      }
-    );
-  }
-
-  /*
-   * React/Vite can repaint the Home screen.
-   * Keep the CTA attached after repaint.
-   */
-  let timer=0;
-
-  const observer=new MutationObserver(function(){
-
-    clearTimeout(timer);
-
-    timer=setTimeout(run,120);
-
-  });
-
-  observer.observe(
-    document.documentElement,
-    {
-      childList:true,
-      subtree:true
-    }
-  );
-
-})();
-
-
-
-if (typeof window !== "undefined") {
-  try {
-    installJoinFlow();
-  } catch (error) {
-    console.warn("Batzo join flow:", error);
-  }
-}
-
-
-if (typeof window !== "undefined") {
-  try {
-  } catch (error) {
-    console.warn("Batzo clean repair:", error);
-  }
-}
-
-
-/* BATZO MASTER CORE FLOW */
-(function(){
+/* ==============================================================
+   BATZO V11 CLEAN SINGLE FLOW
+   Contest -> Details -> My Teams -> Team Builder -> C/VC -> Join
+   ============================================================== */
+(function () {
   "use strict";
 
-  const TEAM_KEY = "batzo_selected_team";
-  const TEAMS_KEY = "batzo_saved_teams";
-  const WALLET_KEY = "batzo_wallet_balance";
-  const JOINED_KEY = "batzo_joined_contests";
+  if (typeof window === "undefined") return;
 
-  function getJSON(key, fallback){
-    try{
-      const v = localStorage.getItem(key);
-      return v ? JSON.parse(v) : fallback;
-    }catch(e){
+  const TEAM_KEY = "batzo_v11_match_teams";
+  const JOIN_KEY = "batzo_v11_joined_contests";
+  const WALLET_KEY = "batzo_wallet_balance";
+
+  const MAX_TEAMS = 10;
+
+  function readJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
       return fallback;
     }
   }
 
-  function setJSON(key, value){
-    localStorage.setItem(key, JSON.stringify(value));
+  function writeJSON(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.warn("BATZO storage error", e);
+    }
   }
 
-  function getWallet(){
-    const n = Number(localStorage.getItem(WALLET_KEY));
-    return Number.isFinite(n) ? n : 0;
+  function matchKey(match) {
+    if (!match) return "IND-vs-AUS";
+
+    if (typeof match === "string") {
+      return match.replace(/[^a-zA-Z0-9_-]/g, "-");
+    }
+
+    return String(
+      match.id ||
+      match.matchId ||
+      match.key ||
+      ((match.a || match.teamA || "IND") + "-" +
+       (match.b || match.teamB || "AUS"))
+    ).replace(/[^a-zA-Z0-9_-]/g, "-");
   }
 
-  function getContest(){
-    try{
-      if(typeof BATZO_CONTESTS !== "undefined" &&
-         Array.isArray(BATZO_CONTESTS) &&
-         BATZO_CONTESTS.length){
-        return BATZO_CONTESTS[0];
+  function currentMatch() {
+    return window.BATZO_ACTIVE_MATCH || "IND vs AUS";
+  }
+
+  function getTeams(match) {
+    const all = readJSON(TEAM_KEY, {});
+    const key = matchKey(match);
+
+    if (Array.isArray(all[key])) {
+      return all[key];
+    }
+
+    return [];
+  }
+
+  function saveTeams(match, teams) {
+    const all = readJSON(TEAM_KEY, {});
+    all[matchKey(match)] = teams.slice(0, MAX_TEAMS);
+    writeJSON(TEAM_KEY, all);
+  }
+
+  function getContests() {
+    try {
+      if (
+        typeof BATZO_CONTESTS !== "undefined" &&
+        Array.isArray(BATZO_CONTESTS) &&
+        BATZO_CONTESTS.length
+      ) {
+        return BATZO_CONTESTS;
       }
-    }catch(e){}
-    return {
-      id:"batzo-default-contest",
-      name:"Mega Contest",
-      prize:"₹1,00,000",
-      entry:"₹49",
-      spots:10000,
-      joined:3210
+    } catch (e) {}
+
+    return [
+      {
+        id: "mega-001",
+        name: "Mega Contest",
+        prize: "₹1,00,000",
+        entry: "₹49",
+        spots: 10000,
+        joined: 3210,
+        type: "popular"
+      },
+      {
+        id: "grand-002",
+        name: "Grand Contest",
+        prize: "₹50,000",
+        entry: "₹99",
+        spots: 5000,
+        joined: 1800,
+        type: "popular"
+      },
+      {
+        id: "small-003",
+        name: "Small Contest",
+        prize: "₹5,000",
+        entry: "₹25",
+        spots: 500,
+        joined: 210,
+        type: "complete"
+      }
+    ];
+  }
+
+  function players() {
+    try {
+      if (
+        typeof BATZO_PLAYERS !== "undefined" &&
+        Array.isArray(BATZO_PLAYERS) &&
+        BATZO_PLAYERS.length
+      ) {
+        return BATZO_PLAYERS;
+      }
+    } catch (e) {}
+
+    return [];
+  }
+
+  function root() {
+    return document.getElementById("root");
+  }
+
+  function shell(title, subtitle, body, backText) {
+    const r = root();
+    if (!r) return;
+
+    r.innerHTML = `
+      <div class="bz-flow-screen" style="
+        min-height:100vh;
+        background:#07100d;
+        color:#fff;
+        padding-bottom:90px;
+      ">
+        <div style="
+          position:sticky;
+          top:0;
+          z-index:20;
+          background:#07100d;
+          padding:16px;
+          border-bottom:1px solid rgba(255,255,255,.08);
+        ">
+          <button id="bzV11Back" type="button" style="
+            border:0;
+            background:transparent;
+            color:#fff;
+            font-size:15px;
+            margin-bottom:10px;
+          ">← ${backText || "Back"}</button>
+
+          <div style="
+            font-size:11px;
+            font-weight:900;
+            letter-spacing:2px;
+            color:#24e778;
+          ">BATZO CRICKET</div>
+
+          <h1 style="margin:5px 0 0;font-size:25px">${title}</h1>
+
+          <div style="
+            margin-top:5px;
+            color:#929aa7;
+            font-size:13px;
+          ">${subtitle || ""}</div>
+        </div>
+
+        <div style="padding:16px">${body}</div>
+      </div>
+    `;
+
+    return r;
+  }
+
+  function goBack() {
+    location.reload();
+  }
+
+  function showContestTabs(selected) {
+    const list = getContests();
+    const popular = list.filter(
+      c => String(c.type || "popular").toLowerCase() !== "complete"
+    );
+    const complete = list.filter(
+      c => String(c.type || "").toLowerCase() === "complete"
+    );
+
+    const items = selected === "complete" ? complete : popular;
+
+    const cards = items.length
+      ? items.map(c => `
+          <button
+            type="button"
+            class="bz-v11-contest-card"
+            data-contest-id="${String(c.id || c.name).replace(/"/g,"&quot;")}"
+            style="
+              width:100%;
+              text-align:left;
+              margin:10px 0;
+              padding:16px;
+              border-radius:16px;
+              border:1px solid rgba(255,255,255,.10);
+              background:#101a16;
+              color:#fff;
+            "
+          >
+            <div style="display:flex;justify-content:space-between;gap:10px">
+              <strong>${c.name || "Contest"}</strong>
+              <span style="color:#24e778;font-weight:900">
+                ${c.entry || "₹49"}
+              </span>
+            </div>
+
+            <div style="
+              margin-top:9px;
+              font-size:13px;
+              color:#9ca5b1;
+            ">
+              Prize ${c.prize || "₹0"} ·
+              ${Number(c.spots || 0).toLocaleString("en-IN")} spots
+            </div>
+
+            <div style="
+              margin-top:12px;
+              font-size:12px;
+              font-weight:900;
+              color:#24e778;
+            ">VIEW CONTEST →</div>
+          </button>
+        `).join("")
+      : `
+        <div style="
+          padding:25px 10px;
+          text-align:center;
+          color:#9ca5b1;
+        ">
+          No contests available in this category.
+        </div>
+      `;
+
+    const r = shell(
+      "Contests",
+      currentMatch(),
+      `
+        <div style="
+          display:flex;
+          gap:8px;
+          margin-bottom:14px;
+        ">
+          <button id="bzPopular" type="button" style="
+            flex:1;
+            padding:12px;
+            border-radius:12px;
+            border:0;
+            font-weight:900;
+            background:${selected === "popular" ? "#24e778" : "#18231e"};
+            color:${selected === "popular" ? "#061008" : "#fff"};
+          ">POPULAR</button>
+
+          <button id="bzComplete" type="button" style="
+            flex:1;
+            padding:12px;
+            border-radius:12px;
+            border:0;
+            font-weight:900;
+            background:${selected === "complete" ? "#24e778" : "#18231e"};
+            color:${selected === "complete" ? "#061008" : "#fff"};
+          ">COMPLETE</button>
+        </div>
+
+        <div>${cards}</div>
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = goBack;
+
+    r.querySelector("#bzPopular").onclick = function () {
+      showContestTabs("popular");
+    };
+
+    r.querySelector("#bzComplete").onclick = function () {
+      showContestTabs("complete");
+    };
+
+    r.querySelectorAll("[data-contest-id]").forEach(function (btn) {
+      btn.onclick = function () {
+        const id = btn.getAttribute("data-contest-id");
+        const contest = list.find(
+          c => String(c.id || c.name) === String(id)
+        ) || list[0];
+
+        window.BATZO_ACTIVE_CONTEST = contest;
+        showContestDetails(contest);
+      };
+    });
+  }
+
+  function showContestDetails(contest) {
+    const match = currentMatch();
+
+    const r = shell(
+      contest.name || "Contest Details",
+      match,
+      `
+        <div style="
+          padding:18px;
+          border-radius:18px;
+          background:#101a16;
+          border:1px solid rgba(255,255,255,.10);
+        ">
+          <div style="
+            font-size:12px;
+            color:#24e778;
+            font-weight:900;
+            letter-spacing:1.5px;
+          ">CONTEST DETAILS</div>
+
+          <h2 style="margin:8px 0">
+            ${contest.name || "Contest"}
+          </h2>
+
+          <div style="
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+            margin-top:15px;
+          ">
+            <div>
+              <small style="color:#8e97a3">PRIZE POOL</small>
+              <div style="font-weight:900;margin-top:4px">
+                ${contest.prize || "₹0"}
+              </div>
+            </div>
+
+            <div>
+              <small style="color:#8e97a3">ENTRY</small>
+              <div style="font-weight:900;margin-top:4px">
+                ${contest.entry || "₹49"}
+              </div>
+            </div>
+
+            <div>
+              <small style="color:#8e97a3">SPOTS</small>
+              <div style="font-weight:900;margin-top:4px">
+                ${Number(contest.spots || 0).toLocaleString("en-IN")}
+              </div>
+            </div>
+
+            <div>
+              <small style="color:#8e97a3">JOINED</small>
+              <div style="font-weight:900;margin-top:4px">
+                ${Number(contest.joined || 0).toLocaleString("en-IN")}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <button id="bzV11Teams" type="button" style="
+            width:100%;
+            padding:15px;
+            border:0;
+            border-radius:13px;
+            background:#18231e;
+            color:#fff;
+            font-weight:900;
+          ">MY TEAMS (${getTeams(match).length}/10)</button>
+
+          <button id="bzV11Create" type="button" style="
+            width:100%;
+            margin-top:10px;
+            padding:15px;
+            border:0;
+            border-radius:13px;
+            background:#24e778;
+            color:#061008;
+            font-weight:900;
+          ">CREATE TEAM</button>
+        </div>
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = function () {
+      showContestTabs(
+        String(contest.type || "popular").toLowerCase() === "complete"
+          ? "complete"
+          : "popular"
+      );
+    };
+
+    r.querySelector("#bzV11Teams").onclick = function () {
+      showMyTeams(match, contest);
+    };
+
+    r.querySelector("#bzV11Create").onclick = function () {
+      showTeamBuilder(match, contest, null);
     };
   }
 
-  function saveTeam(team){
-    const old = getJSON(TEAMS_KEY, []);
-    const same = old.filter(x => {
-      try{
-        return JSON.stringify(x) !== JSON.stringify(team);
-      }catch(e){
-        return true;
-      }
+  function showMyTeams(match, contest) {
+    const teams = getTeams(match);
+
+    const list = teams.length
+      ? teams.map(function (team, index) {
+          return `
+            <div style="
+              margin:10px 0;
+              padding:15px;
+              border-radius:15px;
+              background:#101a16;
+              border:1px solid rgba(255,255,255,.10);
+            ">
+              <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:8px;
+              ">
+                <strong>${team.name || "Team " + (index + 1)}</strong>
+
+                <span style="
+                  font-size:11px;
+                  color:#24e778;
+                  font-weight:900;
+                ">
+                  ${Array.isArray(team.players) ? team.players.length : 0}/11
+                </span>
+              </div>
+
+              <div style="
+                margin-top:7px;
+                font-size:12px;
+                color:#929aa7;
+              ">
+                ${team.captainName ? "C: " + team.captainName : "C not selected"}
+                ·
+                ${team.viceCaptainName ? "VC: " + team.viceCaptainName : "VC not selected"}
+              </div>
+
+              <div style="
+                display:flex;
+                gap:7px;
+                margin-top:12px;
+              ">
+                <button
+                  type="button"
+                  data-select="${team.id}"
+                  style="
+                    flex:1;
+                    padding:10px;
+                    border:0;
+                    border-radius:10px;
+                    background:#24e778;
+                    color:#061008;
+                    font-weight:900;
+                  "
+                >SELECT</button>
+
+                <button
+                  type="button"
+                  data-edit="${team.id}"
+                  style="
+                    padding:10px 14px;
+                    border:1px solid rgba(255,255,255,.15);
+                    border-radius:10px;
+                    background:#18231e;
+                    color:#fff;
+                    font-weight:900;
+                  "
+                >EDIT</button>
+
+                <button
+                  type="button"
+                  data-delete="${team.id}"
+                  style="
+                    padding:10px 14px;
+                    border:1px solid rgba(255,255,255,.15);
+                    border-radius:10px;
+                    background:#18231e;
+                    color:#fff;
+                    font-weight:900;
+                  "
+                >DELETE</button>
+              </div>
+            </div>
+          `;
+        }).join("")
+      : `
+        <div style="
+          text-align:center;
+          padding:30px 10px;
+          color:#929aa7;
+        ">
+          No team created for this match yet.
+        </div>
+      `;
+
+    const r = shell(
+      "My Teams",
+      match + " • " + (contest.name || "Contest"),
+      `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:12px;
+        ">
+          <strong>My Teams</strong>
+          <span style="color:#24e778;font-weight:900">
+            ${teams.length}/10
+          </span>
+        </div>
+
+        ${list}
+
+        ${
+          teams.length < MAX_TEAMS
+            ? `
+              <button id="bzCreateAnother" type="button" style="
+                width:100%;
+                margin-top:10px;
+                padding:14px;
+                border:0;
+                border-radius:12px;
+                background:#24e778;
+                color:#061008;
+                font-weight:900;
+              ">+ CREATE NEW TEAM</button>
+            `
+            : `
+              <div style="
+                text-align:center;
+                padding:12px;
+                color:#24e778;
+                font-size:12px;
+                font-weight:900;
+              ">MAXIMUM 10 TEAMS REACHED</div>
+            `
+        }
+
+        ${
+          teams.length
+            ? `
+              <button id="bzContinueSelected" type="button" style="
+                width:100%;
+                margin-top:10px;
+                padding:14px;
+                border:0;
+                border-radius:12px;
+                background:#18231e;
+                color:#fff;
+                font-weight:900;
+              ">CONTINUE WITH SELECTED TEAM</button>
+            `
+            : ""
+        }
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = function () {
+      showContestDetails(contest);
+    };
+
+    const create = r.querySelector("#bzCreateAnother");
+    if (create) {
+      create.onclick = function () {
+        if (getTeams(match).length >= MAX_TEAMS) {
+          alert("Maximum 10 teams allowed for this match.");
+          return;
+        }
+        showTeamBuilder(match, contest, null);
+      };
+    }
+
+    r.querySelectorAll("[data-edit]").forEach(function (btn) {
+      btn.onclick = function () {
+        const team = getTeams(match).find(
+          t => String(t.id) === String(btn.dataset.edit)
+        );
+
+        if (team) {
+          showTeamBuilder(match, contest, team);
+        }
+      };
     });
 
-    setJSON(TEAMS_KEY, [team, ...same]);
-    setJSON(TEAM_KEY, team);
-    setJSON("batzo_active_team", team);
-  }
+    r.querySelectorAll("[data-delete]").forEach(function (btn) {
+      btn.onclick = function () {
+        const id = btn.dataset.delete;
 
-  function showContest(){
-    const contest = getContest();
-    window.BATZO_ACTIVE_CONTEST = contest;
+        if (!confirm("Delete this team?")) return;
 
-    window.dispatchEvent(
-      new CustomEvent("batzo:contest", {
-        detail:{contest:contest}
-      })
-    );
-  }
+        const next = getTeams(match).filter(
+          t => String(t.id) !== String(id)
+        );
 
-  function showWalletMessage(text, ok){
-    const old = document.getElementById("batzoMasterWalletMsg");
-    if(old) old.remove();
-
-    const box = document.createElement("div");
-    box.id = "batzoMasterWalletMsg";
-    box.textContent = text;
-    box.style.cssText =
-      "position:fixed;left:16px;right:16px;bottom:90px;" +
-      "z-index:999999;padding:14px 16px;border-radius:14px;" +
-      "background:" + (ok ? "#123d26" : "#421b1b") + ";" +
-      "color:#fff;font-weight:800;text-align:center;" +
-      "box-shadow:0 8px 30px rgba(0,0,0,.45)";
-    document.body.appendChild(box);
-
-    setTimeout(function(){
-      box.remove();
-    },2500);
-  }
-
-  function joinContest(){
-    const team = getJSON(TEAM_KEY, null);
-
-    if(!team){
-      window.dispatchEvent(
-        new CustomEvent("batzo:team", {
-          detail:{match:"IND vs AUS"}
-        })
-      );
-      return;
-    }
-
-    const contest = getContest();
-
-    let entry = parseFloat(
-      String(contest.entry || "49").replace(/[^\d.]/g,"")
-    );
-
-    if(!Number.isFinite(entry)) entry = 49;
-
-    const joined = getJSON(JOINED_KEY, []);
-
-    const already = joined.some(x =>
-      String(x.contestId) === String(contest.id || "batzo-default-contest") &&
-      JSON.stringify(x.team) === JSON.stringify(team)
-    );
-
-    if(already){
-      showWalletMessage("Contest already joined with this team.", true);
-      return;
-    }
-
-    const balance = getWallet();
-
-    if(balance < entry){
-      showWalletMessage(
-        "Insufficient wallet balance. Entry fee: ₹" + entry,
-        false
-      );
-      return;
-    }
-
-    localStorage.setItem(
-      WALLET_KEY,
-      String((balance - entry).toFixed(2))
-    );
-
-    joined.push({
-      contestId:contest.id || "batzo-default-contest",
-      contestName:contest.name || "Mega Contest",
-      entry:entry,
-      team:team,
-      joinedAt:Date.now()
+        saveTeams(match, next);
+        showMyTeams(match, contest);
+      };
     });
 
-    setJSON(JOINED_KEY, joined);
-    localStorage.setItem("batzo_last_joined_contest",
-      JSON.stringify(contest));
+    r.querySelectorAll("[data-select]").forEach(function (btn) {
+      btn.onclick = function () {
+        localStorage.setItem(
+          "batzo_v11_selected_team",
+          JSON.stringify({
+            match: matchKey(match),
+            teamId: btn.dataset.select
+          })
+        );
 
-    showWalletMessage(
-      "Contest joined successfully • ₹" + entry + " deducted",
-      true
-    );
+        showMyTeams(match, contest);
+      };
+    });
+
+    const cont = r.querySelector("#bzContinueSelected");
+
+    if (cont) {
+      cont.onclick = function () {
+        const selected = readJSON("batzo_v11_selected_team", null);
+
+        if (!selected || selected.match !== matchKey(match)) {
+          alert("Please select a team first.");
+          return;
+        }
+
+        const team = getTeams(match).find(
+          t => String(t.id) === String(selected.teamId)
+        );
+
+        if (!team) {
+          alert("Selected team not found.");
+          return;
+        }
+
+        showJoinConfirmation(match, contest, team);
+      };
+    }
   }
 
-  /*
-   * Capture-phase handler:
-   * It runs before older duplicate handlers and prevents
-   * the old Back/reload/create-team behaviour.
-   */
-  document.addEventListener("click", function(e){
-    const el = e.target.closest("button,a");
-    if(!el) return;
+  function showTeamBuilder(match, contest, editing) {
+    const ps = players();
 
-    const text = (el.innerText || el.textContent || "")
-      .replace(/\s+/g," ")
-      .trim()
-      .toUpperCase();
+    if (!ps.length) {
+      alert("Player list is not available.");
+      return;
+    }
 
-    if(
-      el.id === "bzTeamContinue" ||
-      el.id === "bzConfirmTeam" ||
-      text === "CONFIRM TEAM" ||
-      text.includes("CONFIRM TEAM")
-    ){
-      const team = window.BATZO_PENDING_TEAM;
+    const existing = editing || {};
+    const selectedPlayers = Array.isArray(existing.players)
+      ? existing.players
+      : [];
 
-      if(!team){
+    const selectedNames = new Set(
+      selectedPlayers.map(p => String(p.id || p.name))
+    );
+
+    const cards = ps.map(function (p, i) {
+      const id = String(p.id || p.name || i);
+      const active = selectedNames.has(id);
+
+      return `
+        <button
+          type="button"
+          class="bz-player"
+          data-player-id="${id.replace(/"/g,"&quot;")}"
+          style="
+            width:100%;
+            text-align:left;
+            padding:12px;
+            margin:6px 0;
+            border-radius:12px;
+            border:1px solid ${active ? "#24e778" : "rgba(255,255,255,.10)"};
+            background:${active ? "#14291d" : "#101a16"};
+            color:#fff;
+          "
+        >
+          <strong>${p.name || "Player " + (i + 1)}</strong>
+          <div style="
+            margin-top:4px;
+            font-size:11px;
+            color:#929aa7;
+          ">
+            ${p.team || ""} · ${p.role || ""}
+            ${p.credit ? " · " + p.credit + " Credits" : ""}
+          </div>
+        </button>
+      `;
+    }).join("");
+
+    const r = shell(
+      editing ? "Edit Team" : "Create Team",
+      match + " • Select exactly 11 players",
+      `
+        <div style="
+          position:sticky;
+          top:98px;
+          z-index:10;
+          padding:12px;
+          border-radius:12px;
+          background:#101a16;
+          margin-bottom:10px;
+        ">
+          <strong id="bzPlayerCount">
+            SELECTED: ${selectedPlayers.length}/11
+          </strong>
+        </div>
+
+        <div id="bzPlayerList">${cards}</div>
+
+        <button id="bzTeamNext" type="button" style="
+          width:100%;
+          margin-top:12px;
+          padding:15px;
+          border:0;
+          border-radius:13px;
+          background:#24e778;
+          color:#061008;
+          font-weight:900;
+        ">
+          CONTINUE • ${selectedPlayers.length}/11
+        </button>
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = function () {
+      showMyTeams(match, contest);
+    };
+
+    const selected = new Map();
+
+    selectedPlayers.forEach(function (p) {
+      selected.set(String(p.id || p.name), p);
+    });
+
+    function refresh() {
+      const n = selected.size;
+
+      r.querySelector("#bzPlayerCount").textContent =
+        "SELECTED: " + n + "/11";
+
+      r.querySelector("#bzTeamNext").textContent =
+        "CONTINUE • " + n + "/11";
+
+      r.querySelectorAll(".bz-player").forEach(function (b) {
+        const on = selected.has(b.dataset.playerId);
+
+        b.style.borderColor = on
+          ? "#24e778"
+          : "rgba(255,255,255,.10)";
+
+        b.style.background = on
+          ? "#14291d"
+          : "#101a16";
+      });
+    }
+
+    r.querySelectorAll(".bz-player").forEach(function (btn) {
+      btn.onclick = function () {
+        const id = btn.dataset.playerId;
+
+        if (selected.has(id)) {
+          selected.delete(id);
+        } else {
+          if (selected.size >= 11) {
+            alert("Maximum 11 players.");
+            return;
+          }
+
+          const p = ps.find(
+            x => String(x.id || x.name) === id
+          );
+
+          if (p) selected.set(id, p);
+        }
+
+        refresh();
+      };
+    });
+
+    r.querySelector("#bzTeamNext").onclick = function () {
+      if (selected.size !== 11) {
+        alert("Please select exactly 11 players.");
         return;
       }
 
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+      showCaptainVC(
+        match,
+        contest,
+        editing,
+        Array.from(selected.values())
+      );
+    };
+  }
 
-      if(!Array.isArray(team.players) && !Array.isArray(team.selectedPlayers)){
-        alert("Please select 11 players.");
-        return;
-      }
+  function showCaptainVC(match, contest, editing, selectedPlayers) {
+    let captain = editing ? editing.captain : null;
+    let vice = editing ? editing.viceCaptain : null;
 
-      const players = team.players || team.selectedPlayers || [];
+    const rows = selectedPlayers.map(function (p, i) {
+      const id = String(p.id || p.name || i);
 
-      if(players.length < 11){
-        alert("Please select 11 players.");
-        return;
-      }
+      return `
+        <div style="
+          margin:8px 0;
+          padding:13px;
+          border-radius:13px;
+          background:#101a16;
+          border:1px solid rgba(255,255,255,.10);
+        ">
+          <strong>${p.name || "Player"}</strong>
 
-      if(team.captain === undefined || team.captain === null){
+          <div style="
+            display:flex;
+            gap:8px;
+            margin-top:10px;
+          ">
+            <button
+              type="button"
+              data-c="${id.replace(/"/g,"&quot;")}"
+              style="
+                padding:10px 15px;
+                border-radius:9px;
+                border:0;
+                background:${String(captain) === id ? "#24e778" : "#18231e"};
+                color:#fff;
+                font-weight:900;
+              "
+            >C</button>
+
+            <button
+              type="button"
+              data-vc="${id.replace(/"/g,"&quot;")}"
+              style="
+                padding:10px 15px;
+                border-radius:9px;
+                border:0;
+                background:${String(vice) === id ? "#24e778" : "#18231e"};
+                color:#fff;
+                font-weight:900;
+              "
+            >VC</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const r = shell(
+      "Captain & Vice-Captain",
+      "Choose one C and one VC",
+      `
+        ${rows}
+
+        <button id="bzSaveTeam" type="button" style="
+          width:100%;
+          margin-top:12px;
+          padding:15px;
+          border:0;
+          border-radius:13px;
+          background:#24e778;
+          color:#061008;
+          font-weight:900;
+        ">SAVE TEAM</button>
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = function () {
+      showTeamBuilder(match, contest, editing);
+    };
+
+    r.querySelectorAll("[data-c]").forEach(function (btn) {
+      btn.onclick = function () {
+        captain = btn.dataset.c;
+        refreshButtons();
+      };
+    });
+
+    r.querySelectorAll("[data-vc]").forEach(function (btn) {
+      btn.onclick = function () {
+        vice = btn.dataset.vc;
+        refreshButtons();
+      };
+    });
+
+    function refreshButtons() {
+      r.querySelectorAll("[data-c]").forEach(function (b) {
+        b.style.background =
+          String(captain) === b.dataset.c
+            ? "#24e778"
+            : "#18231e";
+      });
+
+      r.querySelectorAll("[data-vc]").forEach(function (b) {
+        b.style.background =
+          String(vice) === b.dataset.vc
+            ? "#24e778"
+            : "#18231e";
+      });
+    }
+
+    r.querySelector("#bzSaveTeam").onclick = function () {
+      if (captain === null || captain === undefined) {
         alert("Please select Captain.");
         return;
       }
 
-      if(team.viceCaptain === undefined || team.viceCaptain === null){
+      if (vice === null || vice === undefined) {
         alert("Please select Vice-Captain.");
         return;
       }
 
-      if(team.captain === team.viceCaptain){
+      if (String(captain) === String(vice)) {
         alert("Captain and Vice-Captain must be different.");
         return;
       }
 
-      saveTeam(team);
-      showContest();
-      return;
+      const all = getTeams(match);
+
+      const captainPlayer = selectedPlayers.find(
+        p => String(p.id || p.name) === String(captain)
+      );
+
+      const vicePlayer = selectedPlayers.find(
+        p => String(p.id || p.name) === String(vice)
+      );
+
+      const team = {
+        id: editing && editing.id
+          ? editing.id
+          : "team-" + Date.now() + "-" + Math.random().toString(36).slice(2,7),
+
+        name: editing && editing.name
+          ? editing.name
+          : "Team " + (all.length + 1),
+
+        players: selectedPlayers,
+
+        captain: captain,
+        viceCaptain: vice,
+
+        captainName: captainPlayer
+          ? captainPlayer.name
+          : "",
+
+        viceCaptainName: vicePlayer
+          ? vicePlayer.name
+          : "",
+
+        updatedAt: Date.now()
+      };
+
+      let next;
+
+      if (editing) {
+        next = all.map(function (x) {
+          return String(x.id) === String(editing.id)
+            ? team
+            : x;
+        });
+      } else {
+        if (all.length >= MAX_TEAMS) {
+          alert("Maximum 10 teams allowed for this match.");
+          return;
+        }
+
+        next = all.concat(team);
+      }
+
+      saveTeams(match, next);
+
+      localStorage.setItem(
+        "batzo_v11_selected_team",
+        JSON.stringify({
+          match: matchKey(match),
+          teamId: team.id
+        })
+      );
+
+      showMyTeams(match, contest);
+    };
+  }
+
+  function walletBalance() {
+    const n = Number(localStorage.getItem(WALLET_KEY));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function entryAmount(contest) {
+    const raw = String(contest.entry || "49");
+    const n = Number(raw.replace(/[^\d.]/g, ""));
+    return Number.isFinite(n) ? n : 49;
+  }
+
+  function showJoinConfirmation(match, contest, team) {
+    const fee = entryAmount(contest);
+
+    const r = shell(
+      "Join Contest",
+      match + " • " + (contest.name || "Contest"),
+      `
+        <div style="
+          padding:18px;
+          border-radius:17px;
+          background:#101a16;
+          border:1px solid rgba(255,255,255,.10);
+        ">
+          <div style="color:#24e778;font-weight:900">
+            SELECTED TEAM
+          </div>
+
+          <h2>${team.name || "My Team"}</h2>
+
+          <div style="color:#929aa7;font-size:13px">
+            ${team.players.length}/11 players
+            · C: ${team.captainName || "-"}
+            · VC: ${team.viceCaptainName || "-"}
+          </div>
+
+          <div style="
+            margin-top:18px;
+            display:flex;
+            justify-content:space-between;
+          ">
+            <span>Entry Fee</span>
+            <strong>₹${fee}</strong>
+          </div>
+
+          <div style="
+            margin-top:8px;
+            display:flex;
+            justify-content:space-between;
+          ">
+            <span>Wallet</span>
+            <strong>₹${walletBalance()}</strong>
+          </div>
+        </div>
+
+        <button id="bzFinalJoin" type="button" style="
+          width:100%;
+          margin-top:15px;
+          padding:16px;
+          border:0;
+          border-radius:13px;
+          background:#24e778;
+          color:#061008;
+          font-weight:900;
+        ">
+          JOIN CONTEST • ₹${fee}
+        </button>
+      `
+    );
+
+    r.querySelector("#bzV11Back").onclick = function () {
+      showMyTeams(match, contest);
+    };
+
+    r.querySelector("#bzFinalJoin").onclick = function () {
+      const joined = readJSON(JOIN_KEY, []);
+
+      const duplicate = joined.some(function (x) {
+        return String(x.contestId) === String(contest.id) &&
+               String(x.match) === String(matchKey(match)) &&
+               String(x.teamId) === String(team.id);
+      });
+
+      if (duplicate) {
+        alert("This team is already joined in this contest.");
+        return;
+      }
+
+      const balance = walletBalance();
+
+      if (balance < fee) {
+        alert(
+          "Insufficient wallet balance. Required ₹" +
+          fee +
+          ", available ₹" +
+          balance + "."
+        );
+        return;
+      }
+
+      const record = {
+        contestId: contest.id || contest.name,
+        contestName: contest.name || "Contest",
+        match: matchKey(match),
+        teamId: team.id,
+        joinedAt: Date.now()
+      };
+
+      writeJSON(JOIN_KEY, joined.concat(record));
+
+      if (balance > 0) {
+        localStorage.setItem(
+          WALLET_KEY,
+          String(Math.max(0, balance - fee))
+        );
+      }
+
+      alert("Contest joined successfully.");
+      showContestDetails(contest);
+    };
+  }
+
+  function openContests() {
+    window.BATZO_ACTIVE_MATCH =
+      window.BATZO_ACTIVE_MATCH || "IND vs AUS";
+
+    showContestTabs("popular");
+  }
+
+  function openMyTeams() {
+    const match = currentMatch();
+
+    const contests = getContests();
+
+    showMyTeams(
+      match,
+      window.BATZO_ACTIVE_CONTEST || contests[0]
+    );
+  }
+
+  /*
+   * Capture ONLY the navigation buttons that belong to the
+   * main React shell. This replaces the old competing listeners.
+   */
+  document.addEventListener("click", function (e) {
+    const el = e.target.closest("button,a");
+    if (!el) return;
+
+    const text = (el.innerText || "").trim().toUpperCase();
+
+    // Home -> Popular Contests card
+    const popularSection = el.closest(".section-block");
+    if (
+      popularSection &&
+      /Popular Contests/i.test(
+        popularSection.innerText || ""
+      ) &&
+      el.closest(".contest-list")
+    ) {
+      const title = (el.innerText || "").trim();
+      const contest = getContests().find(function (c) {
+        return String(c.title || c.name || "").toUpperCase()
+          === title.toUpperCase();
+      }) || getContests()[0];
+
+      if (contest) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.BATZO_ACTIVE_CONTEST = contest;
+        showContestDetails(contest);
+        return;
+      }
     }
 
-    if(
-      el.id === "bzJoin" ||
-      text.includes("JOIN CONTEST") ||
-      text === "JOIN NOW"
-    ){
+    if (text === "CONTEST" || text === "CONTESTS") {
       e.preventDefault();
       e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      joinContest();
+      openContests();
       return;
     }
 
-    /*
-     * Existing Create Team / Build XI buttons continue to
-     * open the real team screen when there is no saved team.
-     */
-  }, true);
-
-  /*
-   * Make the wallet state available to the existing UI.
-   * No Add Money/payment system is created here.
-   */
-  if(localStorage.getItem(WALLET_KEY) === null){
-    localStorage.setItem(WALLET_KEY, "0");
-  }
-
-  window.BATZO_MASTER_CORE = {
-    getWallet:getWallet,
-    saveTeam:saveTeam,
-    joinContest:joinContest,
-    showContest:showContest
-  };
-
-  console.log("BATZO MASTER CORE READY");
-})();
-
-
-/* BATZO FINAL TEAM FLOW AUTHORITY */
-(function(){
-  "use strict";
-
-  if(typeof window === "undefined") return;
-
-  const TEAM_KEY = "batzo_selected_team";
-  const TEAMS_KEY = "batzo_saved_teams";
-  const WALLET_KEY = "batzo_wallet_balance";
-  const JOINED_KEY = "batzo_joined_contests";
-
-  function read(key, fallback){
-    try{
-      const raw=localStorage.getItem(key);
-      return raw===null ? fallback : JSON.parse(raw);
-    }catch(e){
-      return fallback;
-    }
-  }
-
-  function write(key,value){
-    try{
-      localStorage.setItem(key,JSON.stringify(value));
-    }catch(e){}
-  }
-
-  function contestData(){
-    try{
-      if(
-        typeof BATZO_CONTESTS !== "undefined" &&
-        Array.isArray(BATZO_CONTESTS) &&
-        BATZO_CONTESTS.length
-      ){
-        return BATZO_CONTESTS[0];
-      }
-    }catch(e){}
-
-    return {
-      id:"batzo-main-contest",
-      name:"Mega Contest",
-      prize:"₹1,00,000",
-      entry:"₹49",
-      spots:10000,
-      joined:3210
-    };
-  }
-
-  function entryAmount(contest){
-    const n=parseFloat(
-      String(contest.entry || "49").replace(/[^\d.]/g,"")
-    );
-    return Number.isFinite(n) ? n : 49;
-  }
-
-  function wallet(){
-    const n=parseFloat(
-      localStorage.getItem(WALLET_KEY) || "0"
-    );
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function saveTeam(team){
-    const old=read(TEAMS_KEY,[]);
-    const cleaned=Array.isArray(old)
-      ? old.filter(x=>{
-          try{
-            return JSON.stringify(x)!==JSON.stringify(team);
-          }catch(e){
-            return true;
-          }
-        })
-      : [];
-
-    write(TEAMS_KEY,[team,...cleaned]);
-    write(TEAM_KEY,team);
-    write("batzo_active_team",team);
-  }
-
-  function message(text,success){
-    const old=document.getElementById("batzoFinalMessage");
-    if(old) old.remove();
-
-    const box=document.createElement("div");
-    box.id="batzoFinalMessage";
-    box.textContent=text;
-
-    box.style.cssText=
-      "position:fixed;" +
-      "left:16px;right:16px;bottom:92px;" +
-      "z-index:2147483647;" +
-      "padding:15px 16px;" +
-      "border-radius:15px;" +
-      "background:"+(success?"#123d26":"#451b1b")+";" +
-      "color:#fff;" +
-      "font-size:14px;" +
-      "font-weight:900;" +
-      "text-align:center;" +
-      "box-shadow:0 10px 35px rgba(0,0,0,.5);";
-
-    document.body.appendChild(box);
-
-    setTimeout(()=>{
-      if(box.parentNode) box.remove();
-    },3000);
-  }
-
-  function renderFinalContest(){
-    const root=document.getElementById("root");
-    if(!root) return;
-
-    const contest=contestData();
-    window.BATZO_ACTIVE_CONTEST=contest;
-
-    root.innerHTML=`
-      <div class="bz-flow-screen">
-
-        <div class="bz-flow-head">
-          <div>
-            <div style="
-              color:#24e778;
-              font-size:12px;
-              font-weight:900;
-              letter-spacing:2px
-            ">CONTEST</div>
-
-            <h1>${contest.name || "Mega Contest"}</h1>
-          </div>
-
-          <button
-            class="bz-flow-back"
-            id="batzoFinalContestBack"
-            type="button"
-          >← Back</button>
-        </div>
-
-        <div class="bz-flow-card">
-
-          <div style="
-            color:#858d9a;
-            font-size:11px;
-            text-transform:uppercase;
-            letter-spacing:1.5px
-          ">
-            Winning Prize
-          </div>
-
-          <div class="bz-flow-prize">
-            ${contest.prize || "₹1,00,000"}
-          </div>
-
-          <div style="margin-top:12px;color:#858d9a">
-            Entry Fee
-          </div>
-
-          <div class="bz-flow-entry">
-            ${contest.entry || "₹49"}
-          </div>
-
-          <div class="bz-flow-stats">
-
-            <div class="bz-flow-stat">
-              <strong>${contest.spots || 10000}</strong>
-              <span>SPOTS</span>
-            </div>
-
-            <div class="bz-flow-stat">
-              <strong>${contest.joined || 0}</strong>
-              <span>JOINED</span>
-            </div>
-
-            <div class="bz-flow-stat">
-              <strong>11</strong>
-              <span>PLAYERS</span>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="bz-flow-card">
-
-          <h3 style="color:#fff">
-            TEAM READY
-          </h3>
-
-          <p style="color:#a1a8b4">
-            Your team has been saved successfully.
-          </p>
-
-          <p style="
-            color:#24e778;
-            font-weight:900
-          ">
-            You can join this contest now.
-          </p>
-
-        </div>
-
-        <div class="bz-flow-card">
-
-          <div style="
-            color:#858d9a;
-            font-size:11px;
-            text-transform:uppercase;
-            letter-spacing:1.5px
-          ">
-            Wallet Balance
-          </div>
-
-          <div style="
-            color:#fff;
-            font-size:26px;
-            font-weight:900;
-            margin-top:6px
-          ">
-            ₹${wallet().toFixed(2)}
-          </div>
-
-        </div>
-
-        <div class="bz-flow-bottom">
-
-          <button
-            class="bz-flow-primary"
-            id="bzFinalJoin"
-            type="button"
-          >
-            JOIN CONTEST • ${contest.entry || "₹49"}
-          </button>
-
-        </div>
-
-      </div>
-    `;
-
-    const back=document.getElementById(
-      "batzoFinalContestBack"
-    );
-
-    if(back){
-      back.onclick=()=>{
-        location.reload();
-      };
-    }
-
-    const join=document.getElementById(
-      "bzFinalJoin"
-    );
-
-    if(join){
-      join.onclick=()=>{
-        finalJoinContest(contest);
-      };
-    }
-  }
-
-  function finalJoinContest(contest){
-    const team=read(TEAM_KEY,null);
-
-    if(!team){
-      message(
-        "Team not found. Please create your team first.",
-        false
-      );
-      return;
-    }
-
-    const fee=entryAmount(contest);
-    const balance=wallet();
-
-    if(balance < fee){
-      message(
-        "Insufficient wallet balance • Required ₹"+fee,
-        false
-      );
-      return;
-    }
-
-    const joined=read(JOINED_KEY,[]);
-
-    const contestId=String(
-      contest.id || "batzo-main-contest"
-    );
-
-    const already=Array.isArray(joined) &&
-      joined.some(x =>
-        String(x.contestId)===contestId &&
-        JSON.stringify(x.team)===JSON.stringify(team)
-      );
-
-    if(already){
-      message(
-        "This team is already joined in this contest.",
-        true
-      );
-      return;
-    }
-
-    const newBalance=balance-fee;
-
-    localStorage.setItem(
-      WALLET_KEY,
-      String(newBalance.toFixed(2))
-    );
-
-    const record={
-      contestId:contestId,
-      contestName:contest.name || "Mega Contest",
-      entry:fee,
-      team:team,
-      joinedAt:Date.now()
-    };
-
-    const next=Array.isArray(joined)
-      ? joined
-      : [];
-
-    next.push(record);
-
-    write(JOINED_KEY,next);
-    write("batzo_last_joined_contest",contest);
-
-    message(
-      "CONTEST JOINED • ₹"+fee+" deducted",
-      true
-    );
-
-    setTimeout(()=>{
-      renderFinalContest();
-    },900);
-  }
-
-  function handleConfirm(){
-    const team=window.BATZO_PENDING_TEAM;
-
-    if(!team){
-      return false;
-    }
-
-    const players=
-      Array.isArray(team.players)
-        ? team.players
-        : Array.isArray(team.selectedPlayers)
-          ? team.selectedPlayers
-          : [];
-
-    if(players.length < 11){
-      alert("Please select 11 players.");
-      return true;
-    }
-
-    if(
-      team.captain===undefined ||
-      team.captain===null
-    ){
-      alert("Please select Captain.");
-      return true;
-    }
-
-    if(
-      team.viceCaptain===undefined ||
-      team.viceCaptain===null
-    ){
-      alert("Please select Vice-Captain.");
-      return true;
-    }
-
-    if(team.captain===team.viceCaptain){
-      alert(
-        "Captain and Vice-Captain must be different."
-      );
-      return true;
-    }
-
-    team.savedAt=Date.now();
-
-    saveTeam(team);
-
-    /*
-     * THIS IS THE IMPORTANT FIX:
-     * Do not dispatch to any old contest handler.
-     * Directly render the final contest screen.
-     */
-    renderFinalContest();
-
-    return true;
-  }
-
-  /*
-   * Window capture runs before the old document handlers.
-   * This prevents the old Team/Contest handlers from
-   * overriding the final flow.
-   */
-  window.addEventListener(
-    "click",
-    function(event){
-
-      const el=event.target &&
-        event.target.closest
-          ? event.target.closest("button,a")
-          : null;
-
-      if(!el) return;
-
-      const id=el.id || "";
-
-      const text=(
-        el.innerText ||
-        el.textContent ||
-        ""
-      )
-      .replace(/\s+/g," ")
-      .trim()
-      .toUpperCase();
-
-      if(
-        id==="bzConfirmTeam" ||
-        text==="CONFIRM TEAM" ||
-        text.includes("CONFIRM TEAM")
-      ){
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        handleConfirm();
-        return;
-      }
-
-      /*
-       * Once the final contest screen is visible,
-       * only our final Join button handles joining.
-       */
-      if(id==="bzFinalJoin"){
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        finalJoinContest(
-          contestData()
-        );
-        return;
-      }
-
-    },
-    true
-  );
-
-  window.BATZO_FINAL_TEAM_FLOW={
-    saveTeam:saveTeam,
-    showContest:renderFinalContest,
-    joinContest:finalJoinContest,
-    wallet:wallet
-  };
-
-  console.log(
-    "BATZO FINAL TEAM FLOW AUTHORITY READY"
-  );
-
-})();
-
-
-/* BATZO ONE FINAL APPLICATION CONTROLLER */
-(function(){
-
-  "use strict";
-
-  if(typeof window==="undefined") return;
-
-  const TEAMS="batzo_saved_teams";
-  const SELECTED="batzo_selected_team";
-  const ACTIVE="batzo_active_team";
-  const WALLET="batzo_wallet_balance";
-  const JOINED="batzo_joined_contests";
-
-  function get(key,fallback){
-    try{
-      const x=localStorage.getItem(key);
-      return x===null ? fallback : JSON.parse(x);
-    }catch(e){
-      return fallback;
-    }
-  }
-
-  function put(key,value){
-    localStorage.setItem(key,JSON.stringify(value));
-  }
-
-  function playersOf(team){
-    if(!team) return [];
-    if(Array.isArray(team.players)) return team.players;
-    if(Array.isArray(team.selectedPlayers)) return team.selectedPlayers;
-    return [];
-  }
-
-  function contest(){
-    try{
-      if(
-        typeof BATZO_CONTESTS!=="undefined" &&
-        Array.isArray(BATZO_CONTESTS) &&
-        BATZO_CONTESTS.length
-      ){
-        return BATZO_CONTESTS[0];
-      }
-    }catch(e){}
-
-    return {
-      id:"batzo-main-contest",
-      name:"Mega Contest",
-      prize:"₹1,00,000",
-      entry:"₹49",
-      spots:10000,
-      joined:3210
-    };
-  }
-
-  function fee(c){
-    const n=parseFloat(
-      String(c.entry||"49").replace(/[^\d.]/g,"")
-    );
-    return Number.isFinite(n) ? n : 49;
-  }
-
-  function wallet(){
-    const n=parseFloat(
-      localStorage.getItem(WALLET)||"0"
-    );
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function saveTeam(team){
-    const old=get(TEAMS,[]);
-    const arr=Array.isArray(old)?old:[];
-
-    const id=team.id || ("team-"+Date.now());
-
-    const filtered=arr.filter(x =>
-      String(x.id||"")!==String(id)
-    );
-
-    team.id=id;
-    team.updatedAt=Date.now();
-
-    put(TEAMS,[team,...filtered]);
-    put(SELECTED,team);
-    put(ACTIVE,team);
-
-    return team;
-  }
-
-  function removeTeam(id){
-    const arr=get(TEAMS,[]);
-    const next=(Array.isArray(arr)?arr:[])
-      .filter(x=>String(x.id||"")!==String(id));
-
-    put(TEAMS,next);
-
-    const selected=get(SELECTED,null);
-
-    if(
-      selected &&
-      String(selected.id||"")===String(id)
-    ){
-      localStorage.removeItem(SELECTED);
-      localStorage.removeItem(ACTIVE);
-    }
-  }
-
-  function toast(text,ok){
-    const old=document.getElementById(
-      "batzo-final-toast"
-    );
-
-    if(old) old.remove();
-
-    const d=document.createElement("div");
-
-    d.id="batzo-final-toast";
-    d.textContent=text;
-
-    d.style.cssText=
-      "position:fixed;" +
-      "left:15px;right:15px;bottom:90px;" +
-      "z-index:2147483647;" +
-      "padding:15px;" +
-      "border-radius:14px;" +
-      "background:"+(ok?"#123d26":"#471b1b")+";" +
-      "color:#fff;" +
-      "font-weight:900;" +
-      "text-align:center;" +
-      "box-shadow:0 8px 30px rgba(0,0,0,.55);";
-
-    document.body.appendChild(d);
-
-    setTimeout(()=>{
-      if(d.parentNode) d.remove();
-    },2500);
-  }
-
-  function goContest(){
-    const c=contest();
-
-    window.BATZO_ACTIVE_CONTEST=c;
-
-    renderContest(c);
-  }
-
-  function renderContest(c){
-    const root=document.getElementById("root");
-
-    if(!root) return;
-
-    const saved=get(SELECTED,null);
-
-    root.innerHTML=`
-      <div class="bz-flow-screen">
-
-        <div class="bz-flow-head">
-
-          <div>
-            <div style="
-              color:#24e778;
-              font-size:12px;
-              font-weight:900;
-              letter-spacing:2px
-            ">
-              CONTEST
-            </div>
-
-            <h1>${c.name||"Mega Contest"}</h1>
-          </div>
-
-          <button
-            class="bz-flow-back"
-            id="batzoContestBack"
-            type="button"
-          >
-            ← Back
-          </button>
-
-        </div>
-
-        <div class="bz-flow-card">
-
-          <div style="
-            color:#858d9a;
-            font-size:11px;
-            text-transform:uppercase;
-            letter-spacing:1.5px
-          ">
-            Winning Prize
-          </div>
-
-          <div class="bz-flow-prize">
-            ${c.prize||"₹1,00,000"}
-          </div>
-
-          <div style="
-            margin-top:12px;
-            color:#858d9a
-          ">
-            Entry Fee
-          </div>
-
-          <div class="bz-flow-entry">
-            ${c.entry||"₹49"}
-          </div>
-
-          <div class="bz-flow-stats">
-
-            <div class="bz-flow-stat">
-              <strong>${c.spots||10000}</strong>
-              <span>SPOTS</span>
-            </div>
-
-            <div class="bz-flow-stat">
-              <strong>${c.joined||0}</strong>
-              <span>JOINED</span>
-            </div>
-
-            <div class="bz-flow-stat">
-              <strong>11</strong>
-              <span>PLAYERS</span>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="bz-flow-card">
-
-          <h3 style="color:#fff">
-            SELECTED TEAM
-          </h3>
-
-          <p style="color:#a1a8b4">
-            ${
-              saved
-              ? "Your saved team is ready to join."
-              : "No team selected."
-            }
-          </p>
-
-          <p style="
-            color:#24e778;
-            font-weight:900
-          ">
-            Wallet: ₹${wallet().toFixed(2)}
-          </p>
-
-        </div>
-
-        <div class="bz-flow-bottom">
-
-          <button
-            class="bz-flow-primary"
-            id="batzoFinalJoin"
-            type="button"
-          >
-            JOIN CONTEST • ${c.entry||"₹49"}
-          </button>
-
-        </div>
-
-      </div>
-    `;
-
-    const back=document.getElementById(
-      "batzoContestBack"
-    );
-
-    if(back){
-      back.onclick=()=>{
-        location.reload();
-      };
-    }
-
-    const join=document.getElementById(
-      "batzoFinalJoin"
-    );
-
-    if(join){
-      join.onclick=()=>{
-        joinContest(c);
-      };
-    }
-  }
-
-  function joinContest(c){
-    const team=get(SELECTED,null);
-
-    if(!team){
-      toast(
-        "No saved team. Create a team first.",
-        false
-      );
-      return;
-    }
-
-    const amount=fee(c);
-    const balance=wallet();
-
-    if(balance<amount){
-      toast(
-        "Insufficient wallet balance • Required ₹"+amount,
-        false
-      );
-      return;
-    }
-
-    const arr=get(JOINED,[]);
-    const joined=Array.isArray(arr)?arr:[];
-
-    const cid=String(
-      c.id||"batzo-main-contest"
-    );
-
-    const duplicate=joined.some(x =>
-      String(x.contestId)===cid &&
-      String(x.teamId||"")===String(team.id||"")
-    );
-
-    if(duplicate){
-      toast(
-        "This team already joined this contest.",
-        true
-      );
-      return;
-    }
-
-    const newBalance=balance-amount;
-
-    localStorage.setItem(
-      WALLET,
-      String(newBalance.toFixed(2))
-    );
-
-    joined.push({
-      contestId:cid,
-      contestName:c.name||"Mega Contest",
-      teamId:team.id||"",
-      team:team,
-      entry:amount,
-      joinedAt:Date.now()
-    });
-
-    put(JOINED,joined);
-
-    toast(
-      "JOINED SUCCESSFULLY • ₹"+amount+" deducted",
-      true
-    );
-
-    setTimeout(()=>{
-      renderContest(c);
-    },900);
-  }
-
-  function renderMyTeams(){
-    const root=document.getElementById("root");
-
-    if(!root) return;
-
-    const teams=get(TEAMS,[]);
-    const list=Array.isArray(teams)?teams:[];
-
-    root.innerHTML=`
-      <div class="bz-flow-screen">
-
-        <div class="bz-flow-head">
-
-          <div>
-            <div style="
-              color:#24e778;
-              font-size:12px;
-              font-weight:900;
-              letter-spacing:2px
-            ">
-              YOUR SQUADS
-            </div>
-
-            <h1>My Teams</h1>
-          </div>
-
-          <button
-            id="batzoTeamsBack"
-            class="bz-flow-back"
-            type="button"
-          >
-            ← Back
-          </button>
-
-        </div>
-
-        ${
-          list.length
-          ? list.map((team,index)=>{
-
-              const ps=playersOf(team);
-
-              return `
-                <div
-                  class="bz-flow-card"
-                  data-team-card="${team.id||index}"
-                >
-
-                  <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    gap:12px;
-                    align-items:center
-                  ">
-
-                    <div>
-
-                      <div style="
-                        color:#24e778;
-                        font-size:11px;
-                        font-weight:900;
-                        letter-spacing:1.5px
-                      ">
-                        TEAM ${index+1}
-                      </div>
-
-                      <h3 style="
-                        color:#fff;
-                        margin:6px 0
-                      ">
-                        ${
-                          team.name ||
-                          "Team "+(index+1)
-                        }
-                      </h3>
-
-                      <div style="
-                        color:#9299a7;
-                        font-size:12px
-                      ">
-                        ${ps.length}/11 Players
-                      </div>
-
-                    </div>
-
-                    <div style="
-                      color:#24e778;
-                      font-size:24px
-                    ">
-                      👥
-                    </div>
-
-                  </div>
-
-                  <div style="
-                    margin-top:12px;
-                    display:flex;
-                    gap:8px
-                  ">
-
-                    <button
-                      type="button"
-                      class="batzoEditTeam"
-                      data-id="${team.id||index}"
-                      style="
-                        flex:1;
-                        padding:12px;
-                        border:0;
-                        border-radius:10px;
-                        background:#24e778;
-                        color:#041009;
-                        font-weight:900
-                      "
-                    >
-                      EDIT
-                    </button>
-
-                    <button
-                      type="button"
-                      class="batzoDeleteTeam"
-                      data-id="${team.id||index}"
-                      style="
-                        flex:1;
-                        padding:12px;
-                        border:1px solid #733;
-                        border-radius:10px;
-                        background:#281416;
-                        color:#ff7777;
-                        font-weight:900
-                      "
-                    >
-                      DELETE
-                    </button>
-
-                  </div>
-
-                </div>
-              `;
-            }).join("")
-          : `
-            <div class="bz-flow-card">
-              <h3 style="color:#fff">
-                No Teams
-              </h3>
-
-              <p style="color:#9ca3af">
-                Create your first fantasy team.
-              </p>
-            </div>
-          `
-        }
-
-        <div class="bz-flow-bottom">
-
-          <button
-            id="batzoCreateNewTeam"
-            class="bz-flow-primary"
-            type="button"
-          >
-            CREATE NEW TEAM
-          </button>
-
-          ${
-            list.length
-            ? `
-              <button
-                id="batzoDeleteAllTeams"
-                type="button"
-                style="
-                  width:100%;
-                  margin-top:8px;
-                  padding:12px;
-                  border:1px solid #733;
-                  border-radius:12px;
-                  background:#281416;
-                  color:#ff7777;
-                  font-weight:900
-                "
-              >
-                DELETE ALL TEST TEAMS
-              </button>
-            `
-            : ""
-          }
-
-        </div>
-
-      </div>
-    `;
-
-    document.getElementById(
-      "batzoTeamsBack"
-    ).onclick=()=>{
-      location.reload();
-    };
-
-    document.getElementById(
-      "batzoCreateNewTeam"
-    ).onclick=()=>{
-      openCreateTeam("IND vs AUS");
-    };
-
-    document.querySelectorAll(
-      ".batzoDeleteTeam"
-    ).forEach(btn=>{
-
-      btn.onclick=()=>{
-
-        const id=btn.dataset.id;
-
-        if(
-          confirm(
-            "Delete this team?"
-          )
-        ){
-          removeTeam(id);
-          renderMyTeams();
-        }
-
-      };
-
-    });
-
-    document.querySelectorAll(
-      ".batzoEditTeam"
-    ).forEach(btn=>{
-
-      btn.onclick=()=>{
-
-        const id=btn.dataset.id;
-
-        const arr=get(TEAMS,[]);
-        const team=(Array.isArray(arr)?arr:[])
-          .find(x=>String(x.id||"")===String(id));
-
-        if(!team){
-          alert("Team not found.");
-          return;
-        }
-
-        window.BATZO_PENDING_TEAM={
-          ...team,
-          players:playersOf(team)
-        };
-
-        openCaptainEditor(
-          window.BATZO_PENDING_TEAM
-        );
-      };
-
-    });
-
-    const delAll=document.getElementById(
-      "batzoDeleteAllTeams"
-    );
-
-    if(delAll){
-
-      delAll.onclick=()=>{
-
-        if(
-          confirm(
-            "Delete ALL saved test teams?"
-          )
-        ){
-
-          localStorage.removeItem(TEAMS);
-          localStorage.removeItem(SELECTED);
-          localStorage.removeItem(ACTIVE);
-
-          renderMyTeams();
-        }
-
-      };
-
-    }
-  }
-
-  function openCreateTeam(match){
-    window.dispatchEvent(
-      new CustomEvent(
-        "batzo:team",
-        {
-          detail:{match:match||"IND vs AUS"}
-        }
-      )
-    );
-  }
-
-  function openCaptainEditor(team){
-    const root=document.getElementById("root");
-    if(!root) return;
-
-    const ps=playersOf(team);
-    if(!Array.isArray(ps) || ps.length!==11){
-      alert("Please select exactly 11 players.");
-      return;
-    }
-
-    // Always create a fresh copy so C/VC changes cannot remain
-    // stuck in an old BATZO_PENDING_TEAM reference.
-    const working={
-      ...team,
-      players:[...ps],
-      captain:
-        team.captain !== undefined && team.captain !== null
-          ? team.captain
-          : null,
-      viceCaptain:
-        team.viceCaptain !== undefined && team.viceCaptain !== null
-          ? team.viceCaptain
-          : null
-    };
-
-    window.BATZO_PENDING_TEAM=working;
-
-    const keyOf=(p,i)=>{
-      if(p && p.id!==undefined && p.id!==null) return String(p.id);
-      if(p && p.name) return String(p.name);
-      return String(i);
-    };
-
-    const same=(a,b)=>{
-      if(a===null || a===undefined || b===null || b===undefined) return false;
-      return String(a)===String(b);
-    };
-
-    root.innerHTML=`
-      <div class="bz-flow-screen bz-cvc-screen">
-        <div class="bz-flow-head">
-          <div>
-            <div style="
-              color:#24e778;
-              font-size:12px;
-              font-weight:900;
-              letter-spacing:2px;
-            ">BATZO TEAM</div>
-
-            <h1 style="margin:8px 0 0;">
-              Captain & Vice-Captain
-            </h1>
-
-            <div class="bz-team-subtitle">
-              Choose one C and one VC
-            </div>
-          </div>
-
-          <button
-            id="bzCvcBack"
-            type="button"
-            class="bz-flow-back"
-          >← Back</button>
-        </div>
-
-        <div class="bz-cvc-rules">
-          <strong>C = 2× Points</strong>
-          <span>•</span>
-          <strong>VC = 1.5× Points</strong>
-        </div>
-
-        <div id="bzCvcPlayers" class="bz-cvc-list">
-          ${ps.map((p,i)=>{
-            const k=keyOf(p,i);
-            const name=p.name || "Player";
-            const role=p.role || "";
-            const side=p.team || p.side || "";
-            const credit=
-              p.credit!==undefined && p.credit!==null
-                ? p.credit
-                : (
-                    p.credits!==undefined && p.credits!==null
-                      ? p.credits
-                      : ""
-                  );
-
-            return `
-              <div
-                class="bz-cvc-player"
-                data-player-key="${String(k).replace(/"/g,"&quot;")}"
-              >
-                <div class="bz-cvc-info">
-                  <strong>${name}</strong>
-                  <span>${side} • ${role}${credit!=="" ? ` • ${credit} Credits` : ""}</span>
-                </div>
-
-                <div class="bz-cvc-actions">
-                  <button
-                    type="button"
-                    class="bz-cvc-select bz-c-btn"
-                    data-cvc="captain"
-                    data-player-key="${String(k).replace(/"/g,"&quot;")}"
-                    aria-pressed="${same(working.captain,k) ? "true" : "false"}"
-                  >C</button>
-
-                  <button
-                    type="button"
-                    class="bz-cvc-select bz-vc-btn"
-                    data-cvc="vice"
-                    data-player-key="${String(k).replace(/"/g,"&quot;")}"
-                    aria-pressed="${same(working.viceCaptain,k) ? "true" : "false"}"
-                  >VC</button>
-                </div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-
-        <div class="bz-cvc-footer">
-          <button
-            id="bzConfirmTeam"
-            type="button"
-            class="bz-confirm-team"
-          >CONFIRM TEAM</button>
-        </div>
-      </div>
-    `;
-
-    const refresh=()=>{
-      document.querySelectorAll(".bz-cvc-select").forEach(btn=>{
-        const type=btn.getAttribute("data-cvc");
-        const key=btn.getAttribute("data-player-key");
-        const selected =
-          type==="captain"
-            ? same(working.captain,key)
-            : same(working.viceCaptain,key);
-
-        btn.setAttribute("aria-pressed",selected ? "true" : "false");
-        btn.classList.toggle("is-active",selected);
-      });
-
-      // Keep the global object synchronized on every click.
-      window.BATZO_PENDING_TEAM=working;
-      window.BATZO_ACTIVE_TEAM=working;
-    };
-
-    document.querySelectorAll(".bz-cvc-select").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        const type=btn.getAttribute("data-cvc");
-        const key=btn.getAttribute("data-player-key");
-
-        if(type==="captain"){
-          if(same(working.viceCaptain,key)){
-            working.viceCaptain=null;
-          }
-          working.captain=key;
-        }else{
-          if(same(working.captain,key)){
-            working.captain=null;
-          }
-          working.viceCaptain=key;
-        }
-
-        window.BATZO_PENDING_TEAM=working;
-        window.BATZO_ACTIVE_TEAM=working;
-        refresh();
-      });
-    });
-
-    const back=document.getElementById("bzCvcBack");
-    if(back){
-      back.onclick=()=>{
-        openCreateTeam(working.match || "IND vs AUS");
-      };
-    }
-
-    const confirm=document.getElementById("bzConfirmTeam");
-    if(confirm){
-      confirm.onclick=(ev)=>{
-        ev.preventDefault();
-        ev.stopPropagation();
-
-        refresh();
-
-        if(working.players.length!==11){
-          alert("Team must contain exactly 11 players.");
-          return;
-        }
-
-        if(working.captain===null || working.captain===undefined){
-          alert("Please select Captain.");
-          return;
-        }
-
-        if(working.viceCaptain===null || working.viceCaptain===undefined){
-          alert("Please select Vice-Captain.");
-          return;
-        }
-
-        if(same(working.captain,working.viceCaptain)){
-          alert("Captain and Vice-Captain must be different.");
-          return;
-        }
-
-        saveTeam(working);
-
-        window.BATZO_PENDING_TEAM=working;
-        window.BATZO_ACTIVE_TEAM=working;
-
-        renderContest(
-          window.BATZO_ACTIVE_CONTEST || contest()
-        );
-      };
-    }
-
-    refresh();
-  }
-
-  function bindCreateTeam(){
-
-    const btn=document.getElementById(
-      "bzTeamContinue"
-    );
-
-    if(!btn) return;
-
-    btn.onclick=()=>{
-
-      const pending=window.BATZO_PENDING_TEAM;
-
-      if(pending &&
-         Array.isArray(pending.players) &&
-         pending.players.length>=11){
-
-        openCaptainEditor(pending);
-        return;
-      }
-
-      /*
-       * The original Create Team screen stores
-       * selected players in its local Set.
-       * Its own Continue handler creates
-       * BATZO_PENDING_TEAM. If it has not done
-       * that yet, let the original handler run.
-       */
-    };
-  }
-
-  /*
-   * Global navigation controller.
-   */
-  document.addEventListener(
-    "click",
-    function(event){
-
-      const el=
-        event.target &&
-        event.target.closest
-          ? event.target.closest("button,a")
-          : null;
-
-      if(!el) return;
-
-      const id=el.id||"";
-
-      const text=(
-        el.innerText ||
-        el.textContent ||
-        ""
-      )
-      .replace(/\s+/g," ")
-      .trim()
-      .toUpperCase();
-
-      /*
-       * MY TEAMS
-       */
-      if(
-        text==="MY TEAMS" ||
-        text.includes("MY TEAMS")
-      ){
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        renderMyTeams();
-        return;
-      }
-
-      /*
-       * CONFIRM TEAM
-       */
-      if(
-        id==="bzConfirmTeam" ||
-        id==="batzoConfirmFinal" ||
-        text==="CONFIRM TEAM" ||
-        text.includes("CONFIRM TEAM")
-      ){
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        const team =
-          window.BATZO_PENDING_TEAM ||
-          window.BATZO_ACTIVE_TEAM ||
-          (typeof getJSON==="function"
-            ? getJSON(TEAM_KEY,null)
-            : null);
-
-        if(!team){
-          alert(
-            "Team data not found. Please select 11 players again."
-          );
-          return;
-        }
-
-        const ps=playersOf(team);
-
-        if(ps.length<11){
-          alert("Please select 11 players.");
-          return;
-        }
-
-        if(
-          team.captain===undefined ||
-          team.captain===null
-        ){
-          alert("Please select Captain.");
-          return;
-        }
-
-        if(
-          team.viceCaptain===undefined ||
-          team.viceCaptain===null
-        ){
-          alert("Please select Vice-Captain.");
-          return;
-        }
-
-        if(
-          team.captain===team.viceCaptain
-        ){
-          alert(
-            "Captain and Vice-Captain must be different."
-          );
-          return;
-        }
-
-        saveTeam(team);
-        renderContest(
-          window.BATZO_ACTIVE_CONTEST ||
-          contest()
-        );
-
-        return;
-      }
-
-      /*
-       * JOIN CONTEST
-       */
-      if(
-        id==="bzJoin" ||
-        id==="batzoFinalJoin" ||
-        text.includes("JOIN CONTEST") ||
-        text==="JOIN NOW"
-      ){
-
-        /*
-         * Don't intercept buttons while the
-         * old flow is still selecting a team.
-         * Our final contest button is safe.
-         */
-        if(
-          id==="batzoFinalJoin" ||
-          document.getElementById("batzoFinalJoin")
-        ){
-
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-
-          joinContest(
-            window.BATZO_ACTIVE_CONTEST ||
-            contest()
-          );
-
-          return;
-        }
-      }
-
-    },
-    true
-  );
-
-  /*
-   * Keep Create Team Continue wired whenever
-   * the dynamic screen appears.
-   */
-  const observer=
-    new MutationObserver(()=>{
-      bindCreateTeam();
-    });
-
-  if(document.documentElement){
-    observer.observe(
-      document.documentElement,
-      {
-        childList:true,
-        subtree:true
-      }
-    );
-  }
-
-  // Phase 20: single Team-flow binding; no repeated 500ms rebinding.
-
-
-  window.BATZO_FINAL_APP_CONTROLLER={
-    teams:renderMyTeams,
-    contest:renderContest,
-    saveTeam:saveTeam,
-    join:joinContest,
-    deleteTeam:removeTeam
-  };
-
-  console.log(
-    "BATZO FINAL APPLICATION CONTROLLER READY"
-  );
-
-})();
-
-
-/*
- * BATZO V6 SINGLE TEAM/CONTEST FLOW AUTHORITY
- * One binding only. No timers. No duplicate overlays.
- */
-(function () {
-  "use strict";
-
-  if (window.__BATZO_V6_SINGLE_FLOW__) return;
-  window.__BATZO_V6_SINGLE_FLOW__ = true;
-
-  function clickBack() {
-    const selectors = [
-      "#bzCvcBack",
-      "#bzCaptainBack",
-      "#bzBack",
-      "#batzoContestBack",
-      "#batzoFinalContestBack",
-      ".bz-flow-back"
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        el.click();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  console.log("BATZO V6 SINGLE FLOW READY");
-})();
-
-
-/*
- * BATZO V7 SINGLE FLOW AUTHORITY
- *
- * Existing React Team/Contest logic remains authoritative.
- * This block only provides one Android hardware-back bridge.
- */
-(function () {
-  "use strict";
-
-  if (window.__BATZO_V7_BACK_AUTHORITY__) return;
-  window.__BATZO_V7_BACK_AUTHORITY__ = true;
-
-  window.__BATZO_FLOW_BACK__ = function () {
-    const selectors = [
-      "#bzCvcBack",
-      "#bzCaptainBack",
-      "#bzBack",
-      "#batzoContestBack",
-      "#batzoFinalContestBack",
-      ".bz-flow-back"
-    ];
-
-    for (const selector of selectors) {
-      const el = document.querySelector(selector);
-      if (el) {
-        el.click();
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  console.log("BATZO V7 SINGLE BACK AUTHORITY READY");
-})();
-
-
-
-
-/* BATZO_FINAL_NAV_CONTROLLER_V2 */
-(function(){
-  if(window.__BATZO_FINAL_NAV_CONTROLLER_V2__) return;
-  window.__BATZO_FINAL_NAV_CONTROLLER_V2__ = true;
-
-  function norm(v){
-    return (v || "")
-      .replace(/\s+/g," ")
-      .trim()
-      .toLowerCase();
-  }
-
-  function label(el){
-    return norm(
-      el.getAttribute("aria-label") ||
-      el.textContent ||
-      ""
-    );
-  }
-
-  function isBottom(el){
-    if(!el) return false;
-
-    const r = el.getBoundingClientRect();
-
-    /* Bottom navigation is physically near the bottom. */
-    if(
-      window.innerHeight > 0 &&
-      r.top > window.innerHeight * 0.70
-    ){
-      return true;
-    }
-
-    const cls = norm(el.className);
-    const parent = el.closest(
-      "nav,footer,[class*='bottom'],[class*='Bottom'],[class*='navigation'],[class*='Navigation']"
-    );
-
-    return !!parent ||
-      cls.includes("bottom") ||
-      cls.includes("navigation");
-  }
-
-  function findBottomButton(kind){
-    const all = Array.from(
-      document.querySelectorAll("button,a,[role='button']")
-    );
-
-    let candidates = [];
-
-    for(const el of all){
-      if(!isBottom(el)) continue;
-
-      const t = label(el);
-
-      if(kind === "match"){
-        if(
-          t === "match" ||
-          t === "matches" ||
-          t.includes("match")
-        ){
-          candidates.push(el);
-        }
-      }
-
-      if(kind === "contest"){
-        if(
-          t === "contest" ||
-          t === "contests" ||
-          t.includes("contest")
-        ){
-          candidates.push(el);
-        }
-      }
-
-      if(kind === "team"){
-        if(
-          t === "team" ||
-          t === "teams" ||
-          t === "my team" ||
-          t === "my teams"
-        ){
-          candidates.push(el);
-        }
-      }
-    }
-
-    return candidates[0] || null;
-  }
-
-  function activate(kind){
-    const target = findBottomButton(kind);
-
-    if(!target){
-      console.error(
-        "BATZO NAV: working bottom button not found:",
-        kind
-      );
-      return false;
-    }
-
-    target.click();
-    return true;
-  }
-
-  document.addEventListener("click",function(e){
-
-    const target = e.target.closest(
-      "button,a,[role='button']"
-    );
-
-    if(!target) return;
-
-    /* NEVER interfere with the working bottom navigation. */
-    if(isBottom(target)) return;
-
-    const t = label(target);
-
-    let kind = null;
-
-    /* Upcoming match card button */
-    if(
-      t.includes("view contests") ||
-      t.includes("view contest")
-    ){
-      kind = "contest";
-    }
-
-    /* Top Match */
-    else if(
-      t === "match" ||
-      t === "matches"
-    ){
-      kind = "match";
-    }
-
-    /* Top Contest */
-    else if(
-      t === "contest" ||
-      t === "contests"
-    ){
-      kind = "contest";
-    }
-
-    /* Top My Team */
-    else if(
-      t === "my team" ||
-      t === "my teams" ||
-      t === "my team(s)"
-    ){
-      kind = "team";
-    }
-
-    if(!kind) return;
-
-    /*
-     * Stop the broken top handler.
-     * Then execute the already-working bottom handler.
-     */
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    activate(kind);
-
-  },true);
-})();
-
-
-
-/* BATZO_REAL_JOIN_CONTROLLER_FINAL */
-(function(){
-  if(window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__) return;
-  window.__BATZO_REAL_JOIN_CONTROLLER_FINAL__=true;
-
-  document.addEventListener("click",function(e){
-
-    const btn=e.target.closest(
-      "#batzoFinalJoin,#batzoJoinContest,[data-batzo-join-contest]"
-    );
-
-    if(!btn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    try{
-
+    if (text.includes("CREATE TEAM")) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const match = currentMatch();
       const contest =
         window.BATZO_ACTIVE_CONTEST ||
-        (typeof window.contest==="function"
-          ? window.contest()
-          : null);
+        getContests()[0];
 
-      /*
-       * THIS IS THE ACTUAL CONTROLLER PRESENT IN THE APP.
-       */
-      if(
-        window.BATZO_FINAL_APP_CONTROLLER &&
-        typeof window.BATZO_FINAL_APP_CONTROLLER.join==="function"
-      ){
-        window.BATZO_FINAL_APP_CONTROLLER.join(contest);
-        return;
-      }
-
-      console.error(
-        "BATZO: BATZO_FINAL_APP_CONTROLLER.join unavailable"
-      );
-
-    }catch(err){
-
-      console.error(
-        "BATZO REAL JOIN ERROR:",
-        err
-      );
-
+      showTeamBuilder(match, contest, null);
+      return;
     }
 
-  },true);
+    if (
+      text === "MY TEAM" ||
+      text === "MY TEAMS"
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      openMyTeams();
+      return;
+    }
 
-  console.log(
-    "BATZO REAL JOIN CONTROLLER READY"
-  );
+    if (text === "POPULAR CONTEST" || text === "POPULAR CONTESTS") {
+      e.preventDefault();
+      e.stopPropagation();
+      openContests();
+      return;
+    }
+
+    if (text === "COMPLETE CONTEST" || text === "COMPLETE CONTESTS") {
+      e.preventDefault();
+      e.stopPropagation();
+      showContestTabs("complete");
+      return;
+    }
+  }, true);
+
+  window.addEventListener("batzo:open-contests", openContests);
+
+  window.addEventListener("batzo:contest", function (e) {
+    const c =
+      e.detail && e.detail.contest
+        ? e.detail.contest
+        : getContests()[0];
+
+    window.BATZO_ACTIVE_CONTEST = c;
+    showContestDetails(c);
+  });
+
+  window.addEventListener("batzo:team", function (e) {
+    const match =
+      e.detail && e.detail.match
+        ? e.detail.match
+        : currentMatch();
+
+    window.BATZO_ACTIVE_MATCH = match;
+    openMyTeams();
+  });
+
 })();
 
 export default App;

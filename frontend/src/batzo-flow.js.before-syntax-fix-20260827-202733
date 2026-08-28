@@ -1220,7 +1220,10 @@ if(
 
   /* LEGACY CLICK DISABLED */
 
-  /* Legacy click interceptor intentionally disabled. */
+  // document.addEventListener("click",
+    interceptClicks,
+    true
+  );
 
   window.addEventListener(
     "batzo:team",
@@ -1258,132 +1261,4 @@ if(
   window.__BATZO_REMOVE_OLD_CVC_PLAYER_CONTROLS_DISABLED__=true;
 })();
 
-
-
-
-/* ==================================================
-   BATZO FINAL SAFE CONTEST BACK
-   ================================================== */
-
-if (
-  typeof window !== "undefined" &&
-  !window.__BATZO_SAFE_CONTEST_BACK__
-) {
-  window.__BATZO_SAFE_CONTEST_BACK__ = function () {
-
-    const all = Array.from(
-      document.querySelectorAll(
-        "button,a,[role='button']"
-      )
-    );
-
-    /*
-     * Prefer the real bottom Contest navigation.
-     * This returns the user to View Contests instead
-     * of reloading the entire WebView.
-     */
-    const contestNav = all.find((el) => {
-      if (!el || !el.getBoundingClientRect) return false;
-
-      const rect = el.getBoundingClientRect();
-      const text = (
-        el.innerText ||
-        el.textContent ||
-        ""
-      )
-        .replace(/\s+/g, " ")
-        .trim()
-        .toUpperCase();
-
-      if (
-        !rect.width ||
-        !rect.height ||
-        rect.bottom < 0 ||
-        rect.top > window.innerHeight
-      ) {
-        return false;
-      }
-
-      const bottom =
-        rect.top > window.innerHeight * 0.60;
-
-      return (
-        bottom &&
-        (
-          text === "CONTEST" ||
-          text === "CONTESTS" ||
-          text.includes("VIEW CONTEST")
-        )
-      );
-    });
-
-    if (contestNav) {
-      contestNav.click();
-      return true;
-    }
-
-    /*
-     * Fallback: use the application's contest event.
-     */
-    try {
-      const contests =
-        typeof window.BATZO_CONTESTS !== "undefined"
-          ? window.BATZO_CONTESTS
-          : null;
-
-      if (Array.isArray(contests) && contests.length) {
-        window.dispatchEvent(
-          new CustomEvent("batzo:contest", {
-            detail: {
-              contest: contests[0]
-            }
-          })
-        );
-        return true;
-      }
-    } catch (_) {}
-
-    /*
-     * Last fallback only.
-     */
-    try {
-      if (
-        typeof window.__BATZO_FLOW_BACK__ === "function"
-      ) {
-        return window.__BATZO_FLOW_BACK__() === true;
-      }
-    } catch (_) {}
-
-    return false;
-  };
-}
-
-/* ==================================================
-   BATZO BACK BUTTON WIRING
-   ================================================== */
-
-function batzoWireFinalBack(id) {
-  const button = document.getElementById(id);
-
-  if (!button) return;
-
-  button.onclick = function (ev) {
-    if (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
-    }
-
-    if (
-      typeof window.__BATZO_SAFE_CONTEST_BACK__ ===
-      "function"
-    ) {
-      window.__BATZO_SAFE_CONTEST_BACK__();
-    }
-  };
-}
-
-function batzoWireContestBackButtons() {
-  batzoWireFinalBack("batzoContestBack");
-  batzoWireFinalBack("batzoFinalContestBack");
-}
 
