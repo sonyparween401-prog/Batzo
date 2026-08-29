@@ -1,12 +1,13 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { registerRoutes } = require('./routes');
+const { authenticateToken } = require('./auth-middleware');
 
-const { registerUser } = require('./auth');
+const { registerUser, loginUser } = require('./auth');
 const { requestOtp, verifyOtp } = require('./otp');
 const { loginWithFirebaseIdToken } = require('./firebase-user');
 
@@ -69,6 +70,24 @@ const { name, mobile, password } = req.body;
 });
 
 
+app.post('/api/login', async (req, res) => {
+  try {
+    const { mobile, password } = req.body || {};
+
+    const result = await loginUser(mobile, password);
+
+    return res.json({
+      success: true,
+      ...result
+    });
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      message: err.message || 'Login failed'
+    });
+  }
+});
+
 app.post('/api/request-otp', async (req, res) => {
   try {
     const { mobile } = req.body || {};
@@ -130,6 +149,9 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 });
 
+
+// BATZO TEAM / CONTEST API ROUTES
+registerRoutes(app, authenticateToken);
 
 app.post('/api/auth/firebase', async (req, res) => {
   try {

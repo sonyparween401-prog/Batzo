@@ -1,3 +1,4 @@
+import AuthGate from "./AuthGate";
 import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -115,7 +116,7 @@ async function startBatzo() {
         React.createElement(
           AppErrorBoundary,
           null,
-          React.createElement(App)
+          React.createElement(AuthGate, null, React.createElement(App))
         )
       )
     );

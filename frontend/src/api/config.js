@@ -1,7 +1,7 @@
 export const API_CONFIG = {
   baseUrl:
     import.meta.env.VITE_CRICKET_API_URL ||
-    "http://127.0.0.1:3101/api",
+    "http://127.0.0.1:3000/api",
 
   endpoints: {
     matches: "/matches",

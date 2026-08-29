@@ -1,5 +1,6 @@
 const fs=require('fs');
 const path=require('path');
+const {validateTeam}=require('./fantasy-validation');
 
 const dbFile=path.join(__dirname,'data','batzo.json');
 
@@ -44,42 +45,111 @@ function registerRoutes(app, authenticateToken){
   });
 
   app.post('/api/teams',authenticateToken,(req,res)=>{
-    const {match_id,team_name}=req.body;
+    try {
+      const {
+        match_id,
+        team_name,
+        players,
+        captainId,
+        viceCaptainId
+      } = req.body || {};
 
-    if(!match_id || !team_name){
-      return res.status(400).json({
+      if (!match_id) {
+        return res.status(400).json({
+          success:false,
+          message:'match_id is required'
+        });
+      }
+
+      if (!Array.isArray(players)) {
+        return res.status(400).json({
+          success:false,
+          message:'players array is required'
+        });
+      }
+
+      const db=readDB();
+
+      const match=db.matches.find(
+        x=>x.id===Number(match_id)
+      );
+
+      if(!match){
+        return res.status(404).json({
+          success:false,
+          message:'Match not found'
+        });
+      }
+
+      const validation=validateTeam(
+        players,
+        captainId,
+        viceCaptainId
+      );
+
+      if(!validation.ok){
+        return res.status(400).json({
+          success:false,
+          message:validation.error,
+          validation
+        });
+      }
+
+      if(!Array.isArray(db.teams)){
+        db.teams=[];
+      }
+
+      const userTeams=db.teams.filter(
+        x=>String(x.user_id)===String(req.user.userId) &&
+           Number(x.match_id)===Number(match_id)
+      );
+
+      if(userTeams.length>=10){
+        return res.status(400).json({
+          success:false,
+          message:'Maximum 10 teams allowed for this match'
+        });
+      }
+
+      const team={
+        id:Date.now(),
+        user_id:req.user.userId,
+        match_id:Number(match_id),
+        team_name:String(
+          team_name || ('Team '+(userTeams.length+1))
+        ).trim(),
+        players:players.map(p=>({
+          id:p.id,
+          name:p.name,
+          role:p.role,
+          team:p.team,
+          credits:Number(p.credits||0)
+        })),
+        captainId,
+        viceCaptainId,
+        credits:validation.credits,
+        roles:validation.roles,
+        teams:validation.teams,
+        created_at:new Date().toISOString()
+      };
+
+      db.teams.push(team);
+      writeDB(db);
+
+      return res.status(201).json({
+        success:true,
+        message:'Team created successfully',
+        team
+      });
+
+    } catch(error) {
+      console.error('Create team failed:',error);
+
+      return res.status(500).json({
         success:false,
-        message:'match_id and team_name are required'
+        message:'Failed to create team'
       });
     }
-
-    const db=readDB();
-
-    const match=db.matches.find(x=>x.id===Number(match_id));
-
-    if(!match){
-      return res.status(404).json({
-        success:false,
-        message:'Match not found'
-      });
-    }
-
-    const team={
-      id:db.teams.length+1,
-      user_id:req.user.userId,
-      match_id:Number(match_id),
-      team_name:String(team_name).trim(),
-      created_at:new Date().toISOString()
-    };
-
-    db.teams.push(team);
-    writeDB(db);
-
-    res.status(201).json({
-      success:true,
-      message:'Team created',
-      team
-    });
   });
 
   app.get('/api/my-teams',authenticateToken,(req,res)=>{

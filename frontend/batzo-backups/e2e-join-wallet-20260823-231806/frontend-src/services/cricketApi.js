@@ -1,6 +1,6 @@
 const BASE =
   import.meta.env.VITE_CRICKET_API_URL ||
-  "http://127.0.0.1:3101/api";
+  "http://127.0.0.1:3000/api";
 
 async function api(path, options = {}) {
   const response = await fetch(`${BASE}${path}`, {

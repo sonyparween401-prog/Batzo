@@ -1,9 +1,10 @@
-const admin = require('firebase-admin');
+const { getApps, initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
 let initialized = false;
 
 function initFirebaseAdmin() {
-  if (initialized) return admin;
+  if (initialized) return;
 
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
@@ -18,17 +19,18 @@ function initFirebaseAdmin() {
   try {
     serviceAccount = JSON.parse(raw);
   } catch {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.');
+    throw new Error(
+      'FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.'
+    );
   }
 
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+  if (getApps().length === 0) {
+    initializeApp({
+      credential: cert(serviceAccount)
     });
   }
 
   initialized = true;
-  return admin;
 }
 
 async function verifyFirebaseToken(idToken) {
@@ -36,8 +38,9 @@ async function verifyFirebaseToken(idToken) {
     throw new Error('Firebase ID token is required.');
   }
 
-  const firebase = initFirebaseAdmin();
-  return firebase.auth().verifyIdToken(idToken);
+  initFirebaseAdmin();
+
+  return getAuth().verifyIdToken(idToken);
 }
 
 module.exports = {

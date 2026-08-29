@@ -11,6 +11,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import "./App.css";
 import { installJoinFlow } from "./services/join-flow-ui";
 
+import AuthGate from "./AuthGate";
 const liveMatches = [
   {
     id: 1,
@@ -102,7 +103,7 @@ function Header({ setNotice }) {
 
         <button
           className="wallet-box"
-          onClick={() => setNotice("Wallet balance: ₹0")}
+          onClick={() => batzoRequireLogin(() => setNotice("Wallet balance: ₹0"))}
         >
           <span className="wallet-icon">▰</span>
           <div>
@@ -286,7 +287,33 @@ function ContestCard({ contest, onClick }) {
   }
 })();
 
-function App() {
+
+/* BATZO_HOME_FIRST_ACTION_GUARD */
+function batzoRequireLogin(action) {
+  const token =
+    localStorage.getItem("batzo_token") ||
+    localStorage.getItem("batzo_auth_token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("token");
+
+  if (token) {
+    if (typeof action === "function") action();
+    return true;
+  }
+
+  if (typeof window.BATZO_REQUIRE_AUTH === "function") {
+    window.BATZO_REQUIRE_AUTH(action);
+    return false;
+  }
+
+  window.__BATZO_PENDING_ACTION__ =
+    typeof action === "function" ? action : null;
+
+  window.dispatchEvent(new Event("batzo-auth-required"));
+  return false;
+}
+
+function BatzoApp() {
   const [tab, setTab] = useState("home");
 
   /*
@@ -296,6 +323,20 @@ function App() {
   const batzoTabHistory = useRef([]);
   const batzoPreviousTab = useRef(tab);
 
+  /*
+   * BATZO FINAL TAB NAVIGATION
+   * Keep a real React tab history so Android hardware
+   * Back can return to the previous Batzo screen.
+   */
+  const navigateTab = (nextTab) => {
+    if (!nextTab || nextTab === tab) return;
+
+    batzoTabHistory.current.push(tab);
+    batzoPreviousTab.current = tab;
+    setTab(nextTab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
     let active = true;
     let handle = null;
@@ -304,7 +345,28 @@ function App() {
       if (!active) return;
 
       try {
-        /* Custom Batzo flow gets first priority. */
+        /*
+         * ONE Android Back controller.
+         *
+         * If Login/AuthGate is visible:
+         *   close Login first, then go Home.
+         *
+         * No fake Back button is created.
+         */
+        if (
+          typeof window.__BATZO_AUTH_BACK__ === "function" &&
+          window.__BATZO_AUTH_BACK__() === true
+        ) {
+          batzoTabHistory.current = [];
+          batzoPreviousTab.current = "home";
+          setTab("home");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+
+        /*
+         * Existing contest/team flow gets second priority.
+         */
         if (
           typeof window.__BATZO_FLOW_BACK__ === "function" &&
           window.__BATZO_FLOW_BACK__() === true
@@ -312,42 +374,53 @@ function App() {
           return;
         }
 
-        /* Normal React tab history. */
+        /*
+         * Normal app navigation.
+         */
         if (batzoTabHistory.current.length > 0) {
           const previous = batzoTabHistory.current.pop();
           batzoPreviousTab.current = previous;
           setTab(previous);
+          window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
 
-        /* Any non-home tab returns to Home. */
+        /*
+         * Any non-home screen -> Home.
+         */
         if (tab !== "home") {
+          batzoTabHistory.current = [];
           batzoPreviousTab.current = "home";
           setTab("home");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
 
-        /* At Home there is nothing inside Batzo to go back to.
-           Let Android handle the final exit. */
+        /*
+         * Already Home:
+         * do not consume Android Back.
+         */
       } catch (error) {
-        console.warn("BATZO Android Back:", error);
+        console.warn("[BATZO] Android Back:", error);
       }
     };
 
-    import("@capacitor/app").then(({ App }) => {
-      if (!active) return;
+    import("@capacitor/app")
+      .then(({ App }) => {
+        if (!active) return;
 
-      App.addListener("backButton", onBack).then((h) => {
-        if (active) {
-          handle = h;
-          window.__BATZO_BACK_HANDLE__ = h;
-        } else {
-          h.remove();
-        }
+        return App.addListener("backButton", onBack).then((h) => {
+          if (active) {
+            handle = h;
+            window.__BATZO_BACK_HANDLE__ = h;
+          } else {
+            h.remove();
+          }
+        });
+      })
+      .catch((error) => {
+        console.warn("[BATZO] Android Back listener:", error);
       });
-    }).catch((error) => {
-      console.warn("BATZO Back listener:", error);
-    });
 
     return () => {
       active = false;
@@ -362,10 +435,7 @@ function App() {
         window.__BATZO_BACK_HANDLE__ = null;
       }
     };
-  }, [tab]);
-
-
-  const [notice, setNotice] = useState("");
+  }, []);  const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
 
   const openMatch = (match) => {
@@ -433,6 +503,10 @@ function App() {
   };
 
   const goHome = () => {
+    if (tab !== "home") {
+      batzoTabHistory.current.push(tab);
+    }
+    batzoPreviousTab.current = "home";
     setTab("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -467,7 +541,7 @@ function App() {
                 </p>
                 <button
                   className="hero-button"
-                  onClick={() => setTab("matches")}
+                  onClick={() => navigateTab("matches")}
                 >
                   EXPLORE MATCHES <b>→</b>
                 </button>
@@ -497,7 +571,7 @@ function App() {
                   <span>PLAY NOW</span>
                   <h2>Live Matches</h2>
                 </div>
-                <button onClick={() => setTab("matches")}>View all →</button>
+                <button onClick={() => navigateTab("matches")}>View all →</button>
               </div>
 
               {liveMatches.map((m) => (
@@ -515,7 +589,7 @@ function App() {
                   <span>DON'T MISS OUT</span>
                   <h2>Upcoming Matches</h2>
                 </div>
-                <button onClick={() => setTab("matches")}>View all →</button>
+                <button onClick={() => navigateTab("matches")}>View all →</button>
               </div>
 
               <div className="upcoming-list">
@@ -637,7 +711,13 @@ function App() {
             <p>Profile, wallet and account settings.</p>
             <button
               className="outline-button"
-              onClick={() => showComing("Account Settings")}
+              onClick={() => {
+              if (typeof window.BATZO_REQUIRE_AUTH === "function") {
+                window.BATZO_REQUIRE_AUTH(() => {});
+              } else {
+                window.dispatchEvent(new Event("batzo-auth-required"));
+              }
+            }}
             >
               ACCOUNT SETTINGS
             </button>
@@ -648,7 +728,7 @@ function App() {
       <nav className="bottom-navigation">
         <button
           className={tab === "home" ? "active" : ""}
-          onClick={goHome}
+          onClick={() => navigateTab("home")}
         >
           <span>⌂</span>
           <small>Home</small>
@@ -656,7 +736,7 @@ function App() {
 
         <button
           className={tab === "matches" ? "active" : ""}
-          onClick={() => setTab("matches")}
+          onClick={() => navigateTab("matches")}
         >
           <span>🏏</span>
           <small>Matches</small>
@@ -664,7 +744,7 @@ function App() {
 
         <button
           className={tab === "contests" ? "active" : ""}
-          onClick={() => setTab("contests")}
+          onClick={() => navigateTab("contests")}
         >
           <span>🏆</span>
           <small>Contest</small>
@@ -672,7 +752,7 @@ function App() {
 
         <button
           className={tab === "teams" ? "active" : ""}
-          onClick={() => setTab("teams")}
+          onClick={() => navigateTab("teams")}
         >
           <span>👥</span>
           <small>My Team</small>
@@ -680,7 +760,13 @@ function App() {
 
         <button
           className={tab === "profile" ? "active" : ""}
-          onClick={() => setTab("profile")}
+          onClick={() => {
+            if (typeof batzoRequireLogin === "function") {
+              navigateTab("profile");
+            } else {
+              window.dispatchEvent(new Event("batzo-auth-required"));
+            }
+          }}
         >
           <span>◉</span>
           <small>Profile</small>
@@ -1331,7 +1417,7 @@ function App() {
           return;
         }
 
-        showJoinConfirmation(match, contest, team);
+        batzoRequireLogin(() => showJoinConfirmation(match, contest, team));
       };
     }
   }
@@ -1339,72 +1425,111 @@ function App() {
   function showTeamBuilder(match, contest, editing) {
     const ps = players();
 
-    if (!ps.length) {
+    if (!Array.isArray(ps) || !ps.length) {
       alert("Player list is not available.");
       return;
     }
 
     const existing = editing || {};
-    const selectedPlayers = Array.isArray(existing.players)
+    const existingPlayers = Array.isArray(existing.players)
       ? existing.players
       : [];
 
-    const selectedNames = new Set(
-      selectedPlayers.map(p => String(p.id || p.name))
-    );
+    const selected = new Map();
 
-    const cards = ps.map(function (p, i) {
-      const id = String(p.id || p.name || i);
-      const active = selectedNames.has(id);
+    existingPlayers.forEach(function (p) {
+      selected.set(String(p.id || p.name), p);
+    });
 
-      return `
-        <button
-          type="button"
-          class="bz-player"
-          data-player-id="${id.replace(/"/g,"&quot;")}"
-          style="
-            width:100%;
-            text-align:left;
-            padding:12px;
-            margin:6px 0;
-            border-radius:12px;
-            border:1px solid ${active ? "#24e778" : "rgba(255,255,255,.10)"};
-            background:${active ? "#14291d" : "#101a16"};
-            color:#fff;
-          "
-        >
-          <strong>${p.name || "Player " + (i + 1)}</strong>
-          <div style="
-            margin-top:4px;
-            font-size:11px;
-            color:#929aa7;
-          ">
-            ${p.team || ""} · ${p.role || ""}
-            ${p.credit ? " · " + p.credit + " Credits" : ""}
-          </div>
-        </button>
-      `;
-    }).join("");
+    let filter = "WK";
 
     const r = shell(
       editing ? "Edit Team" : "Create Team",
-      match + " • Select exactly 11 players",
+      "IND vs AUS • Select your Fantasy XI",
       `
         <div style="
           position:sticky;
           top:98px;
-          z-index:10;
+          z-index:20;
           padding:12px;
-          border-radius:12px;
+          border-radius:14px;
           background:#101a16;
           margin-bottom:10px;
+          border:1px solid rgba(255,255,255,.10);
         ">
-          <strong id="bzPlayerCount">
-            SELECTED: ${selectedPlayers.length}/11
-          </strong>
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+          ">
+            <strong id="bzPlayerCount">SELECTED: 0/11</strong>
+            <strong id="bzTeamCount">IND 0 • AUS 0</strong>
+          </div>
+
+          <div id="bzRoleCount" style="
+            margin-top:7px;
+            font-size:12px;
+            color:#aeb8b2;
+          ">
+            WK 0/1-4 • BAT 0/3-6 • AR 0/1-4 • BOWL 0/3-6
+          </div>
+
+          <div id="bzCreditCount" style="
+            margin-top:5px;
+            font-size:12px;
+            color:#aeb8b2;
+          ">
+            Credits 0.0/100
+          </div>
         </div>
 
-        <div id="bzPlayerList">${cards}</div>
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:6px;
+          margin-bottom:10px;
+        ">
+          <button type="button" class="bzRoleFilter" data-role="WK"
+            style="padding:11px 4px;border:0;border-radius:10px;
+            background:#24e778;color:#061008;font-weight:900;">WK</button>
+
+          <button type="button" class="bzRoleFilter" data-role="BAT"
+            style="padding:11px 4px;border:0;border-radius:10px;
+            background:#18231e;color:#fff;font-weight:900;">BAT</button>
+
+          <button type="button" class="bzRoleFilter" data-role="AR"
+            style="padding:11px 4px;border:0;border-radius:10px;
+            background:#18231e;color:#fff;font-weight:900;">AR</button>
+
+          <button type="button" class="bzRoleFilter" data-role="BOWL"
+            style="padding:11px 4px;border:0;border-radius:10px;
+            background:#18231e;color:#fff;font-weight:900;">BOWL</button>
+        </div>
+
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:6px;
+          margin-bottom:10px;
+        ">
+          <div style="
+            padding:9px;
+            border-radius:10px;
+            background:#16261e;
+            text-align:center;
+            font-weight:800;
+          ">🇮🇳 INDIA</div>
+
+          <div style="
+            padding:9px;
+            border-radius:10px;
+            background:#16261e;
+            text-align:center;
+            font-weight:800;
+          ">🇦🇺 AUSTRALIA</div>
+        </div>
+
+        <div id="bzPlayerList"></div>
 
         <button id="bzTeamNext" type="button" style="
           width:100%;
@@ -1416,7 +1541,7 @@ function App() {
           color:#061008;
           font-weight:900;
         ">
-          CONTINUE • ${selectedPlayers.length}/11
+          CONTINUE • 0/11
         </button>
       `
     );
@@ -1425,60 +1550,271 @@ function App() {
       showMyTeams(match, contest);
     };
 
-    const selected = new Map();
+    function stats() {
+      const arr = Array.from(selected.values());
 
-    selectedPlayers.forEach(function (p) {
-      selected.set(String(p.id || p.name), p);
-    });
+      const count = function(role) {
+        return arr.filter(function(p) {
+          return String(p.role || "").toUpperCase() === role;
+        }).length;
+      };
 
-    function refresh() {
-      const n = selected.size;
+      const wk = count("WK");
+      const bat = count("BAT");
+      const ar = count("AR");
+      const bowl = count("BOWL");
 
-      r.querySelector("#bzPlayerCount").textContent =
-        "SELECTED: " + n + "/11";
+      const ind = arr.filter(function(p) {
+        return String(p.team || "").toUpperCase() === "IND";
+      }).length;
 
-      r.querySelector("#bzTeamNext").textContent =
-        "CONTINUE • " + n + "/11";
+      const aus = arr.filter(function(p) {
+        return String(p.team || "").toUpperCase() === "AUS";
+      }).length;
 
-      r.querySelectorAll(".bz-player").forEach(function (b) {
-        const on = selected.has(b.dataset.playerId);
+      const credits = arr.reduce(function(total,p) {
+        return total + Number(p.credit || 0);
+      },0);
 
-        b.style.borderColor = on
-          ? "#24e778"
-          : "rgba(255,255,255,.10)";
-
-        b.style.background = on
-          ? "#14291d"
-          : "#101a16";
-      });
+      return {wk,bat,ar,bowl,ind,aus,credits};
     }
 
-    r.querySelectorAll(".bz-player").forEach(function (btn) {
-      btn.onclick = function () {
-        const id = btn.dataset.playerId;
+    function updateHeader() {
+      const x = stats();
 
-        if (selected.has(id)) {
-          selected.delete(id);
-        } else {
-          if (selected.size >= 11) {
-            alert("Maximum 11 players.");
+      r.querySelector("#bzPlayerCount").textContent =
+        "SELECTED: " + selected.size + "/11";
+
+      r.querySelector("#bzTeamCount").textContent =
+        "IND " + x.ind + " • AUS " + x.aus;
+
+      r.querySelector("#bzRoleCount").textContent =
+        "WK " + x.wk + "/1-4 • " +
+        "BAT " + x.bat + "/3-6 • " +
+        "AR " + x.ar + "/1-4 • " +
+        "BOWL " + x.bowl + "/3-6";
+
+      r.querySelector("#bzCreditCount").textContent =
+        "Credits " + x.credits.toFixed(1) + "/100";
+
+      r.querySelector("#bzTeamNext").textContent =
+        "CONTINUE • " + selected.size + "/11";
+    }
+
+    function renderPlayers() {
+      const list = r.querySelector("#bzPlayerList");
+
+      const visible = ps.filter(function(p) {
+        return String(p.role || "").toUpperCase() === filter;
+      });
+
+      list.innerHTML = "";
+
+      if (!visible.length) {
+        list.innerHTML = `
+          <div style="
+            padding:20px;
+            text-align:center;
+            color:#929aa7;
+          ">
+            No ${filter} players available.
+          </div>
+        `;
+        return;
+      }
+
+      visible.forEach(function(p) {
+        const id = String(p.id || p.name);
+        const active = selected.has(id);
+
+        const card = document.createElement("button");
+
+        card.type = "button";
+        card.className = "bz-player";
+
+        card.style.cssText = `
+          width:100%;
+          text-align:left;
+          padding:13px;
+          margin:6px 0;
+          border-radius:13px;
+          border:1px solid ${active ? "#24e778" : "rgba(255,255,255,.10)"};
+          background:${active ? "#14291d" : "#101a16"};
+          color:#fff;
+        `;
+
+        card.innerHTML = `
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+          ">
+            <div>
+              <strong>${p.name || "Player"}</strong>
+              <div style="
+                margin-top:4px;
+                font-size:11px;
+                color:#aeb8b2;
+              ">
+                ${p.team || ""} • ${p.role || ""}
+              </div>
+            </div>
+
+            <div style="
+              text-align:right;
+              font-size:11px;
+              color:#aeb8b2;
+            ">
+              <div>${Number(p.credit || 0).toFixed(1)} Cr</div>
+              <div style="
+                margin-top:5px;
+                color:${active ? "#24e778" : "#8d9891"};
+                font-weight:900;
+              ">
+                ${active ? "✓ SELECTED" : "SELECT"}
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.onclick = function() {
+          if (selected.has(id)) {
+            selected.delete(id);
+            renderPlayers();
+            updateHeader();
             return;
           }
 
-          const p = ps.find(
-            x => String(x.id || x.name) === id
-          );
+          if (selected.size >= 11) {
+            alert("Maximum 11 players allowed.");
+            return;
+          }
 
-          if (p) selected.set(id, p);
-        }
+          const x = stats();
 
-        refresh();
+          const role = String(p.role || "").toUpperCase();
+
+          if (role === "WK" && x.wk >= 4) {
+            alert("Maximum 4 Wicket-Keepers allowed.");
+            return;
+          }
+
+          if (role === "BAT" && x.bat >= 6) {
+            alert("Maximum 6 Batsmen allowed.");
+            return;
+          }
+
+          if (role === "AR" && x.ar >= 4) {
+            alert("Maximum 4 All-Rounders allowed.");
+            return;
+          }
+
+          if (role === "BOWL" && x.bowl >= 6) {
+            alert("Maximum 6 Bowlers allowed.");
+            return;
+          }
+
+          const team = String(p.team || "").toUpperCase();
+
+          if (team === "IND" && x.ind >= 7) {
+            alert("Maximum 7 IND players allowed.");
+            return;
+          }
+
+          if (team === "AUS" && x.aus >= 7) {
+            alert("Maximum 7 AUS players allowed.");
+            return;
+          }
+
+          const nextCredits =
+            x.credits + Number(p.credit || 0);
+
+          if (nextCredits > 100) {
+            alert(
+              "Credits limit exceeded: " +
+              nextCredits.toFixed(1) +
+              "/100"
+            );
+            return;
+          }
+
+          selected.set(id,p);
+
+          renderPlayers();
+          updateHeader();
+        };
+
+        list.appendChild(card);
+      });
+    }
+
+    r.querySelectorAll(".bzRoleFilter").forEach(function(btn) {
+      btn.onclick = function() {
+        filter = btn.dataset.role;
+
+        r.querySelectorAll(".bzRoleFilter").forEach(function(b) {
+          const active = b.dataset.role === filter;
+
+          b.style.background = active
+            ? "#24e778"
+            : "#18231e";
+
+          b.style.color = active
+            ? "#061008"
+            : "#fff";
+        });
+
+        renderPlayers();
       };
     });
 
-    r.querySelector("#bzTeamNext").onclick = function () {
+    r.querySelector("#bzTeamNext").onclick = function() {
+      const x = stats();
+
       if (selected.size !== 11) {
-        alert("Please select exactly 11 players.");
+        alert("Team must contain exactly 11 players.");
+        return;
+      }
+
+      // IND/AUS combination:
+      // minimum 4 from each side, maximum 7 from each side.
+      // 5 IND + 6 AUS is valid.
+      if (x.ind < 4 || x.ind > 7 ||
+          x.aus < 4 || x.aus > 7) {
+        alert(
+          "IND/AUS combination invalid. " +
+          "Choose 4-7 players from each side. " +
+          "Example: 5 IND + 6 AUS."
+        );
+        return;
+      }
+
+      if (x.wk < 1 || x.wk > 4) {
+        alert("Select 1 to 4 Wicket-Keepers.");
+        return;
+      }
+
+      if (x.bat < 3 || x.bat > 6) {
+        alert("Select 3 to 6 Batsmen.");
+        return;
+      }
+
+      if (x.ar < 1 || x.ar > 4) {
+        alert("Select 1 to 4 All-Rounders.");
+        return;
+      }
+
+      if (x.bowl < 3 || x.bowl > 6) {
+        alert("Select 3 to 6 Bowlers.");
+        return;
+      }
+
+      if (x.credits > 100) {
+        alert(
+          "Credits limit exceeded: " +
+          x.credits.toFixed(1) +
+          "/100"
+        );
         return;
       }
 
@@ -1489,6 +1825,9 @@ function App() {
         Array.from(selected.values())
       );
     };
+
+    updateHeader();
+    renderPlayers();
   }
 
   function showCaptainVC(match, contest, editing, selectedPlayers) {
@@ -1568,14 +1907,28 @@ function App() {
 
     r.querySelectorAll("[data-c]").forEach(function (btn) {
       btn.onclick = function () {
-        captain = btn.dataset.c;
+        const id = String(btn.dataset.c);
+
+        if (String(vice) === id) {
+          alert("Captain and Vice-Captain must be different.");
+          return;
+        }
+
+        captain = id;
         refreshButtons();
       };
     });
 
     r.querySelectorAll("[data-vc]").forEach(function (btn) {
       btn.onclick = function () {
-        vice = btn.dataset.vc;
+        const id = String(btn.dataset.vc);
+
+        if (String(captain) === id) {
+          alert("Captain and Vice-Captain must be different.");
+          return;
+        }
+
+        vice = id;
         refreshButtons();
       };
     });
@@ -1597,16 +1950,80 @@ function App() {
     }
 
     r.querySelector("#bzSaveTeam").onclick = function () {
-      if (captain === null || captain === undefined) {
+
+      // ==========================================
+      // BATZO HARD TEAM VALIDATION
+      // ==========================================
+
+      if (!Array.isArray(selectedPlayers) ||
+          selectedPlayers.length !== 11) {
+        alert("Team must contain exactly 11 players.");
+        return;
+      }
+
+      const players = selectedPlayers;
+
+      function roleCount(role) {
+        return players.filter(function (p) {
+          return String(p.role || "").trim().toUpperCase() === role;
+        }).length;
+      }
+
+      const wk   = roleCount("WK");
+      const bat  = roleCount("BAT");
+      const ar   = roleCount("AR");
+      const bowl = roleCount("BOWL");
+
+      if (wk < 1 || wk > 4) {
+        alert("Select 1 to 4 Wicket-Keepers.");
+        return;
+      }
+
+      if (bat < 3 || bat > 6) {
+        alert("Select 3 to 6 Batsmen.");
+        return;
+      }
+
+      if (ar < 1 || ar > 4) {
+        alert("Select 1 to 4 All-Rounders.");
+        return;
+      }
+
+      if (bowl < 3 || bowl > 6) {
+        alert("Select 3 to 6 Bowlers.");
+        return;
+      }
+
+      // IND vs AUS maximum 7 from either side
+      const ind = players.filter(function (p) {
+        return String(p.team || "").trim().toUpperCase() === "IND";
+      }).length;
+
+      const aus = players.filter(function (p) {
+        return String(p.team || "").trim().toUpperCase() === "AUS";
+      }).length;
+
+      if (ind > 7 || aus > 7) {
+        alert("Maximum 7 players allowed from one team.");
+        return;
+      }
+
+      // Captain / Vice-Captain are compulsory
+      if (captain === null ||
+          captain === undefined ||
+          String(captain) === "") {
         alert("Please select Captain.");
         return;
       }
 
-      if (vice === null || vice === undefined) {
+      if (vice === null ||
+          vice === undefined ||
+          String(vice) === "") {
         alert("Please select Vice-Captain.");
         return;
       }
 
+      // C and VC must be different
       if (String(captain) === String(vice)) {
         alert("Captain and Vice-Captain must be different.");
         return;
@@ -1665,6 +2082,11 @@ function App() {
       }
 
       saveTeams(match, next);
+      syncTeamToBackend(match, contest, team).then(function(result) {
+        if (result.ok) {
+          console.log("BATZO: Team Builder backend sync PASS");
+        }
+      });
 
       localStorage.setItem(
         "batzo_v11_selected_team",
@@ -1676,6 +2098,87 @@ function App() {
 
       showMyTeams(match, contest);
     };
+  }
+
+  /* BATZO_TEAM_API_SYNC_V1 */
+  async function syncTeamToBackend(match, contest, team) {
+    try {
+      const token =
+        localStorage.getItem("batzo_token") ||
+        localStorage.getItem("batzo_auth_token") ||
+        localStorage.getItem("authToken") ||
+        localStorage.getItem("token");
+
+      if (!token) {
+        console.warn("BATZO: no JWT token; keeping local team only.");
+        return { ok:false, skipped:true };
+      }
+
+      const matchId = Number(
+        match && (match.id || match.match_id)
+      );
+
+      if (!matchId) {
+        console.warn("BATZO: match id missing; keeping local team.");
+        return { ok:false, skipped:true };
+      }
+
+      const players = Array.isArray(team.players)
+        ? team.players
+        : [];
+
+      const response = await fetch("/api/teams", {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer " + token
+        },
+        body:JSON.stringify({
+          match_id:matchId,
+          team_name:team.name || team.team_name || "Team",
+          players,
+          captainId:team.captainId,
+          viceCaptainId:team.viceCaptainId
+        })
+      });
+
+      const data = await response.json().catch(function(){
+        return {};
+      });
+
+      if (!response.ok || !data.success) {
+        console.warn(
+          "BATZO: backend team sync failed:",
+          data.message || data.error || response.status
+        );
+        return {
+          ok:false,
+          status:response.status,
+          data
+        };
+      }
+
+      console.log(
+        "BATZO: team synced to backend:",
+        data.team && data.team.id
+      );
+
+      return {
+        ok:true,
+        team:data.team
+      };
+
+    } catch(error) {
+      console.warn(
+        "BATZO: backend unavailable; local team retained.",
+        error
+      );
+
+      return {
+        ok:false,
+        error
+      };
+    }
   }
 
   function walletBalance() {
@@ -1920,5 +2423,13 @@ function App() {
   });
 
 })();
+
+function App() {
+  return (
+    <AuthGate>
+      <BatzoApp />
+    </AuthGate>
+  );
+}
 
 export default App;

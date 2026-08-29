@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const dbFile = path.join(__dirname, 'data', 'batzo.json');
 
@@ -47,4 +48,60 @@ async function registerUser(name, mobile, password) {
   };
 }
 
-module.exports = { registerUser };
+async function loginUser(mobile, password) {
+  const db = readDB();
+
+  if (!mobile || !password) {
+    throw new Error('Mobile and password are required');
+  }
+
+  const user = db.users.find(
+    u => String(u.mobile) === String(mobile)
+  );
+
+  if (!user || !user.password_hash) {
+    throw new Error('Invalid mobile or password');
+  }
+
+  const valid = await bcrypt.compare(
+    password,
+    user.password_hash
+  );
+
+  if (!valid) {
+    throw new Error('Invalid mobile or password');
+  }
+
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET must be configured');
+  }
+
+  const token = jwt.sign(
+    {
+      userId: user.id,
+      mobile: user.mobile,
+      provider: 'password'
+    },
+    secret,
+    {
+      expiresIn: '7d',
+      issuer: 'batzo-api'
+    }
+  );
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      mobile: user.mobile
+    }
+  };
+}
+
+module.exports = {
+  registerUser,
+  loginUser
+};

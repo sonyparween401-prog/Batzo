@@ -1,5 +1,29 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": 1,
+      "name": "Batzo Test",
+      "mobile": "9787992484",
+      "password_hash": "$2b$12$gbJ13e/O/Xj129qFZI2IxejpMc56mUA.lOkQuIDbF6OcKJtI.E4GO",
+      "created_at": "2026-08-29T08:34:44.954Z"
+    },
+    {
+      "id": 2,
+      "name": "Rashid ansari",
+      "mobile": "8809512830",
+      "password_hash": "$2b$12$pt.x2FnlyQpUXdCeX1V1vuTFMcrIi1bwF2UD/MZMlvV/6KYn13J5O",
+      "created_at": "2026-08-29T15:49:59.484Z"
+    },
+    {
+      "id": 3,
+      "name": "RASHID ANSARI",
+      "mobile": "",
+      "email": "khanbhai613@gmail.com",
+      "firebaseUid": "SrNfB45vx7R1pN700sVWtQInsip1",
+      "provider": "google.com",
+      "createdAt": "2026-08-29T15:50:12.497Z"
+    }
+  ],
   "matches": [
     {
       "id": 1,
@@ -14,7 +38,107 @@
       "start_time": "2026-08-21T17:17:01.076Z"
     }
   ],
-  "teams": [],
+  "teams": [
+    {
+      "id": 1787992485836,
+      "user_id": 1,
+      "match_id": 1,
+      "team_name": "Batzo API Test Team",
+      "players": [
+        {
+          "id": 1,
+          "name": "WK1",
+          "role": "WK",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 2,
+          "name": "BAT1",
+          "role": "BAT",
+          "team": "IND",
+          "credits": 9
+        },
+        {
+          "id": 3,
+          "name": "BAT2",
+          "role": "BAT",
+          "team": "IND",
+          "credits": 8.5
+        },
+        {
+          "id": 4,
+          "name": "BAT3",
+          "role": "BAT",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 5,
+          "name": "AR1",
+          "role": "AR",
+          "team": "IND",
+          "credits": 9
+        },
+        {
+          "id": 6,
+          "name": "AR2",
+          "role": "AR",
+          "team": "AUS",
+          "credits": 8.5
+        },
+        {
+          "id": 7,
+          "name": "BOWL1",
+          "role": "BOWL",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 8,
+          "name": "BOWL2",
+          "role": "BOWL",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 9,
+          "name": "BOWL3",
+          "role": "BOWL",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 10,
+          "name": "BOWL4",
+          "role": "AUS",
+          "team": "AUS",
+          "credits": 7.5
+        },
+        {
+          "id": 11,
+          "name": "BAT4",
+          "role": "BAT",
+          "team": "AUS",
+          "credits": 7.5
+        }
+      ],
+      "captainId": 5,
+      "viceCaptainId": 2,
+      "credits": 90,
+      "roles": {
+        "WK": 1,
+        "BAT": 4,
+        "AR": 2,
+        "BOWL": 3
+      },
+      "teams": {
+        "IND": 5,
+        "AUS": 6
+      },
+      "created_at": "2026-08-29T08:34:45.838Z"
+    }
+  ],
   "contests": [
     {
       "id": 1,
