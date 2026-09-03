@@ -152,47 +152,51 @@ export function initBatzoNavigation(options = {}) {
 
   CapacitorApp.addListener(
     "backButton",
-    async ({ canGoBack }) => {
+    async () => {
       try {
         /*
-         * FIRST: dynamically rendered Contest/Team screens.
+         * BATZO ANDROID BACK — SINGLE CENTRAL HANDLER
+         *
+         * Never allow Android Back to close the WebView while
+         * BATZO is on an internal screen.
          */
+
+        // 1. Dynamic contest/team screens first.
         if (handleDynamicBack()) {
           return;
         }
 
-        /*
-         * SECOND: React tab navigation.
-         */
+        // 2. React tab/navigation history.
         if (backScreen()) {
           return;
         }
 
         /*
-         * THIRD: normal WebView history.
+         * 3. If React navigation is currently on a non-home tab,
+         *    force Home instead of allowing Android to close the app.
          */
-        if (
-          canGoBack &&
-          window.history.length > 1
-        ) {
-          window.history.back();
+        if (typeof setTab === "function") {
+          setTab("home");
+          try {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } catch (_) {}
           return;
         }
 
         /*
-         * Root screen: Android stays on root.
+         * IMPORTANT:
+         * Do NOT call window.history.back().
+         * Do NOT call App.exitApp().
+         * Do NOT allow the WebView to close from this handler.
          */
-        console.log(
-          "BATZO: ROOT SCREEN — ALLOW ANDROID EXIT"
-        );
+        return;
       } catch (error) {
-        console.warn(
-          "BATZO Android back controller:",
-          error
-        );
+        console.warn("[BATZO] Android Back:", error);
+        return;
       }
     }
   );
+
 
   console.log(
     "BATZO PHASE 18 NAVIGATION CONTROLLER READY"

@@ -12,5 +12,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  },
+  "dependencies": {
+    "@capacitor-firebase/authentication": "^8.4.0",
+    "@capacitor/android": "^8.5.0"
+  }
 }

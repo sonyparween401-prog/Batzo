@@ -1,0 +1,252 @@
+========== WALLET ROUTE LOCATION ==========
+
+===== ALL WALLET REFERENCES =====
+170:// BATZO WALLET API V2
+175:function ensureWalletDB(db) {
+187:function getWallet(db, userId) {
+188:  ensureWalletDB(db);
+215:function walletTransaction(db, opts) {
+216:  ensureWalletDB(db);
+254:    const w=getWallet(db,uid);
+271:app.get("/wallet/transactions", authenticateToken, (req,res)=>{
+293:  ensureWalletDB(db);
+309:app.post("/wallet/deposit/confirm", authenticateToken, (req,res)=>{
+326:      const w=getWallet(db,uid);
+355:app.post("/wallet/withdraw", authenticateToken, (req,res)=>{
+366:    const w=getWallet(db,uid);
+381:    walletTransaction(db,{
+411:app.post("/wallet/contest/join", authenticateToken, (req,res)=>{
+439:    const w=getWallet(db,uid);
+459:    walletTransaction(db,{
+508:app.post("/wallet/settlement/prize", authenticateToken, (req,res)=>{
+528:app.post("/wallet/settlement/refund", authenticateToken, (req,res)=>{
+
+===== ROUTE FUNCTION BOUNDARIES =====
+9:}
+13:}
+15:function registerRoutes(app, authenticateToken){
+17:  app.get('/api/matches',(req,res)=>{
+22:  app.get('/api/matches/:id',(req,res)=>{
+42:  app.get('/api/contests',(req,res)=>{
+47:  app.post('/api/teams',authenticateToken,(req,res)=>{
+155:  app.get('/api/my-teams',authenticateToken,(req,res)=>{
+164:}
+179:}
+185:}
+209:}
+213:}
+240:}
+244:}
+247:app.get("/wallet", authenticateToken, (req,res)=>{
+268:});
+271:app.get("/wallet/transactions", authenticateToken, (req,res)=>{
+289:});
+295:}
+304:}
+309:app.post("/wallet/deposit/confirm", authenticateToken, (req,res)=>{
+351:});
+355:app.post("/wallet/withdraw", authenticateToken, (req,res)=>{
+406:});
+411:app.post("/wallet/contest/join", authenticateToken, (req,res)=>{
+503:});
+508:app.post("/wallet/settlement/prize", authenticateToken, (req,res)=>{
+524:});
+528:app.post("/wallet/settlement/refund", authenticateToken, (req,res)=>{
+533:});
+540:module.exports={registerRoutes};
+
+===== END OF ROUTES.JS =====
+    if(!uid) return res.status(401).json({error:"Unauthorized"});
+    if(!Number.isFinite(amt) || amt<=0) {
+      return res.status(400).json({error:"Invalid withdrawal amount"});
+    }
+
+    const w=getWallet(db,uid);
+
+    if(amt>w.winningBalance) {
+      return res.status(400).json({
+        error:"INSUFFICIENT_WINNINGS",
+        message:"Withdrawal is limited to eligible winning balance."
+      });
+    }
+
+    // Reserve funds. Actual bank/UPI payout must be performed by
+    // a verified payment provider/admin payout workflow.
+    const before=w.winningBalance;
+    w.winningBalance=money(w.winningBalance-amt);
+    w.updatedAt=Date.now();
+
+    walletTransaction(db,{
+      userId:uid,
+      type:"WITHDRAWAL_REQUEST",
+      amount:-amt,
+      balanceBefore:w.balance,
+      balanceAfter:w.balance,
+      winningBefore:before,
+      winningAfter:w.winningBalance,
+      referenceId:"WD_"+Date.now(),
+      description:"Withdrawal request"
+    });
+
+    saveWalletDB(db);
+
+    res.json({
+      success:true,
+      status:"PENDING",
+      wallet:{
+        balance:money(w.balance),
+        winningBalance:money(w.winningBalance)
+      }
+    });
+  } catch(e) {
+    res.status(500).json({error:"Withdrawal failed"});
+  }
+});
+
+// 6: Contest Join.
+// Entry fee is taken ONLY from server wallet.
+// Client cannot submit balance or force a deduction.
+app.post("/wallet/contest/join", authenticateToken, (req,res)=>{
+  try {
+    const db=readDB();
+    const uid=walletUserId(req);
+    const {contestId,teamId,match}=req.body||{};
+
+    if(!uid) return res.status(401).json({error:"Unauthorized"});
+    if(!contestId || !teamId) {
+      return res.status(400).json({error:"contestId and teamId are required"});
+    }
+
+    const contest=db.contests.find(c =>
+      String(c.id||c.contestId||c.name)===String(contestId)
+    );
+
+    if(!contest) return res.status(404).json({error:"Contest not found"});
+
+    const fee=money(
+      contest.entryFee ??
+      contest.entry ??
+      contest.fee ??
+      0
+    );
+
+    if(!Number.isFinite(fee) || fee<0) {
+      return res.status(400).json({error:"Invalid contest entry fee"});
+    }
+
+    const w=getWallet(db,uid);
+
+    const key="join:"+uid+":"+String(contestId)+":"+String(teamId)+":"+String(match||"");
+
+    if(alreadyProcessed(db,key)) {
+      return res.json({success:true,duplicate:true});
+    }
+
+    if(w.balance<fee) {
+      return res.status(400).json({
+        error:"INSUFFICIENT_BALANCE",
+        required:fee,
+        available:money(w.balance)
+      });
+    }
+
+    const before=w.balance;
+    w.balance=money(w.balance-fee);
+    w.updatedAt=Date.now();
+
+    walletTransaction(db,{
+      userId:uid,
+      type:"CONTEST_ENTRY",
+      amount:-fee,
+      balanceBefore:before,
+      balanceAfter:w.balance,
+      winningBefore:w.winningBalance,
+      winningAfter:w.winningBalance,
+      referenceId:String(contestId),
+      description:"Contest entry fee",
+      metadata:{contestId,teamId,match}
+    });
+
+    rememberProcessed(db,key,"CONTEST_ENTRY",uid);
+
+    if(!Array.isArray(db.contestEntries)) db.contestEntries=[];
+
+    const entry={
+      id:"CE_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),
+      userId:uid,
+      contestId:String(contestId),
+      teamId:String(teamId),
+      match:match||null,
+      entryFee:fee,
+      status:"JOINED",
+      createdAt:Date.now()
+    };
+
+    db.contestEntries.push(entry);
+
+    saveWalletDB(db);
+
+    res.json({
+      success:true,
+      entry,
+      wallet:{
+        balance:money(w.balance),
+        winningBalance:money(w.winningBalance)
+      }
+    });
+  } catch(e) {
+    console.error("contest join wallet error",e);
+    res.status(500).json({error:"Contest join failed"});
+  }
+});
+
+// 7: Prize credit.
+// Admin/server settlement only; userId and amount must come from
+// trusted settlement logic, not an ordinary client request.
+app.post("/wallet/settlement/prize", authenticateToken, (req,res)=>{
+  try {
+    const db=readDB();
+    const requester=walletUserId(req);
+    const {userId,amount,contestId,settlementId}=req.body||{};
+
+    // Never expose a client endpoint for arbitrary prize credit.
+    // This placeholder deliberately requires a server-side/admin
+    // authorization layer before real settlement.
+    return res.status(501).json({
+      error:"SERVER_SETTLEMENT_AUTH_REQUIRED",
+      message:"Prize settlement must be performed by trusted server/admin logic."
+    });
+  } catch(e) {
+    res.status(500).json({error:"Settlement failed"});
+  }
+});
+
+// 8: Refund.
+// Same protection as prize settlement.
+app.post("/wallet/settlement/refund", authenticateToken, (req,res)=>{
+  return res.status(501).json({
+    error:"SERVER_SETTLEMENT_AUTH_REQUIRED",
+    message:"Refund must be performed by trusted server/admin logic."
+  });
+});
+
+// 9: No client balance mutation endpoint exists.
+// 10: Payment provider verification deliberately blocked until
+// provider signature/webhook integration is configured.
+// 11: Ledger + idempotency + authorization checks are active.
+
+module.exports={registerRoutes};
+
+===== SERVER ROUTE REGISTRATION =====
+7:const { registerRoutes } = require('./routes');
+8:const { authenticateToken } = require('./auth-middleware');
+14:const cricketRoutes = require("./cricket-routes");
+17:// BATZO CRICKET API ROUTES
+27:// BATZO REAL CRICKET ROUTES
+28:app.use("/api/cricket", cricketRoutes);
+32:// BATZO REAL CRICKET API ROUTES
+54:    const { registerRoutes } = require('./routes');
+153:// BATZO TEAM / CONTEST API ROUTES
+154:registerRoutes(app, authenticateToken);
+
+========== END ==========

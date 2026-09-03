@@ -40,6 +40,88 @@ function saveSession(data) {
   }
 }
 
+
+function saveFirebaseUserLocally(user) {
+  if (!user) return;
+
+  const account = {
+    uid: user.uid || "",
+    name: user.displayName || user.name || "",
+    email: user.email || "",
+    mobile: user.phoneNumber || user.mobile || "",
+    phoneNumber: user.phoneNumber || "",
+    photoURL: user.photoURL || "",
+    emailVerified: Boolean(user.emailVerified),
+    phoneVerified: Boolean(user.phoneNumber)
+  };
+
+  localStorage.setItem(
+    "batzo_firebase_user",
+    JSON.stringify(account)
+  );
+
+  localStorage.setItem(
+    "batzo_user",
+    JSON.stringify(account)
+  );
+
+  if (account.email) {
+    localStorage.setItem(
+      "batzo_google_email",
+      account.email
+    );
+  }
+
+  if (account.mobile) {
+    localStorage.setItem(
+      "batzo_verified_mobile",
+      account.mobile
+    );
+  }
+}
+
+
+function batzoSaveFirebaseAccount(user) {
+  if (!user) return;
+
+  const account = {
+    uid: user.uid || "",
+    name: user.displayName || "",
+    email: user.email || "",
+    mobile: user.phoneNumber || "",
+    photoURL: user.photoURL || "",
+    emailVerified: !!user.emailVerified,
+    phoneVerified: !!user.phoneNumber
+  };
+
+  localStorage.setItem(
+    "batzo_firebase_user",
+    JSON.stringify(account)
+  );
+
+  localStorage.setItem(
+    "batzo_account_settings",
+    JSON.stringify(account)
+  );
+
+  if (account.email) {
+    localStorage.setItem("batzo_google_email", account.email);
+  }
+
+  if (account.phoneVerified) {
+    localStorage.setItem(
+      "batzo_verified_mobile",
+      account.mobile
+    );
+  }
+
+  window.dispatchEvent(
+    new CustomEvent("batzo-account-updated", {
+      detail: account
+    })
+  );
+}
+
 async function firebaseBackendLogin(user, nativeIdToken = null) {
   const idToken =
     nativeIdToken ||
@@ -256,7 +338,8 @@ useEffect(() => {
         setMode("login");
         setNotice("Registration successful. Please login.");
       } else {
-        saveSession(data);
+        batzoSaveFirebaseAccount(user);
+    saveSession(data);
         setMode("session");
         setNotice("");
       }
@@ -312,7 +395,9 @@ useEffect(() => {
 
     await firebaseBackendLogin(user, nativeIdToken);
 
-    setFirebaseUser(user);
+    saveFirebaseUserLocally(user);
+      batzoSaveFirebaseAccount(user);
+      setFirebaseUser(user);
     setMode("session");
   } catch (error) {
     console.error("[BATZO] Google login error:", error);
@@ -349,7 +434,9 @@ async function batzoNativeFacebookLogin() {
     }
 
     await firebaseBackendLogin(user, idToken);
-    setFirebaseUser(user);
+    saveFirebaseUserLocally(user);
+      batzoSaveFirebaseAccount(user);
+      setFirebaseUser(user);
     setMode("session");
 
     console.log("[BATZO] Native Facebook login successful");
@@ -404,7 +491,10 @@ async function batzoNativePhoneVerify(verificationId, verificationCode) {
   }
 
   await firebaseBackendLogin(user, tokenResult.token);
-  setFirebaseUser(user);
+    batzoSaveFirebaseAccount(user);
+  saveFirebaseUserLocally(user);
+      batzoSaveFirebaseAccount(user);
+      setFirebaseUser(user);
   setMode("session");
 }
 
@@ -414,6 +504,36 @@ async function requestPhoneOtp() {
     setNotice("");
 
     try {
+      const phone =
+        mobile.startsWith("+")
+          ? mobile
+          : "+91" + mobile.replace(/\D/g, "");
+
+      if (!/^\+91\d{10}$/.test(phone)) {
+        throw new Error("Enter a valid 10-digit Indian mobile number.");
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        console.log("[BATZO] Starting native Phone OTP");
+
+        const verificationId =
+          await batzoNativePhoneStart(phone);
+
+        if (!verificationId) {
+          throw new Error(
+            "Firebase did not return a verification ID."
+          );
+        }
+
+        setConfirmation({
+          native: true,
+          verificationId
+        });
+
+        setNotice("OTP sent successfully.");
+        return;
+      }
+
       if (!window.batzoRecaptcha) {
         window.batzoRecaptcha = new RecaptchaVerifier(
           auth,
@@ -424,21 +544,20 @@ async function requestPhoneOtp() {
         );
       }
 
-      const phone =
-        mobile.startsWith("+")
-          ? mobile
-          : "+91" + mobile.replace(/\D/g, "");
-
       const result = await signInWithPhoneNumber(
         auth,
         phone,
         window.batzoRecaptcha
       );
 
-      setConfirmation(result);
+      setConfirmation({
+        native: false,
+        confirmationResult: result
+      });
+
       setNotice("OTP sent successfully.");
     } catch (error) {
-      console.error(error);
+      console.error("[BATZO] Phone OTP error:", error);
 
       if (window.batzoRecaptcha) {
         try {
@@ -447,8 +566,10 @@ async function requestPhoneOtp() {
         window.batzoRecaptcha = null;
       }
 
+      setConfirmation(null);
+
       setNotice(
-        error.message ||
+        error?.message ||
         "OTP request failed"
       );
     } finally {
@@ -462,20 +583,47 @@ async function requestPhoneOtp() {
       return;
     }
 
+    if (!/^\d{6}$/.test(otp.trim())) {
+      setNotice("Enter the 6-digit OTP.");
+      return;
+    }
+
     setLoading(true);
     setNotice("");
 
     try {
+      if (
+        Capacitor.isNativePlatform() &&
+        confirmation.native
+      ) {
+        console.log("[BATZO] Verifying native Phone OTP");
+
+        await batzoNativePhoneVerify(
+          confirmation.verificationId,
+          otp.trim()
+        );
+
+        setNotice("");
+        return;
+      }
+
       const result =
-        await confirmation.confirm(otp);
+        await confirmation.confirmationResult.confirm(
+          otp.trim()
+        );
 
       await firebaseBackendLogin(result.user);
 
       setFirebaseUser(result.user);
       setMode("session");
     } catch (error) {
+      console.error(
+        "[BATZO] Phone OTP verify error:",
+        error
+      );
+
       setNotice(
-        error.message ||
+        error?.message ||
         "Invalid OTP"
       );
     } finally {

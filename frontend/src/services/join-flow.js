@@ -1,5 +1,4 @@
 const KEYS = {
-  wallet: "batzo_wallet",
   joined: "batzo_joined_contests",
   pending: "batzo_pending_contest",
   ledger: "batzo_wallet_ledger",
@@ -25,38 +24,9 @@ function money(value) {
   return Number.isFinite(n) && n >= 0 ? Number(n.toFixed(2)) : 0;
 }
 
-function getWallet() {
-  const saved = read(KEYS.wallet, null);
-  if (saved && typeof saved === "object") {
-    return {
-      balance: money(saved.balance),
-      updatedAt: saved.updatedAt || Date.now()
-    };
-  }
 
-  const legacy = Number(localStorage.getItem("batzo_wallet_balance") || 0);
 
-  return {
-    balance: Number.isFinite(legacy) && legacy >= 0 ? money(legacy) : 0,
-    updatedAt: Date.now()
-  };
-}
 
-function saveWallet(wallet) {
-  const clean = {
-    balance: money(wallet.balance),
-    updatedAt: Date.now()
-  };
-
-  write(KEYS.wallet, clean);
-  localStorage.setItem("batzo_wallet_balance", String(clean.balance));
-
-  window.dispatchEvent(
-    new CustomEvent("batzo:wallet-updated", { detail: clean })
-  );
-
-  return clean;
-}
 
 function normalizeContest(input) {
   if (!input) return {};
@@ -145,13 +115,9 @@ export function getMyContests() {
   return getJoinedContests();
 }
 
-export function getWalletBalance() {
-  return getWallet().balance;
-}
 
-export function getWalletLedger() {
-  return read(KEYS.ledger, []);
-}
+
+
 
 export function getSavedTeams() {
   return read(KEYS.teams, []);
@@ -226,8 +192,6 @@ export function joinContest(contestInput, teamInput = null) {
   }
 
   const fee = money(contest.entryFee);
-  const wallet = getWallet();
-
   if (fee > wallet.balance) {
     savePendingContest(contest, team);
 
@@ -273,13 +237,10 @@ export function joinContest(contestInput, teamInput = null) {
   joined.unshift(record);
   write(KEYS.joined, joined);
 
-  const ledger = getWalletLedger();
-
   ledger.unshift({
     id: `entry_${joinedAt}`,
     type: "ENTRY",
     amount: fee,
-    balanceAfter: getWalletBalance(),
     contestId: contest.contestId,
     teamId: team.teamId,
     createdAt: joinedAt,
@@ -301,7 +262,6 @@ export function joinContest(contestInput, teamInput = null) {
     success: true,
     joined: true,
     data: record,
-    wallet: getWallet()
   };
 }
 
@@ -339,19 +299,14 @@ export function addWalletCredit(amount, description = "Wallet credit") {
     };
   }
 
-  const wallet = getWallet();
-
   const updated = saveWallet({
     balance: wallet.balance + value
   });
-
-  const ledger = getWalletLedger();
 
   ledger.unshift({
     id: `credit_${Date.now()}`,
     type: "CREDIT",
     amount: value,
-    balanceAfter: updated.balance,
     createdAt: Date.now(),
     description
   });
@@ -360,7 +315,6 @@ export function addWalletCredit(amount, description = "Wallet credit") {
 
   return {
     ok: true,
-    wallet: updated
   };
 }
 
@@ -368,7 +322,6 @@ export function refreshFlowState() {
   window.dispatchEvent(
     new CustomEvent("batzo:flow-updated", {
       detail: {
-        wallet: getWallet(),
         joined: getJoinedContests(),
         pending: getPendingContest()
       }
@@ -382,9 +335,6 @@ export default {
   getPendingContest,
   getJoinedContests,
   getMyContests,
-  getWallet,
-  getWalletBalance,
-  getWalletLedger,
   getSavedTeams,
   saveTeam,
   isContestJoined,

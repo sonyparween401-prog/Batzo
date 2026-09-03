@@ -1,0 +1,849 @@
+========== BATZO WALLET PRE-CHECK ==========
+DATE: Tue Sep  1 22:34:51 IST 2026
+
+---- PROJECT ----
+/data/data/com.termux/files/home/Batzo
+
+---- ROOT ----
+./.batzo-logo-install/Batzo-3D-Header-Logo.png
+./.batzo-logo-install/Batzo-header-logo-installer.sh
+./.git/COMMIT_EDITMSG
+./.git/FETCH_HEAD
+./.git/HEAD
+./.git/ORIG_HEAD
+./.git/config
+./.git/description
+./.git/index
+./.git/packed-refs
+./.gitignore
+./Batzo-BlackScreen-Fix.apk
+./Batzo-FINAL-RUNTIME-FIX.apk
+./Batzo-Server-Fix.apk
+./Batzo-UseState-Fix.apk
+./apk-auth/Batzo-Auth-v1.apk
+./apk-final/Batzo-24Player-MyTeams-REAL-Final.apk
+./apk-final/Batzo-3D-Multicolor-Logo.apk
+./apk-final/Batzo-3D-Premium-UI.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-FINAL.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-GOOGLE-OTP-FINAL.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-GOOGLE-OTP-FIXED.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-LINKED-GOOGLE-OTP.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-RENDER-FINAL.apk
+./apk-final/Batzo-ACCOUNT-SETTINGS-TRUE-AUTH-FINAL.apk
+./apk-final/Batzo-AUTH-GOOGLE-OTP-V2.apk
+./apk-final/Batzo-AUTH-PROFILE-FINAL.apk
+./apk-final/Batzo-AUTH-PROFILE-GOOGLE-OTP-FINAL.apk
+./apk-final/Batzo-CVC-Buttons-Final.apk
+./apk-final/Batzo-CVC-Final-Fix.apk
+./apk-final/Batzo-CVC-Master-Final.apk
+./apk-final/Batzo-CVC-Real-Fix-Final.apk
+./apk-final/Batzo-Cinematic-Player-Premium.apk
+./apk-final/Batzo-Clean-Android-Back-Final.apk
+./apk-final/Batzo-Clean-Repair-Join-Wallet.apk
+./apk-final/Batzo-Clean-Team-Flow-Master.apk
+./apk-final/Batzo-Confirm-Join-Final.apk
+./apk-final/Batzo-Confirm-Team-Final.apk
+./apk-final/Batzo-Confirm-Team-Save-Final.apk
+./apk-final/Batzo-Contest-Flow-20260829-082655.apk
+./apk-final/Batzo-Continue-11-CVC-Final.apk
+./apk-final/Batzo-Continue-CVC-Confirm-Save-Final.apk
+./apk-final/Batzo-E2E-Join-Wallet-MyContests.apk
+./apk-final/Batzo-EndToEnd-Debug.apk
+./apk-final/Batzo-FINAL-ANDROID-BACK-V2.apk
+./apk-final/Batzo-FINAL-BACK-FIX.apk
+./apk-final/Batzo-FINAL-BOTTOM-5.apk
+./apk-final/Batzo-FINAL-FLOW-BACK-FIX.apk
+./apk-final/Batzo-FINAL-JOIN-BACK-FIX.apk
+./apk-final/Batzo-FINAL-MASTER-V10.apk
+./apk-final/Batzo-FINAL-MATCH-V9-CONTEST-NAV.apk
+./apk-final/Batzo-FINAL-Navigation-Back-FIX.apk
+./apk-final/Batzo-FINAL-Navigation-Back-Record-FIX.apk
+./apk-final/Batzo-FINAL-REAL-AUTH-BACK.apk
+./apk-final/Batzo-FINAL-RUNTIME-NAVIGATION-FIX.apk
+./apk-final/Batzo-FINAL-UPPER-REMOVED.apk
+./apk-final/Batzo-Final-AUTH-NAV-FIX.apk
+./apk-final/Batzo-Final-AccountSettings-Fix.apk
+./apk-final/Batzo-Final-Application-Fix.apk
+./apk-final/Batzo-Final-Auth-AndroidBack.apk
+./apk-final/Batzo-Final-Auth-Back-Fix.apk
+./apk-final/Batzo-Final-Auth-Google-Facebook-OTP.apk
+./apk-final/Batzo-Final-Clean-Join-Wallet.apk
+./apk-final/Batzo-Final-Clean-Repair.apk
+./apk-final/Batzo-Final-Clean-Test.apk
+./apk-final/Batzo-Final-Create-Join-Wallet.apk
+./apk-final/Batzo-Final-Flow.apk
+./apk-final/Batzo-Final-Google-ProfileBack-Fixed.apk
+./apk-final/Batzo-Final-Last-Test.apk
+./apk-final/Batzo-Final-Premium.apk
+./apk-final/Batzo-Final-Profile-Auth-Final.apk
+./apk-final/Batzo-Final-ProfileLogin-Back-Fixed.apk
+./apk-final/Batzo-Final-React310-Back-Fix.apk
+./apk-final/Batzo-Final-System-Back.apk
+./apk-final/Batzo-Final-TEAM-PROFILE-FIX.apk
+./apk-final/Batzo-Final-Team-Join-Fix.apk
+./apk-final/Batzo-Final.apk
+./apk-final/Batzo-Full-Test.apk
+./apk-final/Batzo-GOOGLE-PHONE-ACCOUNT-FINAL.apk
+./apk-final/Batzo-Gold-Navy-FINAL.apk
+./apk-final/Batzo-Google-BACKEND-FINAL.apk
+./apk-final/Batzo-Google-Backend-FINAL.apk
+./apk-final/Batzo-Google-LAN-Backend-FINAL.apk
+./apk-final/Batzo-Google-LAN-FINAL.apk
+./apk-final/Batzo-Google-Localhost-FINAL.apk
+./apk-final/Batzo-Google-Logout-AndroidBack-FIXED.apk
+./apk-final/Batzo-Google-Native-FINAL.apk
+./apk-final/Batzo-Google-REAL-IP-FINAL.apk
+./apk-final/Batzo-Home-First-Correct-Final.apk
+./apk-final/Batzo-Home-First-Final.apk
+./apk-final/Batzo-JOIN-BACK-FINAL.apk
+./apk-final/Batzo-JOIN-BACK-MASTER-FINAL.apk
+./apk-final/Batzo-JOIN-CONTEST-FINAL.apk
+./apk-final/Batzo-JOIN-REAL-CLEAN.apk
+./apk-final/Batzo-JOIN-REAL-FINAL.apk
+./apk-final/Batzo-Join-Flow-Final.apk
+./apk-final/Batzo-LAST-PROFILE-AUTH-BACK-FINAL.apk
+./apk-final/Batzo-LOGO-FIXED.apk
+./apk-final/Batzo-Master-Consolidated.apk
+./apk-final/Batzo-Master-Core.apk
+./apk-final/Batzo-Master-Team-Confirm-Join-Wallet-Final.apk
+./apk-final/Batzo-Master-Team-Contest-Fix-V2.apk
+./apk-final/Batzo-Master-Team-Contest-Fix-V3.apk
+./apk-final/Batzo-Master-Team-Contest-Fix-V4.apk
+./apk-final/Batzo-Master-Team-Contest-Fix-V6.apk
+./apk-final/Batzo-Master-Team-Contest-Fix-V7.apk
+./apk-final/Batzo-Master-Team-Contest-Fix.apk
+./apk-final/Batzo-Master-Team-Join-Final-v2.apk
+./apk-final/Batzo-Master-Team-Join-Final.apk
+./apk-final/Batzo-Master-V3.apk
+./apk-final/Batzo-Navigation-Back-FINAL.apk
+./apk-final/Batzo-Navigation-DEEP-FIX.apk
+./apk-final/Batzo-Navigation-FINAL-TEST.apk
+./apk-final/Batzo-Navigation-Join-Fix.apk
+./apk-final/Batzo-Navigation-MASTER-FINAL.apk
+./apk-final/Batzo-PROFILE-ANDROID-BACK-FINAL.apk
+./apk-final/Batzo-PROFILE-AUTH-BACK-FINAL.apk
+./apk-final/Batzo-PROFILE-DIRECT-ANDROID-BACK-FINAL.apk
+./apk-final/Batzo-PROFILE-GOOGLE-OTP-FINAL.apk
+./apk-final/Batzo-PROFILE-SURGICAL-FINAL.apk
+./apk-final/Batzo-Phase1-Confirm-Fix.apk
+./apk-final/Batzo-Phase1-Final.apk
+./apk-final/Batzo-Phase1-Home-Players.apk
+./apk-final/Batzo-Phase1-Home-UI.apk
+./apk-final/Batzo-Phase11-15-FINAL.apk
+./apk-final/Batzo-Phase11-15-Runtime-FIX-FINAL.apk
+./apk-final/Batzo-Phase16-Navigation-Contest-FINAL.apk
+./apk-final/Batzo-Phase16-Recovered-Final.apk
+./apk-final/Batzo-Phase16-Stable-FINAL.apk
+./apk-final/Batzo-Phase17-Contest-Navigation-FINAL.apk
+./apk-final/Batzo-Phase18-FINAL-Navigation-FIX.apk
+./apk-final/Batzo-Phase18-Navigation-FINAL.apk
+./apk-final/Batzo-Phase18-Startup-Safe-FINAL.apk
+./apk-final/Batzo-Phase19-Contest-Team-FLOW-FINAL.apk
+./apk-final/Batzo-Phase19-Join-Scope-FINAL.apk
+./apk-final/Batzo-Phase19-Runtime-Scope-FINAL.apk
+./apk-final/Batzo-Phase19-Team-Flow-FINAL.apk
+./apk-final/Batzo-Phase2-10-FINAL.apk
+./apk-final/Batzo-Phase2-10-Latest.apk
+./apk-final/Batzo-Phase2-10-Master-20260825-115726.apk
+./apk-final/Batzo-Phase2-10-Navigation-FINAL.apk
+./apk-final/Batzo-Phase20-FINAL-REPAIRED.apk
+./apk-final/Batzo-Phase20-Global-Clean-FINAL.apk
+./apk-final/Batzo-Phase20-Navigation-FINAL.apk
+./apk-final/Batzo-Phase20-Team-Contest-FIX-FINAL.apk
+./apk-final/Batzo-Phase21-Base.apk
+./apk-final/Batzo-Phase22-27-Debug.apk
+./apk-final/Batzo-Phase22-Base.apk
+./apk-final/Batzo-Phase25-Master.apk
+./apk-final/Batzo-Phase35-Runtime-Test.apk
+./apk-final/Batzo-Phase36-Final-Candidate.apk
+./apk-final/Batzo-Phase40-Final.apk
+./apk-final/Batzo-Premium-Dream11-Home.apk
+./apk-final/Batzo-Premium-FINAL.apk
+./apk-final/Batzo-Premium-Home-Matches.apk
+./apk-final/Batzo-Premium-Purple-Blue.apk
+./apk-final/Batzo-Professional-Cricket-Home.apk
+./apk-final/Batzo-ROOT-AUTH-BACK-Fixed.apk
+./apk-final/Batzo-Real-Cricket-FINAL.apk
+./apk-final/Batzo-Restore-Player-Team-Final.apk
+./apk-final/Batzo-TOP-NAV-REMOVED.apk
+./apk-final/Batzo-Team-API-Final.apk
+./apk-final/Batzo-Team-Builder-24Players-Final.apk
+./apk-final/Batzo-Team-Builder-COMPLETE-Final.apk
+./apk-final/Batzo-Team-Builder-FINAL-20260829-091532.apk
+./apk-final/Batzo-Team-Builder-Players-Final-v3.apk
+./apk-final/Batzo-Team-Contest-FIXED-20260829-084803.apk
+./apk-final/Batzo-Team-Flow-Fixed.apk
+./apk-final/Batzo-UPPER-CARDS-REMOVED.apk
+./apk-final/Batzo-Upcoming-FINAL.apk
+./apk-final/Batzo-Upcoming-FIXED.apk
+./apk-final/Batzo-V11-3D-HEADER-FINAL.apk
+./apk-final/Batzo-V11-CLEAN-CONTEST-TEAM.apk
+./apk-final/Batzo-V11-FINAL-FLOW.apk
+./apk-final/Batzo-V11-FIXED.apk
+./apk-final/Batzo-V12-FINAL-3D-LOGO.apk
+./apk-final/Batzo-V13-SQUARE-BOLD-LOGO.apk
+./apk-final/Batzo-V14-ULTRA-BOLD-3D-LOGO.apk
+./apk-final/Batzo-V6-Team-Join-Fixed.apk
+./apk-final/Batzo-V7-Team-Join-Wallet.apk
+./apk-final/Batzo-V7-TopNav-Fix.apk
+./apk-final/Batzo-V7-View-Contests-FINAL.apk
+./apk-final/Batzo-VIEW-CONTESTS-FIX.apk
+./apk-firebase-final/Batzo-Firebase-Final.apk
+./apk-firebase-otp-test/Batzo-Firebase-OTP-Test.apk
+./apk-firebase/Batzo-Firebase.apk
+./apk-new/Batzo-debug.apk
+./apk-new/app-debug.apk
+./apk/app-debug.apk
+./auth-code.txt
+./backend-live.log
+./backend.pid
+./backend/.dockerignore
+./backend/.env
+./backend/.env.backup-jwt-20260829-131655
+./backend/.env.example
+./backend/.env.phase11-15.example
+./backend/Dockerfile
+./backend/auth-middleware.js
+./backend/auth.js
+./backend/batzo-backend.log
+./backend/batzo-server.log
+./backend/cricket-routes.js
+./backend/cricket-routes.js.backup-20260822-122230
+./backend/cricket-routes.js.backup-20260822-122746
+./backend/cricket-routes.js.before-isolated-test-20260822-122842
+./backend/cricket-test-server.js
+./backend/cricket-test-server.js.backup-1787383665
+./backend/cricket-test-server.js.backup-1787386194
+./backend/cricket.js
+./backend/cricket.js.backup-20260822-122746
+./backend/db.js
+./backend/db.js.before-wallet-1788270075
+./backend/db.js.wallet-backup-1788271990
+./backend/fantasy-validation.js
+./backend/firebase-auth.js
+./backend/firebase-user.js
+./backend/health.js
+./backend/otp.js
+./backend/package-lock.json
+./backend/package.json
+./backend/routes.js
+./backend/routes.js.backup-final-20260822-214307
+./backend/routes.js.before-wallet-1788270075
+./backend/routes.js.wallet-backup-1788271990
+./backend/server.js
+./backend/server.js.backup-20260822-122230
+./backend/server.js.backup-cricket-20260822-122746
+./backend/server.js.backup-render
+./backend/server.js.before-cricket-final-20260822-122444
+./backend/server.js.before-cricket-final-20260822-122603
+./backend/server.js.before-final-3101
+./backend/server.js.before-final-cricket-fix-20260822-122356
+./backend/server.js.before-route-order-20260822-122311
+./backups/App.before-continue-fix-20260824-095856.jsx
+./backups/App.css.before-auth.backup
+./backups/App.css.before-real-otp.backup
+./backups/App.css.final-service-repair-20260822-221031
+./backups/App.css.vite.backup
+./backups/App.jsx-clean-20260821-141830.bak
+./backups/App.jsx.20260820-192159.backup
+./backups/App.jsx.20260821-134407.backup
+./backups/App.jsx.20260821-134547.backup
+./backups/App.jsx.before-24-player-20260824-094756
+./backups/App.jsx.before-auth.backup
+./backups/App.jsx.before-duplicate-fix
+./backups/App.jsx.before-email-google-20260820-190709.backup
+./backups/App.jsx.before-facebook-20260821-134644.backup
+./backups/App.jsx.before-final-1787383909
+./backups/App.jsx.before-firebase-auth-20260820-154151.backup
+
+---- BACKEND PACKAGE ----
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.19.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "firebase-admin": "^14.3.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
+
+---- FRONTEND PACKAGE ----
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor-firebase/authentication": "^8.4.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
+    "firebase": "^12.18.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "vite": "^8.2.0"
+  }
+}
+
+---- BACKEND ROUTES / SERVER ----
+backend/package-lock.json:662:    "node_modules/balanced-match": {
+backend/package-lock.json:664:      "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz",
+backend/package-lock.json:756:        "balanced-match": "^1.0.0"
+backend/server.js:153:// BATZO TEAM / CONTEST API ROUTES
+backend/data/batzo.json:160:  "contests": [
+backend/data/batzo.json:164:      "name": "Practice Contest",
+backend/data/batzo.json:172:      "name": "Practice Contest",
+backend/routes.js:33:    const contests=db.contests.filter(x=>x.match_id===match.id);
+backend/routes.js:38:      contests
+backend/routes.js:42:  app.get('/api/contests',(req,res)=>{
+backend/routes.js:44:    res.json({success:true,contests:db.contests});
+backend/routes.js:168:// BATZO_WALLET_API_V1
+backend/routes.js:169:// Server-controlled wallet + transaction ledger.
+backend/routes.js:170:// Never trust wallet amounts supplied by the client.
+backend/routes.js:173:function ensureWalletDB(db) {
+backend/routes.js:174:  if (!Array.isArray(db.wallets)) db.wallets = [];
+backend/routes.js:175:  if (!Array.isArray(db.transactions)) db.transactions = [];
+backend/routes.js:178:function getWallet(db, userId) {
+backend/routes.js:179:  ensureWalletDB(db);
+backend/routes.js:181:  let wallet = db.wallets.find(
+backend/routes.js:185:  if (!wallet) {
+backend/routes.js:186:    wallet = {
+backend/routes.js:189:      balance: 0,
+backend/routes.js:194:    db.wallets.push(wallet);
+backend/routes.js:197:  return wallet;
+backend/routes.js:200:function walletTransaction(db, {
+backend/routes.js:208:  ensureWalletDB(db);
+backend/routes.js:221:  db.transactions.push(tx);
+backend/routes.js:225:// Wallet balance
+backend/.env.example:14:# Payment provider
+backend/.env.example:15:PAYMENT_PROVIDER=
+backend/.env.example:16:PAYMENT_API_KEY=
+backend/.env.example:17:PAYMENT_SECRET=
+backend/routes.js.backup-final-20260822-214307:32:    const contests=db.contests.filter(x=>x.match_id===match.id);
+backend/routes.js.backup-final-20260822-214307:37:      contests
+backend/routes.js.backup-final-20260822-214307:41:  app.get('/api/contests',(req,res)=>{
+backend/routes.js.backup-final-20260822-214307:43:    res.json({success:true,contests:db.contests});
+backend/src/models/contest.model.js:1:const ContestModel = {
+backend/src/models/contest.model.js:6:    entryFee: "number",
+backend/src/models/contest.model.js:7:    prizePool: "number",
+backend/src/models/contest.model.js:16:module.exports = ContestModel;
+backend/src/models/wallet.model.js:1:const WalletModel = {
+backend/src/models/wallet.model.js:4:    balance: "number",
+backend/src/models/wallet.model.js:5:    winningBalance: "number",
+backend/src/models/wallet.model.js:6:    bonusBalance: "number",
+backend/src/models/wallet.model.js:11:module.exports = WalletModel;
+backend/src/models/contestEntry.model.js:1:const ContestEntryModel = {
+backend/src/models/contestEntry.model.js:4:    contestId: "string",
+backend/src/models/contestEntry.model.js:7:    entryFee: "number",
+backend/src/models/contestEntry.model.js:10:    prize: "number",
+backend/src/models/contestEntry.model.js:15:module.exports = ContestEntryModel;
+backend/src/models/transaction.model.js:1:const TransactionModel = {
+backend/src/models/transaction.model.js:5:    type: "deposit|withdrawal|entry_fee|winning|refund",
+backend/src/models/transaction.model.js:13:module.exports = TransactionModel;
+backend/src/services/paymentProvider.js:1:class PaymentProvider {
+backend/src/services/paymentProvider.js:2:  async createDeposit() {
+backend/src/services/paymentProvider.js:4:      "Payment provider credentials are not configured."
+backend/src/services/paymentProvider.js:8:  async verifyPayment() {
+backend/src/services/paymentProvider.js:10:      "Payment verification provider is not configured."
+backend/src/services/paymentProvider.js:14:  async createWithdrawal() {
+backend/src/services/paymentProvider.js:16:      "Withdrawal provider is not configured."
+backend/src/services/paymentProvider.js:21:module.exports = PaymentProvider;
+backend/src/services/contestService.js:1:export function validateContestJoin({contest={},walletBalance=0,matchId,team={},userId}) {
+backend/src/services/contestService.js:2:  const fee=Number(contest.entryFee ?? contest.entry ?? 0);
+backend/src/services/contestService.js:6:  if(contest.status && String(contest.status).toUpperCase()!=="OPEN")return {valid:false,reason:"Contest is not open."};
+backend/src/services/contestService.js:7:  if(Number(walletBalance)<fee)return {valid:false,reason:"Insufficient wallet balance."};
+backend/src/services/contestService.js:8:  return {valid:true,entryFee:fee};
+backend/src/services/settlementService.js:1:function calculatePrizePool(entryFee, joinedSpots) {
+backend/src/services/settlementService.js:2:  return Number(entryFee || 0) * Number(joinedSpots || 0);
+backend/src/services/settlementService.js:5:function settlementTemplate(contest) {
+backend/src/services/settlementService.js:7:    contestId: contest.id,
+backend/src/services/settlementService.js:9:    prizePool: calculatePrizePool(
+backend/src/services/settlementService.js:10:      contest.entryFee,
+backend/src/services/settlementService.js:11:      contest.joinedSpots
+backend/src/services/settlementService.js:18:  calculatePrizePool,
+backend/src/services/walletService.js:11:function debit(balance, amount) {
+backend/src/services/walletService.js:14:  if (Number(balance || 0) < value) {
+backend/src/services/walletService.js:15:    throw new Error("Insufficient wallet balance.");
+backend/src/services/walletService.js:18:  return Number((Number(balance || 0) - value).toFixed(2));
+backend/src/services/walletService.js:21:function credit(balance, amount) {
+backend/src/services/walletService.js:23:    (Number(balance || 0) + validAmount(amount)).toFixed(2)
+backend/.env.phase11-15.example:11:# Phase 15 Payment
+backend/.env.phase11-15.example:12:PAYMENT_PROVIDER=
+backend/.env.phase11-15.example:13:PAYMENT_API_KEY=
+backend/.env.phase11-15.example:14:PAYMENT_SECRET=
+backend/.env.phase11-15.example:15:PAYMENT_WEBHOOK_SECRET=
+backend/routes.js.before-wallet-1788270075:33:    const contests=db.contests.filter(x=>x.match_id===match.id);
+backend/routes.js.before-wallet-1788270075:38:      contests
+backend/routes.js.before-wallet-1788270075:42:  app.get('/api/contests',(req,res)=>{
+backend/routes.js.before-wallet-1788270075:44:    res.json({success:true,contests:db.contests});
+backend/routes.js.wallet-backup-1788271990:33:    const contests=db.contests.filter(x=>x.match_id===match.id);
+backend/routes.js.wallet-backup-1788271990:38:      contests
+backend/routes.js.wallet-backup-1788271990:42:  app.get('/api/contests',(req,res)=>{
+backend/routes.js.wallet-backup-1788271990:44:    res.json({success:true,contests:db.contests});
+backend/routes.js.wallet-backup-1788271990:168:// BATZO_WALLET_API_V1
+backend/routes.js.wallet-backup-1788271990:169:// Server-controlled wallet + transaction ledger.
+backend/routes.js.wallet-backup-1788271990:170:// Never trust wallet amounts supplied by the client.
+backend/routes.js.wallet-backup-1788271990:173:function ensureWalletDB(db) {
+backend/routes.js.wallet-backup-1788271990:174:  if (!Array.isArray(db.wallets)) db.wallets = [];
+backend/routes.js.wallet-backup-1788271990:175:  if (!Array.isArray(db.transactions)) db.transactions = [];
+backend/routes.js.wallet-backup-1788271990:178:function getWallet(db, userId) {
+backend/routes.js.wallet-backup-1788271990:179:  ensureWalletDB(db);
+backend/routes.js.wallet-backup-1788271990:181:  let wallet = db.wallets.find(
+backend/routes.js.wallet-backup-1788271990:185:  if (!wallet) {
+backend/routes.js.wallet-backup-1788271990:186:    wallet = {
+backend/routes.js.wallet-backup-1788271990:189:      balance: 0,
+backend/routes.js.wallet-backup-1788271990:194:    db.wallets.push(wallet);
+backend/routes.js.wallet-backup-1788271990:197:  return wallet;
+backend/routes.js.wallet-backup-1788271990:200:function walletTransaction(db, {
+backend/routes.js.wallet-backup-1788271990:208:  ensureWalletDB(db);
+backend/routes.js.wallet-backup-1788271990:221:  db.transactions.push(tx);
+backend/routes.js.wallet-backup-1788271990:225:// Wallet balance
+backend/routes.js.wallet-backup-1788271990:226:app.get('/api/wallet', authenticateToken, (req, res) => {
+backend/routes.js.wallet-backup-1788271990:229:    const wallet = getWallet(db, req.user.userId);
+backend/routes.js.wallet-backup-1788271990:234:      wallet: {
+backend/routes.js.wallet-backup-1788271990:235:        balance: Number(wallet.balance || 0),
+backend/routes.js.wallet-backup-1788271990:240:    console.error("[BATZO] wallet:", e);
+backend/routes.js.wallet-backup-1788271990:243:      message:"Unable to load wallet"
+backend/routes.js.wallet-backup-1788271990:248:// Transaction history
+backend/routes.js.wallet-backup-1788271990:249:app.get('/api/wallet/transactions', authenticateToken, (req, res) => {
+backend/routes.js.wallet-backup-1788271990:252:    ensureWalletDB(db);
+backend/routes.js.wallet-backup-1788271990:254:    const transactions = db.transactions
+backend/routes.js.wallet-backup-1788271990:260:      transactions
+backend/routes.js.wallet-backup-1788271990:263:    console.error("[BATZO] transaction history:", e);
+backend/routes.js.wallet-backup-1788271990:266:      message:"Unable to load transactions"
+backend/routes.js.wallet-backup-1788271990:271:// Deposit request.
+backend/routes.js.wallet-backup-1788271990:272:// IMPORTANT: this does NOT credit the wallet.
+backend/routes.js.wallet-backup-1788271990:273:// A verified payment gateway webhook must mark it successful.
+backend/routes.js.wallet-backup-1788271990:274:app.post('/api/wallet/deposit', authenticateToken, (req, res) => {
+backend/routes.js.wallet-backup-1788271990:281:        message:"Invalid deposit amount"
+backend/routes.js.wallet-backup-1788271990:286:    const wallet = getWallet(db, req.user.userId);
+backend/routes.js.wallet-backup-1788271990:292:    const tx = walletTransaction(db, {
+backend/routes.js.wallet-backup-1788271990:294:      type:"deposit",
+backend/routes.js.wallet-backup-1788271990:298:      note:"Awaiting verified payment gateway confirmation"
+backend/routes.js.wallet-backup-1788271990:301:    wallet.updated_at = new Date().toISOString();
+backend/routes.js.wallet-backup-1788271990:306:      message:"Deposit request created. Wallet will be credited only after verified payment confirmation.",
+backend/routes.js.wallet-backup-1788271990:307:      transaction:tx,
+backend/routes.js.wallet-backup-1788271990:308:      wallet:{
+backend/routes.js.wallet-backup-1788271990:309:        balance:Number(wallet.balance || 0),
+backend/routes.js.wallet-backup-1788271990:314:    console.error("[BATZO] deposit:",e);
+backend/routes.js.wallet-backup-1788271990:317:      message:"Unable to create deposit request"
+backend/routes.js.wallet-backup-1788271990:322:// Withdrawal request.
+backend/routes.js.wallet-backup-1788271990:323:// IMPORTANT: no balance is deducted until server-side approval.
+backend/routes.js.wallet-backup-1788271990:324:app.post('/api/wallet/withdraw', authenticateToken, (req, res) => {
+backend/routes.js.wallet-backup-1788271990:331:        message:"Invalid withdrawal amount"
+backend/routes.js.wallet-backup-1788271990:336:    const wallet = getWallet(db, req.user.userId);
+backend/routes.js.wallet-backup-1788271990:338:    if (Number(wallet.balance || 0) < amount) {
+backend/routes.js.wallet-backup-1788271990:341:        message:"Insufficient wallet balance"
+backend/routes.js.wallet-backup-1788271990:349:    const tx = walletTransaction(db, {
+backend/routes.js.wallet-backup-1788271990:351:      type:"withdrawal",
+backend/routes.js.wallet-backup-1788271990:362:      message:"Withdrawal request created.",
+backend/routes.js.wallet-backup-1788271990:363:      transaction:tx,
+backend/routes.js.wallet-backup-1788271990:364:      wallet:{
+backend/routes.js.wallet-backup-1788271990:365:        balance:Number(wallet.balance || 0),
+backend/routes.js.wallet-backup-1788271990:370:    console.error("[BATZO] withdrawal:",e);
+backend/routes.js.wallet-backup-1788271990:373:      message:"Unable to create withdrawal request"
+
+---- FRONTEND WALLET / CONTEST ----
+frontend/src/App.css:189:.wallet-box {
+frontend/src/App.css:203:.wallet-icon {
+frontend/src/App.css:208:.wallet-box small {
+frontend/src/App.css:214:.wallet-box strong {
+frontend/src/App.css:220:.wallet-box em {
+frontend/src/App.css:627:.contest-action {
+frontend/src/App.css:634:.contest-action b {
+frontend/src/App.css:712:.contest-action {
+frontend/src/App.css:719:.contest-list {
+frontend/src/App.css:724:.contest-card {
+frontend/src/App.css:739:.contest-card small {
+frontend/src/App.css:746:.contest-card > div > strong {
+frontend/src/App.css:753:.contest-info b {
+frontend/src/App.css:758:.contest-info span {
+frontend/src/App.css:979:  .wallet-box {
+frontend/src/App.css:985:  .wallet-box strong {
+frontend/src/App.css:1095:  .contest-action {
+frontend/src/App.css:1159:  .wallet-box {
+frontend/src/App.css:1165:  .wallet-icon {
+frontend/src/App.css:1169:  .wallet-box small {
+frontend/src/App.css:1173:  .wallet-box strong {
+frontend/src/App.css:1177:  .wallet-box em {
+frontend/src/App.css:1311:  .contest-card {
+frontend/src/App.css:1315:  .contest-info {
+frontend/src/App.css:1526:.contest-card {
+frontend/src/App.css:1810:.contest-card {
+frontend/src/App.css:1815:.contest-card:active,
+frontend/src/App.css:1974:.contest-card {
+frontend/src/App.css:1983:.contest-card:hover {
+frontend/src/App.css:2003:/* wallet polish */
+frontend/src/App.css:2004:.wallet,
+frontend/src/App.css:2005:.wallet-balance {
+frontend/src/App.css:2071:.contest-card:active {
+frontend/src/App.css:2133:/* Wallet remains aligned with notification */
+frontend/src/App.css:2134:.wallet,
+frontend/src/App.css:2135:.wallet-balance,
+frontend/src/App.css:2136:.wallet-card {
+frontend/src/App.css:2424:.contest-card,
+frontend/src/App.css:3319:.bz-contest-action {
+frontend/src/App.css:3629:   BATZO CONTEST DETAILS
+frontend/src/App.css:3632:.bz-contest-details {
+frontend/src/App.css:3636:.bz-contest-hero {
+frontend/src/App.css:3643:.bz-contest-top {
+frontend/src/App.css:3650:.bz-contest-name {
+frontend/src/App.css:3656:.bz-contest-prize-label {
+frontend/src/App.css:3663:.bz-contest-prize {
+frontend/src/App.css:3692:.bz-contest-stats {
+frontend/src/App.css:3699:.bz-contest-stat {
+frontend/src/App.css:3707:.bz-contest-stat strong {
+frontend/src/App.css:3713:.bz-contest-stat span {
+frontend/src/App.css:3727:.bz-winning-row {
+frontend/src/App.css:3736:.bz-winning-row strong {
+frontend/src/App.css:3740:.bz-contest-join {
+frontend/src/App.css:3751:.bz-contest-join button {
+frontend/src/App.css:3772:  .bz-contest-prize {
+frontend/src/App.css:3778:/* BATZO TEAM / CONTEST CONNECTED UI */
+frontend/src/App.css:3900:.bz-flow-prize{
+frontend/src/App.css:3941:   BATZO STABLE MATCH + CONTEST + FANTASY UI
+frontend/src/App.css:4010:.bz-contest-card{
+frontend/src/App.css:4023:.bz-contest-card small{
+frontend/src/App.css:4029:.bz-contest-card strong{
+frontend/src/App.css:4035:.bz-contest-card button{
+frontend/src/App.css:4044:.bz-contest-name{
+frontend/src/App.css:4275:.bz-contest-view{
+frontend/src/App.css:4286:  .bz-contest-card{
+frontend/src/App.css:4290:  .bz-contest-card button{
+frontend/src/App.css:4489:/* Mobile: keep logo compact so notification/wallet never get pushed */
+frontend/src/App.jsx:3:import { BATZO_PLAYERS, BATZO_CONTESTS, openBatzoTeam, openBatzoContest } from "./batzo-flow.js";
+frontend/src/App.jsx:75:const contests = [
+frontend/src/App.jsx:76:  { title: "Mega Contest", prize: "₹50 Lakhs", entry: "₹49", spots: "2.1L" },
+frontend/src/App.jsx:77:  { title: "Head To Head", prize: "₹1,800", entry: "₹49", spots: "2" },
+frontend/src/App.jsx:78:  { title: "Small Contest", prize: "₹25,000", entry: "₹99", spots: "1,000" }
+frontend/src/App.jsx:198:      <span className="contest-action">VIEW CONTESTS <b>→</b></span>
+frontend/src/App.jsx:203:function ContestCard({ contest, onClick }) {
+frontend/src/App.jsx:205:    <button className="contest-card" onClick={onClick}>
+frontend/src/App.jsx:207:        <small>WINNING PRIZE</small>
+frontend/src/App.jsx:208:        <strong>{contest.prize}</strong>
+frontend/src/App.jsx:210:      <div className="contest-info">
+frontend/src/App.jsx:211:        <b>{contest.title}</b>
+frontend/src/App.jsx:212:        <span>{contest.spots} spots</span>
+frontend/src/App.jsx:216:        <b>{contest.entry}</b>
+frontend/src/App.jsx:1096:         * Existing contest/team flow gets second priority.
+frontend/src/App.jsx:1183:      // Open the existing contest tab with the selected match context.
+frontend/src/App.jsx:1185:      setTab("contests");
+frontend/src/App.jsx:1187:      console.warn("BATZO match -> contest flow:", e);
+frontend/src/App.jsx:1188:      setTab("contests");
+frontend/src/App.jsx:1204:    // BATZO CONTEST NAVIGATION FIX
+frontend/src/App.jsx:1205:    // Popular / Complete must open the real contest screen.
+frontend/src/App.jsx:1207:    setTab("contests");
+frontend/src/App.jsx:1210:    // Open the existing contest renderer when available.
+frontend/src/App.jsx:1213:        if (typeof showContest === "function") {
+frontend/src/App.jsx:1214:          showContest();
+frontend/src/App.jsx:1217:          typeof window.BATZO_ACTIVE_CONTEST !== "undefined"
+frontend/src/App.jsx:1220:            new CustomEvent("batzo:contest", {
+frontend/src/App.jsx:1222:                contest: window.BATZO_ACTIVE_CONTEST
+frontend/src/App.jsx:1228:        console.warn("BATZO contest navigation:", e);
+frontend/src/App.jsx:1292:                  Create your best XI, join contests
+frontend/src/App.jsx:1364:                  <h2>Popular Contests</h2>
+frontend/src/App.jsx:1366:                <button onClick={() => window.dispatchEvent(new CustomEvent("batzo:open-contests"))}>View all →</button>
+frontend/src/App.jsx:1369:              <div className="contest-list">
+frontend/src/App.jsx:1370:                {contests.map((c) => (
+frontend/src/App.jsx:1371:                  <ContestCard
+frontend/src/App.jsx:1373:                    contest={c}
+frontend/src/App.jsx:1425:        {tab === "contests" && (
+frontend/src/App.jsx:1429:              <h1>Contests</h1>
+frontend/src/App.jsx:1430:              <p>Choose your contest and play your way.</p>
+frontend/src/App.jsx:1433:            <div className="contest-list">
+frontend/src/App.jsx:1434:              {contests.map((c) => (
+frontend/src/App.jsx:1435:                <ContestCard
+frontend/src/App.jsx:1437:                  contest={c}
+frontend/src/App.jsx:1465:            <p>Profile, wallet and account settings.</p>
+frontend/src/App.jsx:1511:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx:1512:          onClick={() => navigateTab("contests")}
+frontend/src/App.jsx:1515:          <small>Contest</small>
+frontend/src/App.jsx:1547:   Contest -> Details -> My Teams -> Team Builder -> C/VC -> Join
+frontend/src/App.jsx:1555:  const JOIN_KEY = "batzo_v11_joined_contests";
+frontend/src/App.jsx:1613:  function getContests() {
+frontend/src/App.jsx:1616:        typeof BATZO_CONTESTS !== "undefined" &&
+frontend/src/App.jsx:1617:        Array.isArray(BATZO_CONTESTS) &&
+frontend/src/App.jsx:1618:        BATZO_CONTESTS.length
+frontend/src/App.jsx:1620:        return BATZO_CONTESTS;
+frontend/src/App.jsx:1627:        name: "Mega Contest",
+frontend/src/App.jsx:1628:        prize: "₹1,00,000",
+frontend/src/App.jsx:1636:        name: "Grand Contest",
+frontend/src/App.jsx:1637:        prize: "₹50,000",
+frontend/src/App.jsx:1645:        name: "Small Contest",
+frontend/src/App.jsx:1646:        prize: "₹5,000",
+frontend/src/App.jsx:1727:  function showContestTabs(selected) {
+frontend/src/App.jsx:1728:    const list = getContests();
+frontend/src/App.jsx:1742:            class="bz-v11-contest-card"
+frontend/src/App.jsx:1743:            data-contest-id="${String(c.id || c.name).replace(/"/g,"&quot;")}"
+frontend/src/App.jsx:1756:              <strong>${c.name || "Contest"}</strong>
+frontend/src/App.jsx:1767:              Prize ${c.prize || "₹0"} ·
+frontend/src/App.jsx:1776:            ">VIEW CONTEST →</div>
+frontend/src/App.jsx:1785:          No contests available in this category.
+frontend/src/App.jsx:1790:      "Contests",
+frontend/src/App.jsx:1826:      showContestTabs("popular");
+frontend/src/App.jsx:1830:      showContestTabs("complete");
+frontend/src/App.jsx:1833:    r.querySelectorAll("[data-contest-id]").forEach(function (btn) {
+frontend/src/App.jsx:1835:        const id = btn.getAttribute("data-contest-id");
+frontend/src/App.jsx:1836:        const contest = list.find(
+frontend/src/App.jsx:1840:        window.BATZO_ACTIVE_CONTEST = contest;
+frontend/src/App.jsx:1841:        showContestDetails(contest);
+frontend/src/App.jsx:1846:  function showContestDetails(contest) {
+frontend/src/App.jsx:1850:      contest.name || "Contest Details",
+frontend/src/App.jsx:1864:          ">CONTEST DETAILS</div>
+frontend/src/App.jsx:1867:            ${contest.name || "Contest"}
+frontend/src/App.jsx:1877:              <small style="color:#8e97a3">PRIZE POOL</small>
+frontend/src/App.jsx:1879:                ${contest.prize || "₹0"}
+frontend/src/App.jsx:1886:                ${contest.entry || "₹49"}
+frontend/src/App.jsx:1893:                ${Number(contest.spots || 0).toLocaleString("en-IN")}
+frontend/src/App.jsx:1900:                ${Number(contest.joined || 0).toLocaleString("en-IN")}
+frontend/src/App.jsx:1932:      showContestTabs(
+frontend/src/App.jsx:1933:        String(contest.type || "popular").toLowerCase() === "complete"
+frontend/src/App.jsx:1940:      showMyTeams(match, contest);
+frontend/src/App.jsx:1944:      showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:1948:  function showMyTeams(match, contest) {
+frontend/src/App.jsx:2048:      match + " • " + (contest.name || "Contest"),
+frontend/src/App.jsx:2109:      showContestDetails(contest);
+frontend/src/App.jsx:2119:        showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:2130:          showTeamBuilder(match, contest, team);
+frontend/src/App.jsx:2146:        showMyTeams(match, contest);
+frontend/src/App.jsx:2160:        showMyTeams(match, contest);
+frontend/src/App.jsx:2184:        batzoRequireLogin(() => showJoinConfirmation(match, contest, team));
+frontend/src/App.jsx:2189:  function showTeamBuilder(match, contest, editing) {
+frontend/src/App.jsx:2314:      showMyTeams(match, contest);
+frontend/src/App.jsx:2587:        contest,
+frontend/src/App.jsx:2597:  function showCaptainVC(match, contest, editing, selectedPlayers) {
+frontend/src/App.jsx:2669:      showTeamBuilder(match, contest, editing);
+frontend/src/App.jsx:2849:      syncTeamToBackend(match, contest, team).then(function(result) {
+frontend/src/App.jsx:2863:      showMyTeams(match, contest);
+frontend/src/App.jsx:2868:  async function syncTeamToBackend(match, contest, team) {
+frontend/src/App.jsx:2948:  function entryAmount(contest) {
+frontend/src/App.jsx:2949:    const raw = String(contest.entry || "49");
+frontend/src/App.jsx:2954:  function showJoinConfirmation(match, contest, team) {
+frontend/src/App.jsx:2955:    const fee = entryAmount(contest);
+frontend/src/App.jsx:2958:      "Join Contest",
+frontend/src/App.jsx:2959:      match + " • " + (contest.name || "Contest"),
+frontend/src/App.jsx:2984:            <span>Entry Fee</span>
+frontend/src/App.jsx:2993:            <span>Wallet</span>
+frontend/src/App.jsx:3007:          JOIN CONTEST • ₹${fee}
+frontend/src/App.jsx:3013:      showMyTeams(match, contest);
+frontend/src/App.jsx:3020:        return String(x.contestId) === String(contest.id) &&
+frontend/src/App.jsx:3026:        alert("This team is already joined in this contest.");
+frontend/src/App.jsx:3031:      if (balance < fee) {
+frontend/src/App.jsx:3033:          "Insufficient wallet balance. Required ₹" +
+frontend/src/App.jsx:3036:          balance + "."
+frontend/src/App.jsx:3042:        contestId: contest.id || contest.name,
+frontend/src/App.jsx:3043:        contestName: contest.name || "Contest",
+frontend/src/App.jsx:3051:      if (balance > 0) {
+frontend/src/App.jsx:3053:          String(Math.max(0, balance - fee))
+frontend/src/App.jsx:3057:      alert("Contest joined successfully.");
+frontend/src/App.jsx:3058:      showContestDetails(contest);
+frontend/src/App.jsx:3062:  function openContests() {
+frontend/src/App.jsx:3066:    showContestTabs("popular");
+frontend/src/App.jsx:3072:    const contests = getContests();
+frontend/src/App.jsx:3076:      window.BATZO_ACTIVE_CONTEST || contests[0]
+frontend/src/App.jsx:3090:    // Home -> Popular Contests card
+frontend/src/App.jsx:3094:      /Popular Contests/i.test(
+frontend/src/App.jsx:3097:      el.closest(".contest-list")
+frontend/src/App.jsx:3100:      const contest = getContests().find(function (c) {
+frontend/src/App.jsx:3103:      }) || getContests()[0];
+frontend/src/App.jsx:3105:      if (contest) {
+frontend/src/App.jsx:3108:        window.BATZO_ACTIVE_CONTEST = contest;
+frontend/src/App.jsx:3109:        showContestDetails(contest);
+frontend/src/App.jsx:3114:    if (text === "CONTEST" || text === "CONTESTS") {
+frontend/src/App.jsx:3117:      openContests();
+frontend/src/App.jsx:3126:      const contest =
+frontend/src/App.jsx:3127:        window.BATZO_ACTIVE_CONTEST ||
+frontend/src/App.jsx:3128:        getContests()[0];
+frontend/src/App.jsx:3130:      showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:3144:    if (text === "POPULAR CONTEST" || text === "POPULAR CONTESTS") {
+frontend/src/App.jsx:3147:      openContests();
+frontend/src/App.jsx:3151:    if (text === "COMPLETE CONTEST" || text === "COMPLETE CONTESTS") {
+frontend/src/App.jsx:3154:      showContestTabs("complete");
+frontend/src/App.jsx:3159:  window.addEventListener("batzo:open-contests", openContests);
+frontend/src/App.jsx:3161:  window.addEventListener("batzo:contest", function (e) {
+frontend/src/App.jsx:3163:      e.detail && e.detail.contest
+frontend/src/App.jsx:3164:        ? e.detail.contest
+frontend/src/App.jsx:3165:        : getContests()[0];
+frontend/src/App.jsx:3167:    window.BATZO_ACTIVE_CONTEST = c;
+frontend/src/App.jsx:3168:    showContestDetails(c);
+frontend/src/index.css:109:.contest-card {
+frontend/src/App.jsx.backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.backup:128:                <span>Manage balance</span>
+frontend/src/App.jsx.backup:309:          <small>Contests</small>
+frontend/src/App.jsx.logo-backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.logo-backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.logo-backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.logo-backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.logo-backup:128:                <span>Manage balance</span>
+frontend/src/App.jsx.logo-backup:309:          <small>Contests</small>
+frontend/src/App.jsx.before-match-details:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.before-match-details:119:                <strong>Contests</strong>
+frontend/src/App.jsx.before-match-details:120:                <span>Join contests</span>
+frontend/src/App.jsx.before-match-details:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.before-match-details:128:                <span>Manage balance</span>
+frontend/src/App.jsx.before-match-details:309:          <small>Contests</small>
+frontend/src/App.css.before-match-details:2042:.contest-btn,
+frontend/src/App.css.before-match-details:2059:.contest-btn:active,
+frontend/src/MatchDetails.jsx:56:          <div style={{ fontWeight: 800 }}>Contests</div>
+frontend/src/MatchDetails.jsx:58:            Join contests and create your team
+frontend/src/App.jsx.blank-screen-backup:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.blank-screen-backup:121:                <strong>Contests</strong>
+frontend/src/App.jsx.blank-screen-backup:122:                <span>Join contests</span>
+frontend/src/App.jsx.blank-screen-backup:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.blank-screen-backup:130:                <span>Manage balance</span>
+frontend/src/App.jsx.blank-screen-backup:318:          <small>Contests</small>
+frontend/src/App.css.blank-screen-backup:2042:.contest-btn,
+frontend/src/App.css.blank-screen-backup:2059:.contest-btn:active,
+frontend/src/App.css.blank-screen-backup:2570:.bd-contest-row button,
+frontend/src/App.css.blank-screen-backup:2648:.bd-contest-card {
+frontend/src/App.css.blank-screen-backup:2657:.bd-contest-head {
+frontend/src/App.css.blank-screen-backup:2663:.bd-contest-head small {
+frontend/src/App.css.blank-screen-backup:2670:.bd-contest-head strong {
+frontend/src/App.css.blank-screen-backup:2678:.bd-contest-head > span {
+frontend/src/App.css.blank-screen-backup:2687:.bd-contest-head > span.safe {
+frontend/src/App.css.blank-screen-backup:2692:.bd-contest-row {
+frontend/src/App.css.blank-screen-backup:2702:.bd-contest-row small {
+frontend/src/App.css.blank-screen-backup:2709:.bd-contest-row b {
+frontend/src/App.css.blank-screen-backup:2783:  .bd-contest-row {
+frontend/src/App.jsx.safe-match-backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.safe-match-backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.safe-match-backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.safe-match-backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.safe-match-backup:128:                <span>Manage balance</span>
+frontend/src/App.jsx.safe-match-backup:309:          <small>Contests</small>
+frontend/src/App.css.safe-match-backup:2042:.contest-btn,
+frontend/src/App.css.safe-match-backup:2059:.contest-btn:active,
+frontend/src/App.jsx.match-flow-broken:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.match-flow-broken:121:                <strong>Contests</strong>
+frontend/src/App.jsx.match-flow-broken:122:                <span>Join contests</span>
+frontend/src/App.jsx.match-flow-broken:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.match-flow-broken:130:                <span>Manage balance</span>
+frontend/src/App.jsx.match-flow-broken:318:          <small>Contests</small>
+frontend/src/App.css.match-flow-broken:2042:.contest-btn,
+frontend/src/App.css.match-flow-broken:2059:.contest-btn:active,
+frontend/src/App.jsx.home-stable-backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.home-stable-backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.home-stable-backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.home-stable-backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.home-stable-backup:128:                <span>Manage balance</span>
+frontend/src/App.jsx.home-stable-backup:309:          <small>Contests</small>
+frontend/src/App.css.home-stable-backup:2042:.contest-btn,
+frontend/src/App.css.home-stable-backup:2059:.contest-btn:active,
+frontend/src/App.jsx.command-fix-backup:73:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.command-fix-backup:120:                <strong>Contests</strong>
+frontend/src/App.jsx.command-fix-backup:121:                <span>Join contests</span>
+frontend/src/App.jsx.command-fix-backup:128:                <strong>Wallet</strong>
+frontend/src/App.jsx.command-fix-backup:129:                <span>Manage balance</span>
+frontend/src/App.jsx.command-fix-backup:317:          <small>Contests</small>
+frontend/src/App.jsx.failed-match-details-backup:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.failed-match-details-backup:121:                <strong>Contests</strong>
+frontend/src/App.jsx.failed-match-details-backup:122:                <span>Join contests</span>
+frontend/src/App.jsx.failed-match-details-backup:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.failed-match-details-backup:130:                <span>Manage balance</span>
+frontend/src/App.jsx.failed-match-details-backup:318:          <small>Contests</small>
+
+---- DATABASE / AUTH ----
+backend/auth-middleware.js
+backend/auth.js
+backend/cricket-routes.js
+backend/cricket-test-server.js
+backend/cricket.js
+backend/data/batzo.json
+backend/data/otp.json
+backend/db.js
+backend/fantasy-validation.js
+backend/firebase-auth.js
+backend/firebase-user.js
+backend/health.js
+backend/otp.js
+backend/package-lock.json
+backend/package.json
+backend/routes.js
+backend/routes/fantasy.js
+backend/secrets/firebase-service-account.json
+backend/server.js
+
+---- GIT STATUS ----
+ M backend/data/batzo.json
+ M backend/routes.js
+ M frontend/src/App.jsx
+ M frontend/src/AuthGate.jsx
+?? backend/db.js.before-wallet-1788270075
+?? backend/db.js.wallet-backup-1788271990
+?? backend/routes.js.before-wallet-1788270075
+?? backend/routes.js.wallet-backup-1788271990
+?? frontend/package.json.before-fix
+?? frontend/patch-account-settings.py
+?? frontend/src/App.jsx.backup-before-final-navigation
+?? frontend/src/App.jsx.backup-before-google-profile-fix-20260901-155225
+?? frontend/src/App.jsx.backup-before-google-profile-fix-20260901-155626
+?? frontend/src/App.jsx.backup-before-navigation-fix
+?? frontend/src/App.jsx.backup-final-back
+?? frontend/src/App.jsx.bak-account-settings
+?? frontend/src/App.jsx.before-account-auth-final-fix
+?? frontend/src/App.jsx.before-account-otp-final-fix
+?? frontend/src/App.jsx.before-account-settings-final-repair
+?? frontend/src/App.jsx.before-back-fix
+?? frontend/src/App.jsx.before-google-otp-fix
+?? frontend/src/App.jsx.before-recaptcha-fix
+?? frontend/src/App.jsx.logout-backup
+?? frontend/src/App.jsx.wallet-backup-1788271990
+?? wallet-precheck.txt
+
+---- BUILD CHECK ----
+
+> frontend@0.0.0 build
+> vite build
+
+vite v8.2.1 building client environment for production...
+transforming...
+✓ 46 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:   0.32 kB
+dist/assets/index-CG2yhv3b.css    9.90 kB │ gzip:   2.77 kB
+dist/assets/App-Dt0cV0wx.css     58.27 kB │ gzip:  12.44 kB
+dist/assets/esm-BqyIvHOM.js       0.05 kB │ gzip:   0.07 kB
+dist/assets/web-B8E4oyAq.js       0.84 kB │ gzip:   0.40 kB
+dist/assets/web-Bl_Dm-h4.js      12.01 kB │ gzip:   2.77 kB
+dist/assets/App-szB63cJy.js      70.74 kB │ gzip:  17.07 kB
+dist/assets/index-BgmODU0m.js   335.16 kB │ gzip: 103.30 kB
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mnode_modules/@capacitor/app/dist/esm/index.js is dynamically imported by src/App.jsx but also statically imported by src/App.jsx, src/core/batzo-navigation-controller.js, dynamic import will not move module into another chunk.
+
+✓ built in 481ms
+FRONTEND_BUILD_STATUS=0
+
+========== PRE-CHECK COMPLETE ==========

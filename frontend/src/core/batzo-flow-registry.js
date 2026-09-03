@@ -18,7 +18,6 @@ export const BATZO_PRIMARY_FLOW = Object.freeze({
   MY_TEAMS: "my-teams",
   SCOREBOARD: "scoreboard",
   SCORECARD: "scorecard",
-  WALLET: "wallet"
 });
 
 export const BATZO_FLOW_ORDER = [

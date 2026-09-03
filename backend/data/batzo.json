@@ -22,6 +22,33 @@
       "firebaseUid": "SrNfB45vx7R1pN700sVWtQInsip1",
       "provider": "google.com",
       "createdAt": "2026-08-29T15:50:12.497Z"
+    },
+    {
+      "id": 4,
+      "name": "SOC MAc",
+      "mobile": "",
+      "email": "sonyparween401@gmail.com",
+      "firebaseUid": "J1Tlinys13PNMhg9YRV3fSqFxiI3",
+      "provider": "google.com",
+      "createdAt": "2026-09-01T06:54:33.248Z"
+    },
+    {
+      "id": 5,
+      "name": "Mihir Chandra",
+      "mobile": "",
+      "email": "mihir99054@gmail.com",
+      "firebaseUid": "yj2eXGMyalRCEyOs17AcdBNJmPA3",
+      "provider": "google.com",
+      "createdAt": "2026-09-01T07:03:10.658Z"
+    },
+    {
+      "id": 6,
+      "name": "Bathroom Singer",
+      "mobile": "",
+      "email": "bsinger756@gmail.com",
+      "firebaseUid": "NRCxlrf8erQwUp5Dx2I9Qxnexoj2",
+      "provider": "google.com",
+      "createdAt": "2026-09-03T08:20:54.180Z"
     }
   ],
   "matches": [
@@ -156,5 +183,18 @@
       "entry_points": 100,
       "max_users": 100
     }
-  ]
+  ],
+  "transactions": [],
+  "contestEntries": [],
+  "wallets": [
+    {
+      "userId": "6",
+      "balance": 0,
+      "winningBalance": 0,
+      "bonusBalance": 0,
+      "createdAt": 1788423654233,
+      "updatedAt": 1788423654233
+    }
+  ],
+  "walletIdempotency": []
 }

@@ -1,0 +1,1354 @@
+========== BATZO WALLET CODE AUDIT ==========
+
+===== backend/db.js =====
+const fs = require('fs');
+const path = require('path');
+
+const dataDir = path.join(__dirname, 'data');
+const dbFile = path.join(dataDir, 'batzo.json');
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+if (!fs.existsSync(dbFile)) {
+  const database = {
+    users: [],
+    matches: [],
+    teams: []
+  };
+
+  fs.writeFileSync(dbFile, JSON.stringify(database, null, 2));
+}
+
+console.log('Batzo database initialized successfully');
+console.log(`Database: ${dbFile}`);
+
+===== backend/routes.js : WALLET/CONTEST/PAYMENT =====
+160-      success:true,
+161-      teams
+162-    });
+163-  });
+164-}
+165-
+166-
+167-// ============================================================
+168:// BATZO_WALLET_API_V1
+169:// Server-controlled wallet + transaction ledger.
+170:// Never trust wallet amounts supplied by the client.
+171-// ============================================================
+172-
+173:function ensureWalletDB(db) {
+174:  if (!Array.isArray(db.wallets)) db.wallets = [];
+175:  if (!Array.isArray(db.transactions)) db.transactions = [];
+176-}
+177-
+178:function getWallet(db, userId) {
+179:  ensureWalletDB(db);
+180-
+181:  let wallet = db.wallets.find(
+182-    w => String(w.user_id) === String(userId)
+183-  );
+184-
+185:  if (!wallet) {
+186:    wallet = {
+187-      id: Date.now(),
+188-      user_id: userId,
+189:      balance: 0,
+190-      currency: "INR",
+191-      created_at: new Date().toISOString(),
+192-      updated_at: new Date().toISOString()
+193-    };
+194:    db.wallets.push(wallet);
+195-  }
+196-
+197:  return wallet;
+198-}
+199-
+200:function walletTransaction(db, {
+201-  userId,
+202-  type,
+203-  amount,
+204-  status,
+205-  reference,
+206-  note
+207-}) {
+208:  ensureWalletDB(db);
+209-
+210-  const tx = {
+211-    id: "TX-" + Date.now() + "-" + Math.random().toString(36).slice(2,8),
+212-    user_id: userId,
+213-    type,
+214-    amount: Number(amount),
+215-    status,
+216-    reference: reference || null,
+217-    note: note || "",
+218-    created_at: new Date().toISOString()
+219-  };
+220-
+221:  db.transactions.push(tx);
+222-  return tx;
+223-}
+224-
+225:// Wallet balance
+226-
+227-
+228-
+229-
+230-module.exports={registerRoutes};
+
+===== backend/server.js =====
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { registerRoutes } = require('./routes');
+const { authenticateToken } = require('./auth-middleware');
+
+const { registerUser, loginUser } = require('./auth');
+const { requestOtp, verifyOtp } = require('./otp');
+const { loginWithFirebaseIdToken } = require('./firebase-user');
+
+const cricketRoutes = require("./cricket-routes");
+const app = express();
+
+// BATZO CRICKET API ROUTES
+
+
+// BATZO CRICKET API - MUST BE BEFORE SPA/404 HANDLERS
+
+const PORT = process.env.PORT || 3000;
+
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: '100kb' }));
+// BATZO REAL CRICKET ROUTES
+app.use("/api/cricket", cricketRoutes);
+
+// BATZO REAL CRICKET API
+
+// BATZO REAL CRICKET API ROUTES
+
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use('/api/', apiLimiter);
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    service: 'Batzo API',
+    status: 'healthy'
+  });
+});
+
+app.post('/api/register', async (req, res) => {
+  try {
+    const { registerRoutes } = require('./routes');
+
+const { name, mobile, password } = req.body;
+    const user = await registerUser(name, mobile, password);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      user
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { mobile, password } = req.body || {};
+
+    const result = await loginUser(mobile, password);
+
+    return res.json({
+      success: true,
+      ...result
+    });
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      message: err.message || 'Login failed'
+    });
+  }
+});
+
+app.post('/api/request-otp', async (req, res) => {
+  try {
+    const { mobile } = req.body || {};
+    const result = requestOtp(mobile);
+
+    /*
+      SMS PROVIDER HOOK:
+      Set up your SMS provider here.
+      Never expose provider API keys in frontend code.
+
+      For now the OTP is generated securely and stored server-side.
+      Real SMS delivery will be enabled after provider credentials
+      are configured.
+    */
+
+    const providerConfigured =
+      !!process.env.SMS_PROVIDER &&
+      !!process.env.SMS_API_KEY;
+
+    if (!providerConfigured) {
+      return res.status(503).json({
+        success: false,
+        code: 'SMS_PROVIDER_NOT_CONFIGURED',
+        message: 'SMS provider is not configured yet.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'OTP request accepted.',
+      expiresInSeconds: result.expiresInSeconds
+    });
+  } catch (err) {
+    const status = err.code === 'RATE_LIMIT' ? 429 : 400;
+    return res.status(status).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+app.post('/api/verify-otp', async (req, res) => {
+  try {
+    const { mobile, otp } = req.body || {};
+    const result = verifyOtp(mobile, otp);
+
+    return res.json({
+      success: true,
+      verified: true,
+      mobile: result.phone,
+      message: 'OTP verified successfully.'
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      verified: false,
+      message: err.message
+    });
+  }
+});
+
+
+// BATZO TEAM / CONTEST API ROUTES
+registerRoutes(app, authenticateToken);
+
+app.post('/api/auth/firebase', async (req, res) => {
+  try {
+    const { idToken } = req.body || {};
+
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Firebase ID token is required.'
+      });
+    }
+
+    const result = await loginWithFirebaseIdToken(idToken);
+
+    return res.json({
+      success: true,
+      ...result
+    });
+  } catch (err) {
+    console.error('Firebase authentication failed:', err.message);
+
+    return res.status(401).json({
+      success: false,
+      message: 'Firebase authentication failed.'
+    });
+  }
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Batzo API running on http://0.0.0.0:${PORT}`);
+});
+
+
+===== frontend/App.jsx : WALLET =====
+64-    a: "England",
+65-    ac: "ENG",
+66-    af: "🏴",
+67-    b: "South Africa",
+68-    bc: "SA",
+69-    bf: "🇿🇦",
+70-    time: "Tomorrow",
+71-    clock: "7:30 PM"
+72-  }
+73-];
+74-
+75-const contests = [
+76:  { title: "Mega Contest", prize: "₹50 Lakhs", entry: "₹49", spots: "2.1L" },
+77:  { title: "Head To Head", prize: "₹1,800", entry: "₹49", spots: "2" },
+78:  { title: "Small Contest", prize: "₹25,000", entry: "₹99", spots: "1,000" }
+79-];
+80-
+81-function Logo() {
+82-  return (
+83-    <div className="logo-area">
+84-      <img
+85-        src="/batzo-assets/Batzo-3D-Header-Logo.png?v=14"
+86-        className="batzo-final-header-logo"
+87-        alt="BATZO Cricket Hub"
+88-      />
+89-    </div>
+90-  );
+91-}
+92-
+93-function Header({ setNotice }) {
+94-  return (
+95-    <header className="top-header">
+96-      <Logo />
+97-
+98-      <div className="header-right">
+99-        <button
+100-          className="notification-btn"
+101-          onClick={() => setNotice("No new notifications")}
+102-          aria-label="Notifications"
+103-        >
+104-          <span className="bell">♧</span>
+105-          <b>3</b>
+106-        </button>
+107-
+108-        
+109-      </div>
+110-    </header>
+111-  );
+112-}
+113-
+114-function QuickCard({ icon, title, sub, type, onClick }) {
+115-  return (
+116-    <button className={`quick-card ${type || ""}`} onClick={onClick}>
+117-      <div className="quick-icon">{icon}</div>
+118-      <div className="quick-title">{title}</div>
+119-      <div className="quick-sub">{sub}</div>
+120-      <span className="quick-arrow">›</span>
+121-    </button>
+122-  );
+123-}
+--
+195-        <span className="mini-flag">{match.bf}</span>
+196-      </div>
+197-
+198-      <span className="contest-action">VIEW CONTESTS <b>→</b></span>
+199-    </button>
+200-  );
+201-}
+202-
+203-function ContestCard({ contest, onClick }) {
+204-  return (
+205-    <button className="contest-card" onClick={onClick}>
+206-      <div>
+207:        <small>WINNING PRIZE</small>
+208:        <strong>{contest.prize}</strong>
+209-      </div>
+210-      <div className="contest-info">
+211-        <b>{contest.title}</b>
+212-        <span>{contest.spots} spots</span>
+213-      </div>
+214-      <div className="join-box">
+215-        <small>JOIN</small>
+216-        <b>{contest.entry}</b>
+217-      </div>
+218-    </button>
+219-  );
+220-}
+221-
+222-
+223-/* BATZO_PHASE18_TEAM_MIGRATION */
+224-(function(){
+225-  try {
+226-    const keys = [
+227-      "batzo_active_team",
+228-      "batzo_saved_team",
+229-      "batzo_selected_team",
+230-      "batzo_pending_team"
+231-    ];
+232-
+233-    let team = null;
+234-
+235-    for (const key of keys) {
+236-      try {
+237-        const raw = localStorage.getItem(key);
+238-        if (!raw) continue;
+239-
+240-        const parsed = JSON.parse(raw);
+241-
+242-        if (
+243-          parsed &&
+244-          typeof parsed === "object" &&
+245-          (
+246-            Array.isArray(parsed.players) ||
+247-            Array.isArray(parsed.playerIds) ||
+248-            parsed.captain !== undefined ||
+249-            parsed.viceCaptain !== undefined
+250-          )
+251-        ) {
+252-          team = parsed;
+253-          break;
+--
+1453-              onClick={() => showComing("Team Builder")}
+1454-            >
+1455-              CREATE TEAM →
+1456-            </button>
+1457-          </section>
+1458-        )}
+1459-
+1460-        {tab === "profile" && (
+1461-          <section className="empty-page">
+1462-            <div className="profile-icon">B</div>
+1463-            <span>BATZO ACCOUNT</span>
+1464-            <h1>Your Profile</h1>
+1465:            <p>Profile, wallet and account settings.</p>
+1466-            <button
+1467-              className="outline-button"
+1468-              onClick={() => {
+1469-                const openSettings = () => {
+1470-                  setAccountSettings(true);
+1471-                  setAccountData(() => {
+1472-                    try {
+1473-                      return JSON.parse(
+1474-                        localStorage.getItem("batzo_account_settings") ||
+1475-                        localStorage.getItem("batzo_firebase_user") ||
+1476-                        "{}"
+1477-                      );
+1478-                    } catch (_) {
+1479-                      return {};
+1480-                    }
+1481-                  });
+1482-                };
+1483-
+1484-                openSettings();
+1485-              }}
+1486-            >
+1487-              ACCOUNT SETTINGS
+1488-            </button>
+1489-          </section>
+1490-        )}
+1491-      </main>
+1492-
+1493-      <nav className="bottom-navigation">
+1494-        <button
+1495-          className={tab === "home" ? "active" : ""}
+1496-          onClick={() => navigateTab("home")}
+1497-        >
+1498-          <span>⌂</span>
+1499-          <small>Home</small>
+1500-        </button>
+1501-
+1502-        <button
+1503-          className={tab === "matches" ? "active" : ""}
+1504-          onClick={() => navigateTab("matches")}
+1505-        >
+1506-          <span>🏏</span>
+1507-          <small>Matches</small>
+1508-        </button>
+1509-
+1510-        <button
+--
+1616-        typeof BATZO_CONTESTS !== "undefined" &&
+1617-        Array.isArray(BATZO_CONTESTS) &&
+1618-        BATZO_CONTESTS.length
+1619-      ) {
+1620-        return BATZO_CONTESTS;
+1621-      }
+1622-    } catch (e) {}
+1623-
+1624-    return [
+1625-      {
+1626-        id: "mega-001",
+1627-        name: "Mega Contest",
+1628:        prize: "₹1,00,000",
+1629-        entry: "₹49",
+1630-        spots: 10000,
+1631-        joined: 3210,
+1632-        type: "popular"
+1633-      },
+1634-      {
+1635-        id: "grand-002",
+1636-        name: "Grand Contest",
+1637:        prize: "₹50,000",
+1638-        entry: "₹99",
+1639-        spots: 5000,
+1640-        joined: 1800,
+1641-        type: "popular"
+1642-      },
+1643-      {
+1644-        id: "small-003",
+1645-        name: "Small Contest",
+1646:        prize: "₹5,000",
+1647-        entry: "₹25",
+1648-        spots: 500,
+1649-        joined: 210,
+1650-        type: "complete"
+1651-      }
+1652-    ];
+1653-  }
+1654-
+1655-  function players() {
+1656-    try {
+1657-      if (
+1658-        typeof BATZO_PLAYERS !== "undefined" &&
+1659-        Array.isArray(BATZO_PLAYERS) &&
+1660-        BATZO_PLAYERS.length
+1661-      ) {
+1662-        return BATZO_PLAYERS;
+1663-      }
+1664-    } catch (e) {}
+1665-
+1666-    return [];
+1667-  }
+1668-
+1669-  function root() {
+1670-    return document.getElementById("root");
+1671-  }
+1672-
+1673-  function shell(title, subtitle, body, backText) {
+1674-    const r = root();
+1675-    if (!r) return;
+1676-
+1677-    r.innerHTML = `
+1678-      <div class="bz-flow-screen" style="
+1679-        min-height:100vh;
+1680-        background:#07100d;
+1681-        color:#fff;
+1682-        padding-bottom:90px;
+1683-      ">
+1684-        <div style="
+1685-          position:sticky;
+1686-          top:0;
+1687-          z-index:20;
+1688-          background:#07100d;
+1689-          padding:16px;
+1690-          border-bottom:1px solid rgba(255,255,255,.08);
+1691-        ">
+--
+1755-            <div style="display:flex;justify-content:space-between;gap:10px">
+1756-              <strong>${c.name || "Contest"}</strong>
+1757-              <span style="color:#24e778;font-weight:900">
+1758-                ${c.entry || "₹49"}
+1759-              </span>
+1760-            </div>
+1761-
+1762-            <div style="
+1763-              margin-top:9px;
+1764-              font-size:13px;
+1765-              color:#9ca5b1;
+1766-            ">
+1767:              Prize ${c.prize || "₹0"} ·
+1768-              ${Number(c.spots || 0).toLocaleString("en-IN")} spots
+1769-            </div>
+1770-
+1771-            <div style="
+1772-              margin-top:12px;
+1773-              font-size:12px;
+1774-              font-weight:900;
+1775-              color:#24e778;
+1776-            ">VIEW CONTEST →</div>
+1777-          </button>
+1778-        `).join("")
+1779-      : `
+1780-        <div style="
+1781-          padding:25px 10px;
+1782-          text-align:center;
+1783-          color:#9ca5b1;
+1784-        ">
+1785-          No contests available in this category.
+1786-        </div>
+1787-      `;
+1788-
+1789-    const r = shell(
+1790-      "Contests",
+1791-      currentMatch(),
+1792-      `
+1793-        <div style="
+1794-          display:flex;
+1795-          gap:8px;
+1796-          margin-bottom:14px;
+1797-        ">
+1798-          <button id="bzPopular" type="button" style="
+1799-            flex:1;
+1800-            padding:12px;
+1801-            border-radius:12px;
+1802-            border:0;
+1803-            font-weight:900;
+1804-            background:${selected === "popular" ? "#24e778" : "#18231e"};
+1805-            color:${selected === "popular" ? "#061008" : "#fff"};
+1806-          ">POPULAR</button>
+1807-
+1808-          <button id="bzComplete" type="button" style="
+1809-            flex:1;
+1810-            padding:12px;
+1811-            border-radius:12px;
+1812-            border:0;
+--
+1865-
+1866-          <h2 style="margin:8px 0">
+1867-            ${contest.name || "Contest"}
+1868-          </h2>
+1869-
+1870-          <div style="
+1871-            display:grid;
+1872-            grid-template-columns:1fr 1fr;
+1873-            gap:10px;
+1874-            margin-top:15px;
+1875-          ">
+1876-            <div>
+1877:              <small style="color:#8e97a3">PRIZE POOL</small>
+1878-              <div style="font-weight:900;margin-top:4px">
+1879:                ${contest.prize || "₹0"}
+1880-              </div>
+1881-            </div>
+1882-
+1883-            <div>
+1884-              <small style="color:#8e97a3">ENTRY</small>
+1885-              <div style="font-weight:900;margin-top:4px">
+1886-                ${contest.entry || "₹49"}
+1887-              </div>
+1888-            </div>
+1889-
+1890-            <div>
+1891-              <small style="color:#8e97a3">SPOTS</small>
+1892-              <div style="font-weight:900;margin-top:4px">
+1893-                ${Number(contest.spots || 0).toLocaleString("en-IN")}
+1894-              </div>
+1895-            </div>
+1896-
+1897-            <div>
+1898-              <small style="color:#8e97a3">JOINED</small>
+1899-              <div style="font-weight:900;margin-top:4px">
+1900-                ${Number(contest.joined || 0).toLocaleString("en-IN")}
+1901-              </div>
+1902-            </div>
+1903-          </div>
+1904-        </div>
+1905-
+1906-        <div style="margin-top:16px">
+1907-          <button id="bzV11Teams" type="button" style="
+1908-            width:100%;
+1909-            padding:15px;
+1910-            border:0;
+1911-            border-radius:13px;
+1912-            background:#18231e;
+1913-            color:#fff;
+1914-            font-weight:900;
+1915-          ">MY TEAMS (${getTeams(match).length}/10)</button>
+1916-
+1917-          <button id="bzV11Create" type="button" style="
+1918-            width:100%;
+1919-            margin-top:10px;
+1920-            padding:15px;
+1921-            border:0;
+1922-            border-radius:13px;
+1923-            background:#24e778;
+1924-            color:#061008;
+--
+2972-
+2973-          <div style="color:#929aa7;font-size:13px">
+2974-            ${team.players.length}/11 players
+2975-            · C: ${team.captainName || "-"}
+2976-            · VC: ${team.viceCaptainName || "-"}
+2977-          </div>
+2978-
+2979-          <div style="
+2980-            margin-top:18px;
+2981-            display:flex;
+2982-            justify-content:space-between;
+2983-          ">
+2984:            <span>Entry Fee</span>
+2985-            <strong>₹${fee}</strong>
+2986-          </div>
+2987-
+2988-          <div style="
+2989-            margin-top:8px;
+2990-            display:flex;
+2991-            justify-content:space-between;
+2992-          ">
+2993:            <span>Wallet</span>
+2994-          </div>
+2995-        </div>
+2996-
+2997-        <button id="bzFinalJoin" type="button" style="
+2998-          width:100%;
+2999-          margin-top:15px;
+3000-          padding:16px;
+3001-          border:0;
+3002-          border-radius:13px;
+3003-          background:#24e778;
+3004-          color:#061008;
+3005-          font-weight:900;
+3006-        ">
+3007-          JOIN CONTEST • ₹${fee}
+3008-        </button>
+3009-      `
+3010-    );
+3011-
+3012-    r.querySelector("#bzV11Back").onclick = function () {
+3013-      showMyTeams(match, contest);
+3014-    };
+3015-
+3016-    r.querySelector("#bzFinalJoin").onclick = function () {
+3017-      const joined = readJSON(JOIN_KEY, []);
+3018-
+3019-      const duplicate = joined.some(function (x) {
+3020-        return String(x.contestId) === String(contest.id) &&
+3021-               String(x.match) === String(matchKey(match)) &&
+3022-               String(x.teamId) === String(team.id);
+3023-      });
+3024-
+3025-      if (duplicate) {
+3026-        alert("This team is already joined in this contest.");
+3027-        return;
+3028-      }
+3029-
+3030-
+3031:      if (balance < fee) {
+3032-        alert(
+3033:          "Insufficient wallet balance. Required ₹" +
+3034-          fee +
+3035-          ", available ₹" +
+3036:          balance + "."
+3037-        );
+3038-        return;
+3039-      }
+3040-
+3041-      const record = {
+3042-        contestId: contest.id || contest.name,
+3043-        contestName: contest.name || "Contest",
+3044-        match: matchKey(match),
+3045-        teamId: team.id,
+3046-        joinedAt: Date.now()
+3047-      };
+3048-
+3049-      writeJSON(JOIN_KEY, joined.concat(record));
+3050-
+3051:      if (balance > 0) {
+3052-        localStorage.setItem(
+3053:          String(Math.max(0, balance - fee))
+3054-        );
+3055-      }
+3056-
+3057-      alert("Contest joined successfully.");
+3058-      showContestDetails(contest);
+3059-    };
+3060-  }
+3061-
+3062-  function openContests() {
+3063-    window.BATZO_ACTIVE_MATCH =
+3064-      window.BATZO_ACTIVE_MATCH || "IND vs AUS";
+3065-
+3066-    showContestTabs("popular");
+3067-  }
+3068-
+3069-  function openMyTeams() {
+3070-    const match = currentMatch();
+3071-
+3072-    const contests = getContests();
+3073-
+3074-    showMyTeams(
+3075-      match,
+3076-      window.BATZO_ACTIVE_CONTEST || contests[0]
+3077-    );
+3078-  }
+3079-
+3080-  /*
+3081-   * Capture ONLY the navigation buttons that belong to the
+3082-   * main React shell. This replaces the old competing listeners.
+3083-   */
+3084-  document.addEventListener("click", function (e) {
+3085-    const el = e.target.closest("button,a");
+3086-    if (!el) return;
+3087-
+3088-    const text = (el.innerText || "").trim().toUpperCase();
+3089-
+3090-    // Home -> Popular Contests card
+3091-    const popularSection = el.closest(".section-block");
+3092-    if (
+3093-      popularSection &&
+3094-      /Popular Contests/i.test(
+3095-        popularSection.innerText || ""
+3096-      ) &&
+3097-      el.closest(".contest-list")
+3098-    ) {
+
+===== FRONTEND API CALLS =====
+frontend/src/App.css:189:.wallet-box {
+frontend/src/App.css:203:.wallet-icon {
+frontend/src/App.css:208:.wallet-box small {
+frontend/src/App.css:214:.wallet-box strong {
+frontend/src/App.css:220:.wallet-box em {
+frontend/src/App.css:627:.contest-action {
+frontend/src/App.css:634:.contest-action b {
+frontend/src/App.css:712:.contest-action {
+frontend/src/App.css:719:.contest-list {
+frontend/src/App.css:724:.contest-card {
+frontend/src/App.css:739:.contest-card small {
+frontend/src/App.css:746:.contest-card > div > strong {
+frontend/src/App.css:753:.contest-info b {
+frontend/src/App.css:758:.contest-info span {
+frontend/src/App.css:765:.join-box {
+frontend/src/App.css:774:.join-box small {
+frontend/src/App.css:778:.join-box b {
+frontend/src/App.css:979:  .wallet-box {
+frontend/src/App.css:985:  .wallet-box strong {
+frontend/src/App.css:1095:  .contest-action {
+frontend/src/App.css:1159:  .wallet-box {
+frontend/src/App.css:1165:  .wallet-icon {
+frontend/src/App.css:1169:  .wallet-box small {
+frontend/src/App.css:1173:  .wallet-box strong {
+frontend/src/App.css:1177:  .wallet-box em {
+frontend/src/App.css:1311:  .contest-card {
+frontend/src/App.css:1315:  .contest-info {
+frontend/src/App.css:1319:  .join-box {
+frontend/src/App.css:1526:.contest-card {
+frontend/src/App.css:1810:.contest-card {
+frontend/src/App.css:1815:.contest-card:active,
+frontend/src/App.css:1974:.contest-card {
+frontend/src/App.css:1983:.contest-card:hover {
+frontend/src/App.css:2003:/* wallet polish */
+frontend/src/App.css:2004:.wallet,
+frontend/src/App.css:2005:.wallet-balance {
+frontend/src/App.css:2071:.contest-card:active {
+frontend/src/App.css:2133:/* Wallet remains aligned with notification */
+frontend/src/App.css:2134:.wallet,
+frontend/src/App.css:2135:.wallet-balance,
+frontend/src/App.css:2136:.wallet-card {
+frontend/src/App.css:2424:.contest-card,
+frontend/src/App.css:3319:.bz-contest-action {
+frontend/src/App.css:3629:   BATZO CONTEST DETAILS
+frontend/src/App.css:3632:.bz-contest-details {
+frontend/src/App.css:3636:.bz-contest-hero {
+frontend/src/App.css:3643:.bz-contest-top {
+frontend/src/App.css:3650:.bz-contest-name {
+frontend/src/App.css:3656:.bz-contest-prize-label {
+frontend/src/App.css:3663:.bz-contest-prize {
+frontend/src/App.css:3692:.bz-contest-stats {
+frontend/src/App.css:3699:.bz-contest-stat {
+frontend/src/App.css:3707:.bz-contest-stat strong {
+frontend/src/App.css:3713:.bz-contest-stat span {
+frontend/src/App.css:3740:.bz-contest-join {
+frontend/src/App.css:3751:.bz-contest-join button {
+frontend/src/App.css:3772:  .bz-contest-prize {
+frontend/src/App.css:3778:/* BATZO TEAM / CONTEST CONNECTED UI */
+frontend/src/App.css:3941:   BATZO STABLE MATCH + CONTEST + FANTASY UI
+frontend/src/App.css:4010:.bz-contest-card{
+frontend/src/App.css:4023:.bz-contest-card small{
+frontend/src/App.css:4029:.bz-contest-card strong{
+frontend/src/App.css:4035:.bz-contest-card button{
+frontend/src/App.css:4044:.bz-contest-name{
+frontend/src/App.css:4275:.bz-contest-view{
+frontend/src/App.css:4286:  .bz-contest-card{
+frontend/src/App.css:4290:  .bz-contest-card button{
+frontend/src/App.css:4489:/* Mobile: keep logo compact so notification/wallet never get pushed */
+frontend/src/App.jsx:3:import { BATZO_PLAYERS, BATZO_CONTESTS, openBatzoTeam, openBatzoContest } from "./batzo-flow.js";
+frontend/src/App.jsx:16:import { installJoinFlow } from "./services/join-flow-ui";
+frontend/src/App.jsx:75:const contests = [
+frontend/src/App.jsx:76:  { title: "Mega Contest", prize: "₹50 Lakhs", entry: "₹49", spots: "2.1L" },
+frontend/src/App.jsx:78:  { title: "Small Contest", prize: "₹25,000", entry: "₹99", spots: "1,000" }
+frontend/src/App.jsx:198:      <span className="contest-action">VIEW CONTESTS <b>→</b></span>
+frontend/src/App.jsx:203:function ContestCard({ contest, onClick }) {
+frontend/src/App.jsx:205:    <button className="contest-card" onClick={onClick}>
+frontend/src/App.jsx:208:        <strong>{contest.prize}</strong>
+frontend/src/App.jsx:210:      <div className="contest-info">
+frontend/src/App.jsx:211:        <b>{contest.title}</b>
+frontend/src/App.jsx:212:        <span>{contest.spots} spots</span>
+frontend/src/App.jsx:214:      <div className="join-box">
+frontend/src/App.jsx:215:        <small>JOIN</small>
+frontend/src/App.jsx:216:        <b>{contest.entry}</b>
+frontend/src/App.jsx:388:    const response = await fetch(
+frontend/src/App.jsx:389:      "/api/auth/firebase",
+frontend/src/App.jsx:1096:         * Existing contest/team flow gets second priority.
+frontend/src/App.jsx:1183:      // Open the existing contest tab with the selected match context.
+frontend/src/App.jsx:1185:      setTab("contests");
+frontend/src/App.jsx:1187:      console.warn("BATZO match -> contest flow:", e);
+frontend/src/App.jsx:1188:      setTab("contests");
+frontend/src/App.jsx:1204:    // BATZO CONTEST NAVIGATION FIX
+frontend/src/App.jsx:1205:    // Popular / Complete must open the real contest screen.
+frontend/src/App.jsx:1207:    setTab("contests");
+frontend/src/App.jsx:1210:    // Open the existing contest renderer when available.
+frontend/src/App.jsx:1213:        if (typeof showContest === "function") {
+frontend/src/App.jsx:1214:          showContest();
+frontend/src/App.jsx:1217:          typeof window.BATZO_ACTIVE_CONTEST !== "undefined"
+frontend/src/App.jsx:1220:            new CustomEvent("batzo:contest", {
+frontend/src/App.jsx:1222:                contest: window.BATZO_ACTIVE_CONTEST
+frontend/src/App.jsx:1228:        console.warn("BATZO contest navigation:", e);
+frontend/src/App.jsx:1292:                  Create your best XI, join contests
+frontend/src/App.jsx:1364:                  <h2>Popular Contests</h2>
+frontend/src/App.jsx:1366:                <button onClick={() => window.dispatchEvent(new CustomEvent("batzo:open-contests"))}>View all →</button>
+frontend/src/App.jsx:1369:              <div className="contest-list">
+frontend/src/App.jsx:1370:                {contests.map((c) => (
+frontend/src/App.jsx:1371:                  <ContestCard
+frontend/src/App.jsx:1373:                    contest={c}
+frontend/src/App.jsx:1425:        {tab === "contests" && (
+frontend/src/App.jsx:1429:              <h1>Contests</h1>
+frontend/src/App.jsx:1430:              <p>Choose your contest and play your way.</p>
+frontend/src/App.jsx:1433:            <div className="contest-list">
+frontend/src/App.jsx:1434:              {contests.map((c) => (
+frontend/src/App.jsx:1435:                <ContestCard
+frontend/src/App.jsx:1437:                  contest={c}
+frontend/src/App.jsx:1465:            <p>Profile, wallet and account settings.</p>
+frontend/src/App.jsx:1511:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx:1512:          onClick={() => navigateTab("contests")}
+frontend/src/App.jsx:1515:          <small>Contest</small>
+frontend/src/App.jsx:1547:   Contest -> Details -> My Teams -> Team Builder -> C/VC -> Join
+frontend/src/App.jsx:1555:  const JOIN_KEY = "batzo_v11_joined_contests";
+frontend/src/App.jsx:1613:  function getContests() {
+frontend/src/App.jsx:1616:        typeof BATZO_CONTESTS !== "undefined" &&
+frontend/src/App.jsx:1617:        Array.isArray(BATZO_CONTESTS) &&
+frontend/src/App.jsx:1618:        BATZO_CONTESTS.length
+frontend/src/App.jsx:1620:        return BATZO_CONTESTS;
+frontend/src/App.jsx:1627:        name: "Mega Contest",
+frontend/src/App.jsx:1631:        joined: 3210,
+frontend/src/App.jsx:1636:        name: "Grand Contest",
+frontend/src/App.jsx:1640:        joined: 1800,
+frontend/src/App.jsx:1645:        name: "Small Contest",
+frontend/src/App.jsx:1649:        joined: 210,
+frontend/src/App.jsx:1727:  function showContestTabs(selected) {
+frontend/src/App.jsx:1728:    const list = getContests();
+frontend/src/App.jsx:1742:            class="bz-v11-contest-card"
+frontend/src/App.jsx:1743:            data-contest-id="${String(c.id || c.name).replace(/"/g,"&quot;")}"
+frontend/src/App.jsx:1756:              <strong>${c.name || "Contest"}</strong>
+frontend/src/App.jsx:1776:            ">VIEW CONTEST →</div>
+frontend/src/App.jsx:1778:        `).join("")
+frontend/src/App.jsx:1785:          No contests available in this category.
+frontend/src/App.jsx:1790:      "Contests",
+frontend/src/App.jsx:1826:      showContestTabs("popular");
+frontend/src/App.jsx:1830:      showContestTabs("complete");
+frontend/src/App.jsx:1833:    r.querySelectorAll("[data-contest-id]").forEach(function (btn) {
+frontend/src/App.jsx:1835:        const id = btn.getAttribute("data-contest-id");
+frontend/src/App.jsx:1836:        const contest = list.find(
+frontend/src/App.jsx:1840:        window.BATZO_ACTIVE_CONTEST = contest;
+frontend/src/App.jsx:1841:        showContestDetails(contest);
+frontend/src/App.jsx:1846:  function showContestDetails(contest) {
+frontend/src/App.jsx:1850:      contest.name || "Contest Details",
+frontend/src/App.jsx:1864:          ">CONTEST DETAILS</div>
+frontend/src/App.jsx:1867:            ${contest.name || "Contest"}
+frontend/src/App.jsx:1879:                ${contest.prize || "₹0"}
+frontend/src/App.jsx:1886:                ${contest.entry || "₹49"}
+frontend/src/App.jsx:1893:                ${Number(contest.spots || 0).toLocaleString("en-IN")}
+frontend/src/App.jsx:1898:              <small style="color:#8e97a3">JOINED</small>
+frontend/src/App.jsx:1900:                ${Number(contest.joined || 0).toLocaleString("en-IN")}
+frontend/src/App.jsx:1932:      showContestTabs(
+frontend/src/App.jsx:1933:        String(contest.type || "popular").toLowerCase() === "complete"
+frontend/src/App.jsx:1940:      showMyTeams(match, contest);
+frontend/src/App.jsx:1944:      showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:1948:  function showMyTeams(match, contest) {
+frontend/src/App.jsx:2035:        }).join("")
+frontend/src/App.jsx:2048:      match + " • " + (contest.name || "Contest"),
+frontend/src/App.jsx:2109:      showContestDetails(contest);
+frontend/src/App.jsx:2119:        showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:2130:          showTeamBuilder(match, contest, team);
+frontend/src/App.jsx:2146:        showMyTeams(match, contest);
+frontend/src/App.jsx:2160:        showMyTeams(match, contest);
+frontend/src/App.jsx:2184:        batzoRequireLogin(() => showJoinConfirmation(match, contest, team));
+frontend/src/App.jsx:2189:  function showTeamBuilder(match, contest, editing) {
+frontend/src/App.jsx:2314:      showMyTeams(match, contest);
+frontend/src/App.jsx:2587:        contest,
+frontend/src/App.jsx:2597:  function showCaptainVC(match, contest, editing, selectedPlayers) {
+frontend/src/App.jsx:2647:    }).join("");
+frontend/src/App.jsx:2669:      showTeamBuilder(match, contest, editing);
+frontend/src/App.jsx:2849:      syncTeamToBackend(match, contest, team).then(function(result) {
+frontend/src/App.jsx:2863:      showMyTeams(match, contest);
+frontend/src/App.jsx:2868:  async function syncTeamToBackend(match, contest, team) {
+frontend/src/App.jsx:2894:      const response = await fetch("/api/teams", {
+frontend/src/App.jsx:2948:  function entryAmount(contest) {
+frontend/src/App.jsx:2949:    const raw = String(contest.entry || "49");
+frontend/src/App.jsx:2954:  function showJoinConfirmation(match, contest, team) {
+frontend/src/App.jsx:2955:    const fee = entryAmount(contest);
+frontend/src/App.jsx:2958:      "Join Contest",
+frontend/src/App.jsx:2959:      match + " • " + (contest.name || "Contest"),
+frontend/src/App.jsx:2993:            <span>Wallet</span>
+frontend/src/App.jsx:2997:        <button id="bzFinalJoin" type="button" style="
+frontend/src/App.jsx:3007:          JOIN CONTEST • ₹${fee}
+frontend/src/App.jsx:3013:      showMyTeams(match, contest);
+frontend/src/App.jsx:3016:    r.querySelector("#bzFinalJoin").onclick = function () {
+frontend/src/App.jsx:3017:      const joined = readJSON(JOIN_KEY, []);
+frontend/src/App.jsx:3019:      const duplicate = joined.some(function (x) {
+frontend/src/App.jsx:3020:        return String(x.contestId) === String(contest.id) &&
+frontend/src/App.jsx:3026:        alert("This team is already joined in this contest.");
+frontend/src/App.jsx:3033:          "Insufficient wallet balance. Required ₹" +
+frontend/src/App.jsx:3042:        contestId: contest.id || contest.name,
+frontend/src/App.jsx:3043:        contestName: contest.name || "Contest",
+frontend/src/App.jsx:3046:        joinedAt: Date.now()
+frontend/src/App.jsx:3049:      writeJSON(JOIN_KEY, joined.concat(record));
+frontend/src/App.jsx:3057:      alert("Contest joined successfully.");
+frontend/src/App.jsx:3058:      showContestDetails(contest);
+frontend/src/App.jsx:3062:  function openContests() {
+frontend/src/App.jsx:3066:    showContestTabs("popular");
+frontend/src/App.jsx:3072:    const contests = getContests();
+frontend/src/App.jsx:3076:      window.BATZO_ACTIVE_CONTEST || contests[0]
+frontend/src/App.jsx:3090:    // Home -> Popular Contests card
+frontend/src/App.jsx:3094:      /Popular Contests/i.test(
+frontend/src/App.jsx:3097:      el.closest(".contest-list")
+frontend/src/App.jsx:3100:      const contest = getContests().find(function (c) {
+frontend/src/App.jsx:3103:      }) || getContests()[0];
+frontend/src/App.jsx:3105:      if (contest) {
+frontend/src/App.jsx:3108:        window.BATZO_ACTIVE_CONTEST = contest;
+frontend/src/App.jsx:3109:        showContestDetails(contest);
+frontend/src/App.jsx:3114:    if (text === "CONTEST" || text === "CONTESTS") {
+frontend/src/App.jsx:3117:      openContests();
+frontend/src/App.jsx:3126:      const contest =
+frontend/src/App.jsx:3127:        window.BATZO_ACTIVE_CONTEST ||
+frontend/src/App.jsx:3128:        getContests()[0];
+frontend/src/App.jsx:3130:      showTeamBuilder(match, contest, null);
+frontend/src/App.jsx:3144:    if (text === "POPULAR CONTEST" || text === "POPULAR CONTESTS") {
+frontend/src/App.jsx:3147:      openContests();
+frontend/src/App.jsx:3151:    if (text === "COMPLETE CONTEST" || text === "COMPLETE CONTESTS") {
+frontend/src/App.jsx:3154:      showContestTabs("complete");
+frontend/src/App.jsx:3159:  window.addEventListener("batzo:open-contests", openContests);
+frontend/src/App.jsx:3161:  window.addEventListener("batzo:contest", function (e) {
+frontend/src/App.jsx:3163:      e.detail && e.detail.contest
+frontend/src/App.jsx:3164:        ? e.detail.contest
+frontend/src/App.jsx:3165:        : getContests()[0];
+frontend/src/App.jsx:3167:    window.BATZO_ACTIVE_CONTEST = c;
+frontend/src/App.jsx:3168:    showContestDetails(c);
+frontend/src/index.css:109:.contest-card {
+frontend/src/App.jsx.logo-backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.logo-backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.logo-backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.logo-backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.logo-backup:209:                      ? "JOIN NOW"
+frontend/src/App.jsx.logo-backup:309:          <small>Contests</small>
+frontend/src/App.jsx.before-match-details:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.before-match-details:119:                <strong>Contests</strong>
+frontend/src/App.jsx.before-match-details:120:                <span>Join contests</span>
+frontend/src/App.jsx.before-match-details:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.before-match-details:209:                      ? "JOIN NOW"
+frontend/src/App.jsx.before-match-details:309:          <small>Contests</small>
+frontend/src/App.css.before-match-details:2039:.join-btn,
+frontend/src/App.css.before-match-details:2040:.join-button,
+frontend/src/App.css.before-match-details:2042:.contest-btn,
+frontend/src/App.css.before-match-details:2056:.join-btn:active,
+frontend/src/App.css.before-match-details:2057:.join-button:active,
+frontend/src/App.css.before-match-details:2059:.contest-btn:active,
+frontend/src/MatchDetails.jsx:56:          <div style={{ fontWeight: 800 }}>Contests</div>
+frontend/src/MatchDetails.jsx:58:            Join contests and create your team
+frontend/src/App.jsx.blank-screen-backup:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.blank-screen-backup:121:                <strong>Contests</strong>
+frontend/src/App.jsx.blank-screen-backup:122:                <span>Join contests</span>
+frontend/src/App.jsx.blank-screen-backup:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.blank-screen-backup:211:                      ? "JOIN NOW"
+frontend/src/App.jsx.blank-screen-backup:318:          <small>Contests</small>
+frontend/src/App.css.blank-screen-backup:2039:.join-btn,
+frontend/src/App.css.blank-screen-backup:2040:.join-button,
+frontend/src/App.css.blank-screen-backup:2042:.contest-btn,
+frontend/src/App.css.blank-screen-backup:2056:.join-btn:active,
+frontend/src/App.css.blank-screen-backup:2057:.join-button:active,
+frontend/src/App.css.blank-screen-backup:2059:.contest-btn:active,
+frontend/src/App.css.blank-screen-backup:2540:.bd-join-box {
+frontend/src/App.css.blank-screen-backup:2553:.bd-join-box small,
+frontend/src/App.css.blank-screen-backup:2554:.bd-join-box span {
+frontend/src/App.css.blank-screen-backup:2561:.bd-join-box strong {
+frontend/src/App.css.blank-screen-backup:2569:.bd-join-box button,
+frontend/src/App.css.blank-screen-backup:2570:.bd-contest-row button,
+frontend/src/App.css.blank-screen-backup:2648:.bd-contest-card {
+frontend/src/App.css.blank-screen-backup:2657:.bd-contest-head {
+frontend/src/App.css.blank-screen-backup:2663:.bd-contest-head small {
+frontend/src/App.css.blank-screen-backup:2670:.bd-contest-head strong {
+frontend/src/App.css.blank-screen-backup:2678:.bd-contest-head > span {
+frontend/src/App.css.blank-screen-backup:2687:.bd-contest-head > span.safe {
+frontend/src/App.css.blank-screen-backup:2692:.bd-contest-row {
+frontend/src/App.css.blank-screen-backup:2702:.bd-contest-row small {
+frontend/src/App.css.blank-screen-backup:2709:.bd-contest-row b {
+frontend/src/App.css.blank-screen-backup:2783:  .bd-contest-row {
+frontend/src/App.css.blank-screen-backup:2787:  .bd-join-box button {
+frontend/src/App.jsx.match-flow-broken:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.match-flow-broken:121:                <strong>Contests</strong>
+frontend/src/App.jsx.match-flow-broken:122:                <span>Join contests</span>
+frontend/src/App.jsx.match-flow-broken:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.match-flow-broken:211:                      ? "JOIN NOW"
+frontend/src/App.jsx.match-flow-broken:318:          <small>Contests</small>
+frontend/src/App.css.match-flow-broken:2039:.join-btn,
+frontend/src/App.css.match-flow-broken:2040:.join-button,
+frontend/src/App.css.match-flow-broken:2042:.contest-btn,
+frontend/src/App.css.match-flow-broken:2056:.join-btn:active,
+frontend/src/App.css.match-flow-broken:2057:.join-button:active,
+frontend/src/App.css.match-flow-broken:2059:.contest-btn:active,
+frontend/src/App.jsx.home-stable-backup:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.home-stable-backup:119:                <strong>Contests</strong>
+frontend/src/App.jsx.home-stable-backup:120:                <span>Join contests</span>
+frontend/src/App.jsx.home-stable-backup:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.home-stable-backup:209:                      ? "JOIN NOW"
+frontend/src/App.jsx.home-stable-backup:309:          <small>Contests</small>
+frontend/src/App.css.home-stable-backup:2039:.join-btn,
+frontend/src/App.css.home-stable-backup:2040:.join-button,
+frontend/src/App.css.home-stable-backup:2042:.contest-btn,
+frontend/src/App.css.home-stable-backup:2056:.join-btn:active,
+frontend/src/App.css.home-stable-backup:2057:.join-button:active,
+frontend/src/App.css.home-stable-backup:2059:.contest-btn:active,
+frontend/src/App.jsx.command-fix-backup:73:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.command-fix-backup:120:                <strong>Contests</strong>
+frontend/src/App.jsx.command-fix-backup:121:                <span>Join contests</span>
+frontend/src/App.jsx.command-fix-backup:128:                <strong>Wallet</strong>
+frontend/src/App.jsx.command-fix-backup:210:                      ? "JOIN NOW"
+frontend/src/App.jsx.command-fix-backup:317:          <small>Contests</small>
+frontend/src/App.jsx.failed-match-details-backup:74:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.failed-match-details-backup:121:                <strong>Contests</strong>
+frontend/src/App.jsx.failed-match-details-backup:122:                <span>Join contests</span>
+frontend/src/App.jsx.failed-match-details-backup:129:                <strong>Wallet</strong>
+frontend/src/App.jsx.failed-match-details-backup:211:                      ? "JOIN NOW"
+frontend/src/App.jsx.failed-match-details-backup:318:          <small>Contests</small>
+frontend/src/App.css.failed-match-details-backup:2039:.join-btn,
+frontend/src/App.css.failed-match-details-backup:2040:.join-button,
+frontend/src/App.css.failed-match-details-backup:2042:.contest-btn,
+frontend/src/App.css.failed-match-details-backup:2056:.join-btn:active,
+frontend/src/App.css.failed-match-details-backup:2057:.join-button:active,
+frontend/src/App.css.failed-match-details-backup:2059:.contest-btn:active,
+frontend/src/App.css.failed-match-details-backup:2438:.safe-join-card{
+frontend/src/App.css.failed-match-details-backup:2450:.safe-join-card small,
+frontend/src/App.css.failed-match-details-backup:2451:.safe-join-card span{
+frontend/src/App.css.failed-match-details-backup:2458:.safe-join-card strong{
+frontend/src/App.css.failed-match-details-backup:2465:.safe-join-card button,
+frontend/src/App.css.failed-match-details-backup:2466:.safe-contest-bottom button,
+frontend/src/App.css.failed-match-details-backup:2539:.safe-contest{
+frontend/src/App.css.failed-match-details-backup:2547:.safe-contest-top{
+frontend/src/App.css.failed-match-details-backup:2553:.safe-contest-top small{
+frontend/src/App.css.failed-match-details-backup:2560:.safe-contest-top strong{
+frontend/src/App.css.failed-match-details-backup:2567:.safe-contest-top span{
+frontend/src/App.css.failed-match-details-backup:2576:.safe-contest-top .safe-blue{
+frontend/src/App.css.failed-match-details-backup:2581:.safe-contest-bottom{
+frontend/src/App.css.failed-match-details-backup:2591:.safe-contest-bottom small{
+frontend/src/App.css.failed-match-details-backup:2598:.safe-contest-bottom b{
+frontend/src/MatchDetails.jsx.failed-backup:4:  const [tab, setTab] = useState("contests");
+frontend/src/MatchDetails.jsx.failed-backup:99:      <section className="safe-join-card">
+frontend/src/MatchDetails.jsx.failed-backup:101:          <small>MEGA CONTEST</small>
+frontend/src/MatchDetails.jsx.failed-backup:106:        <button onClick={() => setTab("contests")}>
+frontend/src/MatchDetails.jsx.failed-backup:107:          JOIN CONTEST
+frontend/src/MatchDetails.jsx.failed-backup:114:          className={tab === "contests" ? "active" : ""}
+frontend/src/MatchDetails.jsx.failed-backup:115:          onClick={() => setTab("contests")}
+frontend/src/MatchDetails.jsx.failed-backup:118:          <small>Contests</small>
+frontend/src/MatchDetails.jsx.failed-backup:139:      {tab === "contests" && (
+frontend/src/MatchDetails.jsx.failed-backup:144:              <small>CONTESTS</small>
+frontend/src/MatchDetails.jsx.failed-backup:145:              <h2>Choose your contest</h2>
+frontend/src/MatchDetails.jsx.failed-backup:151:          <div className="safe-contest">
+frontend/src/MatchDetails.jsx.failed-backup:152:            <div className="safe-contest-top">
+frontend/src/MatchDetails.jsx.failed-backup:154:                <small>MEGA CONTEST</small>
+frontend/src/MatchDetails.jsx.failed-backup:160:            <div className="safe-contest-bottom">
+frontend/src/MatchDetails.jsx.failed-backup:176:              <button>JOIN</button>
+frontend/src/MatchDetails.jsx.failed-backup:180:          <div className="safe-contest">
+frontend/src/MatchDetails.jsx.failed-backup:181:            <div className="safe-contest-top">
+frontend/src/MatchDetails.jsx.failed-backup:183:                <small>SMALL CONTEST</small>
+frontend/src/MatchDetails.jsx.failed-backup:189:            <div className="safe-contest-bottom">
+frontend/src/MatchDetails.jsx.failed-backup:205:              <button>JOIN</button>
+frontend/src/App.jsx.before-touch-fix:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.before-touch-fix:119:                <strong>Contests</strong>
+frontend/src/App.jsx.before-touch-fix:120:                <span>Join contests</span>
+frontend/src/App.jsx.before-touch-fix:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.before-touch-fix:209:                      ? "JOIN NOW"
+frontend/src/App.jsx.before-touch-fix:309:          <small>Contests</small>
+frontend/src/App.css.before-touch-fix:2039:.join-btn,
+frontend/src/App.css.before-touch-fix:2040:.join-button,
+frontend/src/App.css.before-touch-fix:2042:.contest-btn,
+frontend/src/App.css.before-touch-fix:2056:.join-btn:active,
+frontend/src/App.css.before-touch-fix:2057:.join-button:active,
+frontend/src/App.css.before-touch-fix:2059:.contest-btn:active,
+frontend/src/App.jsx.before-safe-details:72:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.before-safe-details:119:                <strong>Contests</strong>
+frontend/src/App.jsx.before-safe-details:120:                <span>Join contests</span>
+frontend/src/App.jsx.before-safe-details:127:                <strong>Wallet</strong>
+frontend/src/App.jsx.before-safe-details:209:                      ? "JOIN NOW"
+frontend/src/App.jsx.before-safe-details:309:          <small>Contests</small>
+frontend/src/App.css.before-safe-details:2039:.join-btn,
+frontend/src/App.css.before-safe-details:2040:.join-button,
+frontend/src/App.css.before-safe-details:2042:.contest-btn,
+frontend/src/App.css.before-safe-details:2056:.join-btn:active,
+frontend/src/App.css.before-safe-details:2057:.join-button:active,
+frontend/src/App.css.before-safe-details:2059:.contest-btn:active,
+frontend/src/App.jsx.before-match-flow-1787367695:45:  const [tab, setTab] = React.useState("contests");
+frontend/src/App.jsx.before-match-flow-1787367695:91:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx.before-match-flow-1787367695:92:          onClick={() => setTab("contests")}
+frontend/src/App.jsx.before-match-flow-1787367695:94:          🏆<small>Contests</small>
+frontend/src/App.jsx.before-match-flow-1787367695:112:      {tab === "contests" && (
+frontend/src/App.jsx.before-match-flow-1787367695:114:          <div className="batzo-contest-card">
+frontend/src/App.jsx.before-match-flow-1787367695:116:              <b>Grand Contest</b>
+frontend/src/App.jsx.before-match-flow-1787367695:119:            <button>JOIN</button>
+frontend/src/App.jsx.before-match-flow-1787367695:122:          <div className="batzo-contest-card">
+frontend/src/App.jsx.before-match-flow-1787367695:127:            <button>JOIN</button>
+frontend/src/App.jsx.before-match-flow-1787367695:130:          <div className="batzo-contest-card">
+frontend/src/App.jsx.before-match-flow-1787367695:132:              <b>Practice Contest</b>
+frontend/src/App.jsx.before-match-flow-1787367695:145:            <p>Select players after entering a contest.</p>
+frontend/src/App.jsx.before-match-flow-1787367695:201:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.before-match-flow-1787367695:248:                <strong>Contests</strong>
+frontend/src/App.jsx.before-match-flow-1787367695:249:                <span>Join contests</span>
+frontend/src/App.jsx.before-match-flow-1787367695:256:                <strong>Wallet</strong>
+frontend/src/App.jsx.before-match-flow-1787367695:344:                      ? "JOIN NOW"
+frontend/src/App.jsx.before-match-flow-1787367695:444:          <small>Contests</small>
+frontend/src/App.css.before-match-flow-1787367695:2039:.join-btn,
+frontend/src/App.css.before-match-flow-1787367695:2040:.join-button,
+frontend/src/App.css.before-match-flow-1787367695:2042:.contest-btn,
+frontend/src/App.css.before-match-flow-1787367695:2056:.join-btn:active,
+frontend/src/App.css.before-match-flow-1787367695:2057:.join-button:active,
+frontend/src/App.css.before-match-flow-1787367695:2059:.contest-btn:active,
+frontend/src/App.css.before-match-flow-1787367695:2478:.batzo-contest-card,
+frontend/src/App.css.before-match-flow-1787367695:2488:.batzo-contest-card {
+frontend/src/App.css.before-match-flow-1787367695:2495:.batzo-contest-card b {
+frontend/src/App.css.before-match-flow-1787367695:2500:.batzo-contest-card span {
+frontend/src/App.css.before-match-flow-1787367695:2507:.batzo-contest-card button,
+frontend/src/App.jsx.pre-safe-match-patch:45:  const [tab, setTab] = React.useState("contests");
+frontend/src/App.jsx.pre-safe-match-patch:91:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx.pre-safe-match-patch:92:          onClick={() => setTab("contests")}
+frontend/src/App.jsx.pre-safe-match-patch:94:          🏆<small>Contests</small>
+frontend/src/App.jsx.pre-safe-match-patch:112:      {tab === "contests" && (
+frontend/src/App.jsx.pre-safe-match-patch:114:          <div className="batzo-contest-card">
+frontend/src/App.jsx.pre-safe-match-patch:116:              <b>Grand Contest</b>
+frontend/src/App.jsx.pre-safe-match-patch:119:            <button>JOIN</button>
+frontend/src/App.jsx.pre-safe-match-patch:122:          <div className="batzo-contest-card">
+frontend/src/App.jsx.pre-safe-match-patch:127:            <button>JOIN</button>
+frontend/src/App.jsx.pre-safe-match-patch:130:          <div className="batzo-contest-card">
+frontend/src/App.jsx.pre-safe-match-patch:132:              <b>Practice Contest</b>
+frontend/src/App.jsx.pre-safe-match-patch:145:            <p>Select players after entering a contest.</p>
+frontend/src/App.jsx.pre-safe-match-patch:201:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.pre-safe-match-patch:248:                <strong>Contests</strong>
+frontend/src/App.jsx.pre-safe-match-patch:249:                <span>Join contests</span>
+frontend/src/App.jsx.pre-safe-match-patch:256:                <strong>Wallet</strong>
+frontend/src/App.jsx.pre-safe-match-patch:344:                      ? "JOIN NOW"
+frontend/src/App.jsx.pre-safe-match-patch:444:          <small>Contests</small>
+frontend/src/App.jsx.match-flow-backup:45:  const [tab, setTab] = React.useState("contests");
+frontend/src/App.jsx.match-flow-backup:91:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx.match-flow-backup:92:          onClick={() => setTab("contests")}
+frontend/src/App.jsx.match-flow-backup:94:          🏆<small>Contests</small>
+frontend/src/App.jsx.match-flow-backup:112:      {tab === "contests" && (
+frontend/src/App.jsx.match-flow-backup:114:          <div className="batzo-contest-card">
+frontend/src/App.jsx.match-flow-backup:116:              <b>Grand Contest</b>
+frontend/src/App.jsx.match-flow-backup:119:            <button>JOIN</button>
+frontend/src/App.jsx.match-flow-backup:122:          <div className="batzo-contest-card">
+frontend/src/App.jsx.match-flow-backup:127:            <button>JOIN</button>
+frontend/src/App.jsx.match-flow-backup:130:          <div className="batzo-contest-card">
+frontend/src/App.jsx.match-flow-backup:132:              <b>Practice Contest</b>
+frontend/src/App.jsx.match-flow-backup:145:            <p>Select players after entering a contest.</p>
+frontend/src/App.jsx.match-flow-backup:201:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.match-flow-backup:248:                <strong>Contests</strong>
+frontend/src/App.jsx.match-flow-backup:249:                <span>Join contests</span>
+frontend/src/App.jsx.match-flow-backup:256:                <strong>Wallet</strong>
+frontend/src/App.jsx.match-flow-backup:344:                      ? "JOIN NOW"
+frontend/src/App.jsx.match-flow-backup:444:          <small>Contests</small>
+frontend/src/App.css.match-flow-backup:2039:.join-btn,
+frontend/src/App.css.match-flow-backup:2040:.join-button,
+frontend/src/App.css.match-flow-backup:2042:.contest-btn,
+frontend/src/App.css.match-flow-backup:2056:.join-btn:active,
+frontend/src/App.css.match-flow-backup:2057:.join-button:active,
+frontend/src/App.css.match-flow-backup:2059:.contest-btn:active,
+frontend/src/App.css.match-flow-backup:2478:.batzo-contest-card,
+frontend/src/App.css.match-flow-backup:2488:.batzo-contest-card {
+frontend/src/App.css.match-flow-backup:2495:.batzo-contest-card b {
+frontend/src/App.css.match-flow-backup:2500:.batzo-contest-card span {
+frontend/src/App.css.match-flow-backup:2507:.batzo-contest-card button,
+frontend/src/App.css.match-flow-backup:2730:.batzo-join-btn,
+frontend/src/App.css.match-flow-backup:2739:.batzo-join-btn{
+frontend/src/App.jsx.full-build-backup:45:  const [tab, setTab] = React.useState("contests");
+frontend/src/App.jsx.full-build-backup:91:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx.full-build-backup:92:          onClick={() => setTab("contests")}
+frontend/src/App.jsx.full-build-backup:94:          🏆<small>Contests</small>
+frontend/src/App.jsx.full-build-backup:112:      {tab === "contests" && (
+frontend/src/App.jsx.full-build-backup:114:          <div className="batzo-contest-card">
+frontend/src/App.jsx.full-build-backup:116:              <b>Grand Contest</b>
+frontend/src/App.jsx.full-build-backup:119:            <button>JOIN</button>
+frontend/src/App.jsx.full-build-backup:122:          <div className="batzo-contest-card">
+frontend/src/App.jsx.full-build-backup:127:            <button>JOIN</button>
+frontend/src/App.jsx.full-build-backup:130:          <div className="batzo-contest-card">
+frontend/src/App.jsx.full-build-backup:132:              <b>Practice Contest</b>
+frontend/src/App.jsx.full-build-backup:145:            <p>Select players after entering a contest.</p>
+frontend/src/App.jsx.full-build-backup:201:              Join exciting cricket contests, create your team
+frontend/src/App.jsx.full-build-backup:248:                <strong>Contests</strong>
+frontend/src/App.jsx.full-build-backup:249:                <span>Join contests</span>
+frontend/src/App.jsx.full-build-backup:256:                <strong>Wallet</strong>
+frontend/src/App.jsx.full-build-backup:344:                      ? "JOIN NOW"
+frontend/src/App.jsx.full-build-backup:444:          <small>Contests</small>
+frontend/src/App.css.full-build-backup:2039:.join-btn,
+frontend/src/App.css.full-build-backup:2040:.join-button,
+frontend/src/App.css.full-build-backup:2042:.contest-btn,
+frontend/src/App.css.full-build-backup:2056:.join-btn:active,
+frontend/src/App.css.full-build-backup:2057:.join-button:active,
+frontend/src/App.css.full-build-backup:2059:.contest-btn:active,
+frontend/src/App.css.full-build-backup:2478:.batzo-contest-card,
+frontend/src/App.css.full-build-backup:2488:.batzo-contest-card {
+frontend/src/App.css.full-build-backup:2495:.batzo-contest-card b {
+frontend/src/App.css.full-build-backup:2500:.batzo-contest-card span {
+frontend/src/App.css.full-build-backup:2507:.batzo-contest-card button,
+frontend/src/App.css.full-build-backup:2730:.batzo-join-btn,
+frontend/src/App.css.full-build-backup:2739:.batzo-join-btn{
+frontend/src/App.css.full-build-backup:2911:.batzo-join-btn,
+frontend/src/App.css.full-build-backup:2920:.batzo-join-btn{
+frontend/src/App.jsx.before-clean-android:45:  const [tab, setTab] = React.useState("contests");
+frontend/src/App.jsx.before-clean-android:91:          className={tab === "contests" ? "active" : ""}
+frontend/src/App.jsx.before-clean-android:92:          onClick={() => setTab("contests")}
+
+===== EXISTING WALLET BACKUPS =====
+./apk-final/Batzo-Clean-Repair-Join-Wallet.apk
+./apk-final/Batzo-E2E-Join-Wallet-MyContests.apk
+./apk-final/Batzo-Final-Clean-Join-Wallet.apk
+./apk-final/Batzo-Final-Create-Join-Wallet.apk
+./apk-final/Batzo-Master-Team-Confirm-Join-Wallet-Final.apk
+./apk-final/Batzo-V7-Team-Join-Wallet.apk
+./backend/db.js.before-wallet-1788270075
+./backend/db.js.wallet-backup-1788271990
+./backend/routes.js.before-wallet-1788270075
+./backend/routes.js.wallet-backup-1788271990
+./frontend/src/App.jsx.wallet-backup-1788271990
+./wallet-code-audit.txt
+./wallet-precheck.txt
+
+===== BACKEND PACKAGE =====
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.19.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "firebase-admin": "^14.3.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
+
+===== ENVIRONMENT KEYS — NAMES ONLY =====
+--- backend/.env ---
+CRICKET_API_KEY=***HIDDEN***
+
+JWT_SECRET=***HIDDEN***
+FIREBASE_SERVICE_ACCOUNT_JSON=***HIDDEN***
+--- frontend/.env ---
+VITE_API_BASE_URL=***HIDDEN***
+VITE_CRICKET_API_URL=***HIDDEN***
+
+===== GIT DIFF SUMMARY =====
+ backend/data/batzo.json   |  18 ++
+ backend/routes.js         |  64 ++++
+ frontend/src/App.jsx      | 810 ++++++++++++++++++++++++++++++++++++++++++++--
+ frontend/src/AuthGate.jsx | 176 +++++++++-
+ 4 files changed, 1027 insertions(+), 41 deletions(-)
+
+========== WALLET CODE AUDIT COMPLETE ==========

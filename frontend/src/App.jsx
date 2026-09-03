@@ -8,6 +8,10 @@ import React, {
   useRef
 } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuthProvider, RecaptchaVerifier, signInWithPopup, linkWithPopup, signInWithPhoneNumber, linkWithPhoneNumber as webLinkWithPhoneNumber, onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
 import "./App.css";
 import { installJoinFlow } from "./services/join-flow-ui";
 
@@ -75,6 +79,26 @@ const contests = [
 ];
 
 function Logo() {
+// BATZO_NAVIGATION_BACK_HANDLER
+React.useEffect(() => {
+  const onPopState = () => {
+    const path = window.location.hash.replace(/^#\/?/, "");
+    const target =
+      path.startsWith("contest") ? "matches" :
+      path.startsWith("my-team") || path.startsWith("team") ? "team" :
+      path.startsWith("wallet") ? "wallet" :
+      path.startsWith("profile") ? "profile" :
+      "home";
+
+    if (typeof setTab === "function") {
+      setTab(target);
+    }
+  };
+
+  window.addEventListener("popstate", onPopState);
+  return () => window.removeEventListener("popstate", onPopState);
+}, []);
+
   return (
     <div className="logo-area">
       <img
@@ -94,26 +118,43 @@ function Header({ setNotice }) {
       <div className="header-right">
         <button
           className="notification-btn"
-          onClick={() => setNotice("No new notifications")}
+          onClick={() => navigateTab("notifications")}
           aria-label="Notifications"
         >
-          <span className="bell">♧</span>
+          <span>💰</span>
           <b>3</b>
         </button>
 
-        <button
-          className="wallet-box"
-          onClick={() => batzoRequireLogin(() => setNotice("Wallet balance: ₹0"))}
-        >
-          <span className="wallet-icon">▰</span>
-          <div>
-            <small>Wallet Balance</small>
-            <strong>₹0</strong>
-          </div>
-          <em>›</em>
-        </button>
+        
       </div>
-    </header>
+
+      {/* BATZO_TOP_PROFILE_BUTTON_FINAL */}
+      <button
+        type="button"
+        aria-label="Profile"
+        title="Profile"
+        onClick={() => {
+          batzoTabHistory.current.push(tab);
+          batzoPreviousTab.current = tab;
+          setTab("profile");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        style={{
+          border:"1px solid rgba(50,245,138,.30)",
+          borderRadius:"12px",
+          background:"rgba(16,25,22,.90)",
+          color:"#32f58a",
+          padding:"8px 12px",
+          fontWeight:"900",
+          fontSize:"14px",
+          marginLeft:"8px"
+        }}
+      >
+        👤 Profile
+      </button>
+      {/* END BATZO_TOP_PROFILE_BUTTON_FINAL */}
+
+</header>
   );
 }
 
@@ -313,8 +354,864 @@ function batzoRequireLogin(action) {
   return false;
 }
 
+
+
+
+function BatzoAccountSettings({ onBack }) {
+  const [user, setUser] = useState(null);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState("");
+  const accountRecaptchaRef = useRef(null);
+
+  async function loadUser() {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const r = await FirebaseAuthentication.getCurrentUser();
+        const nextUser = r?.user || null;
+
+        setUser(nextUser);
+
+        // Native Android: synchronize the Firebase session
+        // with the Batzo backend so Wallet receives a Batzo JWT.
+        if (nextUser) {
+          try {
+            const tokenResult =
+              await FirebaseAuthentication.getIdToken({
+                forceRefresh: true
+              });
+
+            if (tokenResult?.token) {
+              const sync = await firebaseAccountBackendSync(
+                nextUser,
+                tokenResult.token
+              );
+
+              if (sync?.token) {
+                console.log(
+                  "[BATZO] Native Firebase -> backend auth sync OK"
+                );
+              }
+            }
+          } catch (syncError) {
+            console.warn(
+              "[BATZO] Native Firebase -> backend auth sync failed:",
+              syncError
+            );
+          }
+        }
+      } else {
+        const nextUser = auth.currentUser || null;
+        setUser(nextUser);
+
+        if (nextUser) {
+          try {
+            await firebaseAccountBackendSync(nextUser);
+            console.log(
+              "[BATZO] Web Firebase -> backend auth sync OK"
+            );
+          } catch (syncError) {
+            console.warn(
+              "[BATZO] Web Firebase -> backend auth sync failed:",
+              syncError
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[BATZO] load account:", e);
+    }
+  }
+
+  useEffect(() => {
+    loadUser();
+
+    if (!Capacitor.isNativePlatform()) {
+      const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+        setUser(nextUser || null);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      try {
+        accountRecaptchaRef.current?.clear();
+      } catch (_) {}
+
+      accountRecaptchaRef.current = null;
+
+      const container =
+        document.getElementById("batzo-account-recaptcha");
+
+      if (container) {
+        container.innerHTML = "";
+      }
+    };
+  }, []);
+
+  function providers() {
+    return Array.isArray(user?.providerData)
+      ? user.providerData
+      : [];
+  }
+
+  const googleProvider =
+    providers().find(p => p?.providerId === "google.com");
+
+  const phoneProvider =
+    providers().find(p => p?.providerId === "phone");
+
+  async function firebaseAccountBackendSync(user, nativeIdToken = null) {
+    const idToken =
+      nativeIdToken ||
+      (user && typeof user.getIdToken === "function"
+        ? await user.getIdToken(true)
+        : null);
+
+    if (!idToken) return null;
+
+    const response = await fetch(
+      batzoApiBase() + "/api/auth/firebase",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ idToken })
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Firebase account sync failed."
+      );
+    }
+
+    if (data.token) {
+      localStorage.setItem("batzo_token", data.token);
+    }
+
+    if (data.user) {
+      try {
+        localStorage.setItem(
+          "batzo_firebase_user",
+          JSON.stringify(data.user)
+        );
+      } catch (_) {}
+    }
+
+    return data;
+  }
+
+  async function addGoogle() {
+    setLoading(true);
+    setNotice("");
+
+    try {
+      let current = null;
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const existing = await FirebaseAuthentication.getCurrentUser();
+          current = existing?.user || null;
+        } catch (_) {
+          current = null;
+        }
+
+        let r;
+
+        if (current) {
+          r = await FirebaseAuthentication.linkWithGoogle();
+        } else {
+          r = await FirebaseAuthentication.signInWithGoogle();
+        }
+
+        if (!r?.user) {
+          throw new Error("Google authentication did not return a user.");
+        }
+
+        setUser(r.user);
+
+        try {
+          const tokenResult =
+            await FirebaseAuthentication.getIdToken({
+              forceRefresh: true
+            });
+
+          if (tokenResult?.token) {
+            await firebaseAccountBackendSync(r.user, tokenResult.token);
+          }
+        } catch (syncError) {
+          console.warn("[BATZO] Google backend sync:", syncError);
+        }
+
+        setNotice(
+          current
+            ? "Google account connected: " + (r.user.email || "Google account")
+            : "Google login successful: " + (r.user.email || "Google account")
+        );
+      } else {
+        current = auth.currentUser;
+
+        const provider = new GoogleAuthProvider();
+        let r;
+
+        if (current) {
+          r = await linkWithPopup(current, provider);
+        } else {
+          r = await signInWithPopup(auth, provider);
+        }
+
+        if (!r?.user) {
+          throw new Error("Google authentication did not return a user.");
+        }
+
+        setUser(r.user);
+
+        try {
+          await firebaseAccountBackendSync(r.user);
+        } catch (syncError) {
+          console.warn("[BATZO] Google backend sync:", syncError);
+        }
+
+        setNotice(
+          current
+            ? "Google account connected: " + (r.user.email || "Google account")
+            : "Google login successful: " + (r.user.email || "Google account")
+        );
+      }
+    } catch (e) {
+      console.error("[BATZO] GOOGLE ACCOUNT:", e);
+
+      if (e?.code === "auth/provider-already-linked") {
+        setNotice("Google account is already connected.");
+      } else if (e?.code === "auth/credential-already-in-use") {
+        setNotice(
+          "This Google account belongs to another Firebase account."
+        );
+      } else if (e?.code === "auth/popup-closed-by-user") {
+        setNotice("Google login was cancelled.");
+      } else {
+        setNotice(e?.message || "Google authentication failed.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendOtp() {
+    setLoading(true);
+    setNotice("");
+
+    try {
+      const normalized =
+        phone.startsWith("+")
+          ? phone
+          : "+91" + phone.replace(/\D/g, "");
+
+      if (!/^\+91\d{10}$/.test(normalized)) {
+        throw new Error(
+          "Enter a valid 10-digit Indian mobile number."
+        );
+      }
+
+      /*
+       * ACCOUNT SETTINGS = LINK PHONE TO EXISTING ACCOUNT.
+       * We must NOT sign in as a new Firebase user here.
+       */
+      if (Capacitor.isNativePlatform()) {
+        const current =
+          await FirebaseAuthentication.getCurrentUser();
+
+        if (!current?.user) {
+          throw new Error(
+            "Please login first, then connect your mobile number."
+          );
+        }
+
+        const r =
+          await FirebaseAuthentication.linkWithPhoneNumber({
+            phoneNumber: normalized
+          });
+
+        if (!r?.verificationId) {
+          throw new Error(
+            "Firebase did not return an OTP verification ID."
+          );
+        }
+
+        setVerificationId(r.verificationId);
+
+        setNotice(
+          "OTP sent. Enter the OTP below to connect this number."
+        );
+
+        return;
+      }
+
+      const current = auth.currentUser;
+
+      if (!current) {
+        throw new Error(
+          "Please login first, then connect your mobile number."
+        );
+      }
+
+      const container =
+        document.getElementById("batzo-account-recaptcha");
+
+      if (!container) {
+        throw new Error(
+          "reCAPTCHA container not found."
+        );
+      }
+
+      /*
+       * Completely remove any previous verifier/widget.
+       */
+      try {
+        accountRecaptchaRef.current?.clear();
+      } catch (_) {}
+
+      accountRecaptchaRef.current = null;
+      container.innerHTML = "";
+
+      /*
+       * Create exactly ONE verifier for this Account Settings
+       * component instance.
+       */
+      accountRecaptchaRef.current =
+        new RecaptchaVerifier(
+          auth,
+          container,
+          {
+            size: "invisible"
+          }
+        );
+
+      await accountRecaptchaRef.current.render();
+
+      const confirmation =
+        await webLinkWithPhoneNumber(
+          current,
+          normalized,
+          accountRecaptchaRef.current
+        );
+
+      setConfirmation(confirmation);
+
+      setNotice(
+        "OTP sent. Enter the OTP below to connect this number."
+      );
+
+    } catch (e) {
+      console.error(
+        "[BATZO] ACCOUNT SETTINGS PHONE LINK:",
+        e
+      );
+
+      setNotice(
+        e?.message ||
+        "OTP could not be sent."
+      );
+
+      try {
+        accountRecaptchaRef.current?.clear();
+      } catch (_) {}
+
+      accountRecaptchaRef.current = null;
+
+      const container =
+        document.getElementById("batzo-account-recaptcha");
+
+      if (container) {
+        container.innerHTML = "";
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyOtp() {
+    if (!otp.trim()) {
+      setNotice("Enter the OTP.");
+      return;
+    }
+
+    setLoading(true);
+    setNotice("");
+
+    try {
+      let nextUser = null;
+
+      if (Capacitor.isNativePlatform()) {
+        if (!verificationId) {
+          throw new Error(
+            "Verification ID missing. Please send OTP again."
+          );
+        }
+
+        const r =
+          await FirebaseAuthentication.confirmVerificationCode({
+            verificationId,
+            verificationCode: otp.trim()
+          });
+
+        nextUser = r?.user || null;
+      } else {
+        if (!confirmation) {
+          throw new Error("OTP session expired. Send OTP again.");
+        }
+
+        const r = await confirmation.confirm(otp.trim());
+        nextUser = r?.user || null;
+      }
+
+      if (!nextUser) {
+        await loadUser();
+
+        if (Capacitor.isNativePlatform()) {
+          const r =
+            await FirebaseAuthentication.getCurrentUser();
+          nextUser = r?.user || null;
+        } else {
+          nextUser = auth.currentUser;
+        }
+      }
+
+      if (!nextUser) {
+        throw new Error(
+          "Firebase verified the OTP but current user was not returned."
+        );
+      }
+
+      setUser(nextUser);
+      setOtp("");
+      setVerificationId("");
+      setConfirmation(null);
+
+      setNotice(
+        "Mobile OTP verified successfully: " +
+        (nextUser.phoneNumber || phone)
+      );
+    } catch (e) {
+      console.error("[BATZO] OTP VERIFY:", e);
+      setNotice(e?.message || "OTP verification failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f4f6f8"
+      }}
+    >
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "18px",
+          background: "#111",
+          color: "#fff"
+        }}
+      >
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            border: 0,
+            background: "transparent",
+            color: "#fff",
+            fontSize: 28,
+            fontWeight: 900
+          }}
+        >
+          ←
+        </button>
+
+        <strong style={{ fontSize: 20 }}>
+          ACCOUNT SETTINGS
+        </strong>
+      </header>
+
+      <main style={{ padding: 18 }}>
+        <section
+          style={{
+            background: "#fff",
+            borderRadius: 18,
+            padding: 20,
+            marginBottom: 14
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              color: "#777"
+            }}
+          >
+            BATZO ACCOUNT
+          </div>
+
+          <h2 style={{ margin: "8px 0" }}>
+            {user?.displayName || "Batzo User"}
+          </h2>
+
+          <div
+            style={{
+              fontSize: 13,
+              color: "#666",
+              wordBreak: "break-word"
+            }}
+          >
+            {user?.email ||
+             user?.phoneNumber ||
+             "Firebase account connected"}
+          </div>
+        </section>
+
+        <section
+          style={{
+            background: "#fff",
+            borderRadius: 18,
+            padding: 20
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>
+            CONNECTED ACCOUNTS
+          </h3>
+
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16,
+              marginBottom: 14
+            }}
+          >
+            <strong>🔵 GOOGLE ACCOUNT</strong>
+
+            <div
+              style={{
+                marginTop: 8,
+                color: "#555",
+                wordBreak: "break-word"
+              }}
+            >
+              {googleProvider?.email ||
+               (user?.email && !phoneProvider
+                 ? user.email
+                 : "No Google account connected")}
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                fontWeight: 900,
+                color: googleProvider
+                  ? "#188038"
+                  : "#777"
+              }}
+            >
+              {googleProvider
+                ? "✓ GOOGLE CONNECTED"
+                : "GOOGLE NOT CONNECTED"}
+            </div>
+
+            {!googleProvider && (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={addGoogle}
+                style={{
+                  width: "100%",
+                  marginTop: 12,
+                  padding: 14,
+                  border: 0,
+                  borderRadius: 12,
+                  background: "#111",
+                  color: "#fff",
+                  fontWeight: 900
+                }}
+              >
+                {loading
+                  ? "CONNECTING..."
+                  : "ADD GOOGLE ACCOUNT"}
+              </button>
+            )}
+          </div>
+
+          <div data-batzo="BATZO_LOGOUT_BUTTON" style={{marginBottom:14}}>
+<button type="button" onClick={async () => {
+  try {
+    await FirebaseAuthentication.signOut();
+  } catch (e) {
+    console.error("[BATZO] Logout error:", e);
+  }
+  window.location.reload();
+}} style={{
+  width:"100%",
+  padding:14,
+  border:0,
+  borderRadius:12,
+  background:"#d32f2f",
+  color:"#fff",
+  fontWeight:900,
+  fontSize:16
+}}>
+🚪 LOGOUT
+</button>
+</div>
+<div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16
+            }}
+          >
+            <strong>📱 MOBILE OTP</strong>
+
+            <div
+              style={{
+                marginTop: 8,
+                color: "#555"
+              }}
+            >
+              {phoneProvider?.phoneNumber ||
+               user?.phoneNumber ||
+               "Mobile number not verified"}
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                fontWeight: 900,
+                color: phoneProvider
+                  ? "#188038"
+                  : "#777"
+              }}
+            >
+              {phoneProvider
+                ? "✓ MOBILE OTP VERIFIED"
+                : "MOBILE NOT VERIFIED"}
+            </div>
+
+            {!phoneProvider && (
+              <>
+                <input
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="10 digit mobile number"
+                  inputMode="numeric"
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    marginTop: 12,
+                    padding: 14,
+                    border: "1px solid #ddd",
+                    borderRadius: 12
+                  }}
+                />
+
+                {!verificationId && !confirmation ? (
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={sendOtp}
+                  >
+                    {loading
+                      ? "SENDING OTP..."
+                      : "SEND OTP"}
+                  </button>
+                ) : (
+                  <>
+                    <input
+                      value={otp}
+                      onChange={e => setOtp(e.target.value)}
+                      placeholder="ENTER OTP"
+                      inputMode="numeric"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        marginTop: 10,
+                        padding: 14,
+                        border: "1px solid #ddd",
+                        borderRadius: 12
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={verifyOtp}
+                      style={{
+                        width: "100%",
+                        marginTop: 10,
+                        padding: 14,
+                        border: 0,
+                        borderRadius: 12,
+                        background: "#111",
+                        color: "#fff",
+                        fontWeight: 900
+                      }}
+                    >
+                      {loading
+                        ? "VERIFYING..."
+                        : "VERIFY OTP"}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+
+            <div id="batzo-account-recaptcha" />
+          </div>
+
+          {notice && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: 12,
+                borderRadius: 10,
+                background: "#fff3cd",
+                color: "#664d03",
+                fontWeight: 700,
+                fontSize: 13,
+                wordBreak: "break-word"
+              }}
+            >
+              {notice}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+
+
+
 function BatzoApp() {
   const [tab, setTab] = useState("home");
+  /* BATZO FINAL ANDROID BACK FLOW */
+  useEffect(() => {
+    const handleBatzoBack = () => {
+      setTab(prev => {
+        if (
+          typeof batzoTabHistory !== "undefined" &&
+          batzoTabHistory.current &&
+          batzoTabHistory.current.length > 0
+        ) {
+          const history = batzoTabHistory.current;
+          let previous = history.pop();
+
+          if (previous === prev && history.length > 0) {
+            previous = history.pop();
+          }
+
+          if (previous && previous !== prev) {
+            if (typeof batzoPreviousTab !== "undefined") {
+              batzoPreviousTab.current = previous;
+            }
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return previous;
+          }
+        }
+
+        if (prev !== "home") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return "home";
+        }
+
+        /*
+         * At Home there is no previous tab.
+         * Tell native Android that the next back action may exit.
+         */
+        window.__BATZO_AT_HOME__ = true;
+        return prev;
+      });
+    };
+
+    window.__BATZO_AT_HOME__ = (tab === "home");
+    window.addEventListener("batzo-native-back", handleBatzoBack);
+
+    return () => {
+      window.removeEventListener("batzo-native-back", handleBatzoBack);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.__BATZO_AT_HOME__ = (tab === "home");
+  }, [tab]);
+/* batzo-profile-click-fix */
+  useEffect(() => {
+    const onProfileClick = (e) => {
+      const btn = e.target && e.target.closest
+        ? e.target.closest('button[aria-label="Profile"]')
+        : null;
+
+      if (!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      setTab(prev => {
+        if (prev !== "profile") {
+          if (typeof batzoTabHistory !== "undefined" && batzoTabHistory.current) {
+            batzoTabHistory.current.push(prev);
+          }
+          if (typeof batzoPreviousTab !== "undefined") {
+            batzoPreviousTab.current = prev;
+          }
+        }
+        return "profile";
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    document.addEventListener("click", onProfileClick, true);
+
+    return () => {
+      document.removeEventListener("click", onProfileClick, true);
+    };
+  }, []);
+
+  const [accountSettings, setAccountSettings] = useState(false);
+
+  useEffect(() => {
+    const openAccountSettings = () => {
+      setAccountSettings(true);
+    };
+
+    window.addEventListener(
+      "batzo-account-settings",
+      openAccountSettings
+    );
+
+    return () => {
+      window.removeEventListener(
+        "batzo-account-settings",
+        openAccountSettings
+      );
+    };
+  }, []);
 
   /*
    * BATZO CLEAN TAB + ANDROID BACK NAVIGATION
@@ -329,6 +1226,9 @@ function BatzoApp() {
    * Back can return to the previous Batzo screen.
    */
   const navigateTab = (nextTab) => {
+    /* batzo-master-navigate-fix */
+    const previousTab = tab;
+    
     if (!nextTab || nextTab === tab) return;
 
     batzoTabHistory.current.push(tab);
@@ -345,6 +1245,14 @@ function BatzoApp() {
       if (!active) return;
 
       try {
+        // ACCOUNT SETTINGS MUST CLOSE FIRST.
+
+
+  if (accountSettings) {
+          setAccountSettings(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
         /*
          * ONE Android Back controller.
          *
@@ -405,37 +1313,53 @@ function BatzoApp() {
       }
     };
 
-    import("@capacitor/app")
-      .then(({ App }) => {
-        if (!active) return;
+    // BATZO: connect browser + Capacitor Android Back to the
+    // single onBack controller above.
+    let browserBackHandler = () => {
+      onBack();
+    };
 
-        return App.addListener("backButton", onBack).then((h) => {
-          if (active) {
-            handle = h;
-            window.__BATZO_BACK_HANDLE__ = h;
-          } else {
-            h.remove();
-          }
-        });
-      })
-      .catch((error) => {
-        console.warn("[BATZO] Android Back listener:", error);
-      });
+    window.addEventListener("popstate", browserBackHandler);
+
+    let capacitorBackListener = null;
+
+    try {
+      const capacitorApp = window.Capacitor?.Plugins?.App;
+
+      if (capacitorApp?.addListener) {
+        capacitorBackListener = capacitorApp.addListener(
+          "backButton",
+          onBack
+        );
+      }
+    } catch (error) {
+      console.warn("[BATZO] Capacitor Back listener:", error);
+    }
 
     return () => {
       active = false;
 
-      if (handle) {
-        handle.remove();
-        handle = null;
+      window.removeEventListener(
+        "popstate",
+        browserBackHandler
+      );
+
+      try {
+        if (capacitorBackListener?.remove) {
+          capacitorBackListener.remove();
+        }
+      } catch (error) {
+        console.warn("[BATZO] Remove Back listener:", error);
       }
 
-      if (window.__BATZO_BACK_HANDLE__) {
-        window.__BATZO_BACK_HANDLE__.remove();
-        window.__BATZO_BACK_HANDLE__ = null;
+      if (handle) {
+        clearTimeout(handle);
       }
     };
-  }, []);  const [notice, setNotice] = useState("");
+
+  }, [tab, accountSettings]);
+
+  const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
 
   const openMatch = (match) => {
@@ -510,6 +1434,32 @@ function BatzoApp() {
     setTab("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+
+
+
+
+
+
+
+
+  if (accountSettings) {
+    return (
+      <BatzoAccountSettings
+        onBack={() => {
+          batzoTabHistory.current = [];
+          batzoPreviousTab.current = tab;
+          setAccountSettings(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
+    );
+  }
+
+
+
+
+
 
   return (
     <div className="batzo-app">
@@ -703,21 +1653,35 @@ function BatzoApp() {
           </section>
         )}
 
+
+
+
         {tab === "profile" && (
           <section className="empty-page">
             <div className="profile-icon">B</div>
             <span>BATZO ACCOUNT</span>
             <h1>Your Profile</h1>
-            <p>Profile, wallet and account settings.</p>
+<p>Profile, wallet and account settings.</p>
             <button
               className="outline-button"
               onClick={() => {
-              if (typeof window.BATZO_REQUIRE_AUTH === "function") {
-                window.BATZO_REQUIRE_AUTH(() => {});
-              } else {
-                window.dispatchEvent(new Event("batzo-auth-required"));
-              }
-            }}
+                const openSettings = () => {
+                  setAccountSettings(true);
+                  setAccountData(() => {
+                    try {
+                      return JSON.parse(
+                        localStorage.getItem("batzo_account_settings") ||
+                        localStorage.getItem("batzo_firebase_user") ||
+                        "{}"
+                      );
+                    } catch (_) {
+                      return {};
+                    }
+                  });
+                };
+
+                openSettings();
+              }}
             >
               ACCOUNT SETTINGS
             </button>
@@ -725,7 +1689,23 @@ function BatzoApp() {
         )}
       </main>
 
-      <nav className="bottom-navigation">
+      
+      {/* BATZO_WALLET_TAB_RENDER */}
+      {/* END BATZO_WALLET_TAB_RENDER */}
+
+
+      {/* BATZO_WALLET_TAB_RENDER_FINAL */}
+      {tab === "wallet" && (
+        <div
+          id="batzo-wallet-final-anchor"
+          style={{paddingBottom:"110px"}}
+        >
+          <BatzoWalletFinalPanel />
+        </div>
+      )}
+      {/* END BATZO_WALLET_TAB_RENDER_FINAL */}
+
+<nav className="bottom-navigation">
         <button
           className={tab === "home" ? "active" : ""}
           onClick={() => navigateTab("home")}
@@ -758,18 +1738,19 @@ function BatzoApp() {
           <small>My Team</small>
         </button>
 
+
         <button
-          className={tab === "profile" ? "active" : ""}
+          className={tab === "wallet" ? "active" : ""}
           onClick={() => {
             if (typeof batzoRequireLogin === "function") {
-              navigateTab("profile");
+              navigateTab("wallet");
             } else {
               window.dispatchEvent(new Event("batzo-auth-required"));
             }
           }}
         >
           <span>◉</span>
-          <small>Profile</small>
+          <small>Wallet</small>
         </button>
       </nav>
     </div>
@@ -788,7 +1769,6 @@ function BatzoApp() {
 
   const TEAM_KEY = "batzo_v11_match_teams";
   const JOIN_KEY = "batzo_v11_joined_contests";
-  const WALLET_KEY = "batzo_wallet_balance";
 
   const MAX_TEAMS = 10;
 
@@ -2181,11 +3161,6 @@ function BatzoApp() {
     }
   }
 
-  function walletBalance() {
-    const n = Number(localStorage.getItem(WALLET_KEY));
-    return Number.isFinite(n) ? n : 0;
-  }
-
   function entryAmount(contest) {
     const raw = String(contest.entry || "49");
     const n = Number(raw.replace(/[^\d.]/g, ""));
@@ -2232,7 +3207,6 @@ function BatzoApp() {
             justify-content:space-between;
           ">
             <span>Wallet</span>
-            <strong>₹${walletBalance()}</strong>
           </div>
         </div>
 
@@ -2269,7 +3243,6 @@ function BatzoApp() {
         return;
       }
 
-      const balance = walletBalance();
 
       if (balance < fee) {
         alert(
@@ -2290,13 +3263,6 @@ function BatzoApp() {
       };
 
       writeJSON(JOIN_KEY, joined.concat(record));
-
-      if (balance > 0) {
-        localStorage.setItem(
-          WALLET_KEY,
-          String(Math.max(0, balance - fee))
-        );
-      }
 
       alert("Contest joined successfully.");
       showContestDetails(contest);
@@ -2423,6 +3389,689 @@ function BatzoApp() {
   });
 
 })();
+
+
+/* ================================================================
+   BATZO_WALLET_UI_V1
+   Server-authoritative wallet screen.
+   No client-side balance mutation.
+   ================================================================ */
+
+
+/* BATZO_WALLET_AUTH_BRIDGE_V2 */
+function batzoAuthToken() {
+  const keys = [
+    "batzo_token",
+    "batzo_auth_token",
+    "authToken",
+    "token"
+  ];
+
+  for (const key of keys) {
+    const value = localStorage.getItem(key);
+    if (value && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+
+  return "";
+}
+
+function batzoApiBase() {
+  const value =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_API_BASE_URL
+      ? String(import.meta.env.VITE_API_BASE_URL)
+      : "";
+
+  return value.replace(/\/+$/, "");
+}
+
+async function batzoWalletRequest(path, options = {}) {
+  let token = batzoAuthToken();
+
+  // If the Batzo JWT is missing, recover it from the
+  // currently authenticated Firebase user.
+  if (!token) {
+    try {
+      let idToken = null;
+      let firebaseUser = auth.currentUser || null;
+
+      // Web Firebase user
+      if (
+        firebaseUser &&
+        typeof firebaseUser.getIdToken === "function"
+      ) {
+        idToken = await firebaseUser.getIdToken(true);
+      }
+
+      // Native Capacitor Firebase user/token
+      if (!idToken) {
+        try {
+          const nativeUser =
+            await FirebaseAuthentication.getCurrentUser();
+
+          if (nativeUser?.user) {
+            firebaseUser = nativeUser.user;
+          }
+        } catch (_) {}
+
+        try {
+          const tokenResult =
+            await FirebaseAuthentication.getIdToken({
+              forceRefresh: true
+            });
+
+          idToken = tokenResult?.token || null;
+        } catch (nativeTokenError) {
+          console.warn(
+            "[BATZO] Native Firebase ID token unavailable:",
+            nativeTokenError
+          );
+        }
+      }
+
+      // Exchange Firebase ID token for Batzo JWT
+      if (idToken) {
+        const base = batzoApiBase();
+
+        if (!base) {
+          throw new Error("API_BASE_URL_MISSING");
+        }
+
+        const syncResponse = await fetch(
+          base + "/api/auth/firebase",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ idToken })
+          }
+        );
+
+        const syncData =
+          await syncResponse.json().catch(() => ({}));
+
+        if (
+          syncResponse.ok &&
+          syncData.success &&
+          syncData.token
+        ) {
+          token = String(syncData.token).trim();
+
+          try {
+            localStorage.setItem("batzo_token", token);
+          } catch (_) {}
+
+          try {
+            localStorage.setItem("batzo_auth_token", token);
+          } catch (_) {}
+          if (syncData.user) {
+            try {
+              localStorage.setItem(
+                "batzo_firebase_user",
+                JSON.stringify(syncData.user)
+              );
+            } catch (_) {}
+          }
+        } else {
+          console.warn(
+            "[BATZO] Firebase-to-Batzo sync failed:",
+            syncData
+          );
+        }
+      }
+    } catch (refreshError) {
+      console.warn(
+        "[BATZO] Wallet Firebase token recovery:",
+        refreshError
+      );
+    }
+  }
+
+  if (!token) {
+    const error = new Error("AUTH_REQUIRED");
+    error.code = "AUTH_REQUIRED";
+    error.status = 401;
+    throw error;
+  }
+
+  const base = batzoApiBase();
+
+  if (!base) {
+    const error = new Error("API_BASE_URL_MISSING");
+    error.code = "API_BASE_URL_MISSING";
+    throw error;
+  }
+
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: "Bearer " + token,
+    "Content-Type": "application/json"
+  };
+
+  const response = await fetch(base + path, {
+    ...options,
+    headers
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (_) {}
+
+  if (response.status === 401) {
+    const error = new Error(
+      data.message || data.error || "Authentication failed"
+    );
+    error.code = "AUTH_EXPIRED";
+    error.status = 401;
+    throw error;
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || data.error || "Wallet request failed"
+    );
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+}
+
+
+
+
+
+
+
+function BatzoWalletScreen() {
+  const [wallet,setWallet] = React.useState(null);
+  const [transactions,setTransactions] = React.useState([]);
+  const [loading,setLoading] = React.useState(true);
+  const [error,setError] = React.useState("");
+
+  const loadWallet = React.useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await batzoWalletRequest("/api/wallet");
+
+      if (!data || data.success !== true) {
+        throw new Error(
+          data && data.message
+            ? data.message
+            : "Invalid wallet response"
+        );
+      }
+
+      setWallet({
+        balance: Number(data.balance || 0),
+        winningBalance: Number(
+          data.winningBalance ?? data.winning ?? 0
+        )
+      });
+
+      if (Array.isArray(data.transactions)) {
+        setTransactions(data.transactions);
+      }
+
+      try {
+        const txData =
+          await batzoWalletRequest(
+            "/api/wallet/transactions?limit=50"
+          );
+
+        setTransactions(
+          Array.isArray(txData.transactions)
+            ? txData.transactions
+            : []
+        );
+      } catch (txError) {
+        console.warn(
+          "BATZO transaction history unavailable:",
+          txError
+        );
+        setTransactions([]);
+      }
+
+    } catch (e) {
+      console.error("BATZO WALLET ERROR:",e);
+
+      if (
+        e &&
+        (
+          e.code === "AUTH_REQUIRED" ||
+          e.code === "AUTH_EXPIRED" ||
+          e.status === 401
+        )
+      ) {
+        setError("Please login to view your wallet.");
+      } else if (
+        e &&
+        e.code === "API_BASE_URL_MISSING"
+      ) {
+        setError("Wallet API URL is not configured.");
+      } else {
+        setError(
+          e && e.message
+            ? e.message
+            : "Wallet service unavailable."
+        );
+      }
+
+      setWallet(null);
+    } finally {
+      setLoading(false);
+    }
+  },[]);
+
+  React.useEffect(() => {
+    loadWallet();
+  },[loadWallet]);
+
+  const balance =
+    wallet && Number.isFinite(Number(wallet.balance))
+      ? Number(wallet.balance)
+      : 0;
+
+  const winning =
+    wallet && Number.isFinite(Number(wallet.winningBalance))
+      ? Number(wallet.winningBalance)
+      : 0;
+
+  return (
+    <section className="bz-wallet-page">
+      <div className="bz-wallet-header">
+        <div>
+          <span>BATZO</span>
+          <h1>Wallet</h1>
+          <p>Manage your cricket balance securely.</p>
+        </div>
+
+        <button
+          type="button"
+          className="bz-wallet-refresh"
+          onClick={loadWallet}
+          disabled={loading}
+          aria-label="Refresh wallet"
+        >
+          ↻
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="bz-wallet-loading">
+          <strong>Loading Wallet...</strong>
+          <span>Checking your secure balance.</span>
+        </div>
+      ) : error ? (
+        <div className="bz-wallet-error">
+          <b>Wallet unavailable</b>
+          <span>{error}</span>
+          <button type="button" onClick={loadWallet}>
+            RETRY
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="bz-wallet-main-card">
+            <small>CURRENT BALANCE</small>
+            <strong>₹{balance.toFixed(2)}</strong>
+          </div>
+
+          <div className="bz-wallet-secondary-card">
+            <div>
+              <small>WINNING BALANCE</small>
+              <strong>₹{winning.toFixed(2)}</strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                alert(
+                  "Add Money will be enabled after verified payment-gateway integration."
+                )
+              }
+            >
+              ADD MONEY
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                alert(
+                  "Withdrawals are available through eligible winning balance."
+                )
+              }
+            >
+              WITHDRAW
+            </button>
+          </div>
+
+          <div className="bz-wallet-history">
+            <h2>Transaction History</h2>
+
+            {transactions.length === 0 ? (
+              <div className="bz-wallet-empty">
+                No transactions yet.
+              </div>
+            ) : (
+              <div className="bz-wallet-transactions">
+                {transactions.map((tx) => {
+                  const amount=Number(tx.amount||0);
+
+                  return (
+                    <div
+                      className="bz-wallet-tx"
+                      key={tx.id || Math.random()}
+                    >
+                      <div>
+                        <b>
+                          {tx.description ||
+                           tx.type ||
+                           "Wallet transaction"}
+                        </b>
+                        <small>
+                          {tx.createdAt
+                            ? new Date(tx.createdAt).toLocaleString()
+                            : ""}
+                        </small>
+                      </div>
+
+                      <strong
+                        className={
+                          amount >= 0
+                            ? "bz-wallet-positive"
+                            : "bz-wallet-negative"
+                        }
+                      >
+                        {amount >= 0 ? "+" : ""}
+                        ₹{amount.toFixed(2)}
+                      </strong>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ===== BATZO_WALLET_FINAL_PANEL ===== */
+function BatzoWalletFinalPanel() {
+  const [wallet, setWallet] = React.useState(null);
+  const [transactions, setTransactions] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+
+  const loadWallet = React.useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await batzoWalletRequest("/api/wallet");
+
+      if (!data || data.success !== true) {
+        throw new Error(data?.message || "Wallet response invalid");
+      }
+
+      setWallet({
+        balance: Number(data.balance || 0),
+        winningBalance: Number(
+          data.winningBalance ?? data.winning ?? 0
+        )
+      });
+
+      try {
+        const tx = await batzoWalletRequest(
+          "/api/wallet/transactions?limit=50"
+        );
+
+        if (tx?.success === true && Array.isArray(tx.transactions)) {
+          setTransactions(tx.transactions);
+        } else {
+          setTransactions([]);
+        }
+      } catch (_) {
+        setTransactions([]);
+      }
+    } catch (e) {
+      console.error("[BATZO WALLET]", e);
+      setError(e?.message || "Wallet load failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadWallet();
+  }, [loadWallet]);
+
+  if (loading) {
+    return (
+      <section className="batzo-wallet-final">
+        <div className="batzo-wallet-card">
+          <h2>💰 BATZO WALLET</h2>
+          <p>Wallet loading...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="batzo-wallet-final"
+      style={{
+        marginTop: "22px",
+        padding: "0 4px 24px"
+      }}
+    >
+      <div
+        className="batzo-wallet-card"
+        style={{
+          border: "1px solid rgba(0,255,140,.28)",
+          borderRadius: "22px",
+          padding: "20px",
+          background: "linear-gradient(145deg,#10151b,#07090d)",
+          boxShadow: "0 10px 35px rgba(0,0,0,.35)"
+        }}
+      >
+        <div style={{
+          display:"flex",
+          justifyContent:"space-between",
+          alignItems:"center",
+          marginBottom:"18px"
+        }}>
+          <div>
+            <div style={{
+              color:"#32f58a",
+              fontSize:"12px",
+              fontWeight:"800",
+              letterSpacing:"2px"
+            }}>
+              BATZO
+            </div>
+            <h2 style={{margin:"4px 0 0",fontSize:"24px"}}>
+              💰 Wallet
+            </h2>
+          </div>
+
+          <button
+            onClick={loadWallet}
+            style={{
+              border:"1px solid rgba(255,255,255,.18)",
+              borderRadius:"12px",
+              background:"#11161d",
+              color:"#fff",
+              padding:"9px 13px",
+              fontWeight:"700"
+            }}
+          >
+            ↻
+          </button>
+        </div>
+
+        {error ? (
+          <div style={{
+            padding:"14px",
+            borderRadius:"14px",
+            background:"rgba(255,60,60,.10)",
+            border:"1px solid rgba(255,80,80,.25)",
+            color:"#ff9b9b",
+            marginBottom:"15px"
+          }}>
+            {error}
+          </div>
+        ) : null}
+
+        <div style={{
+          display:"grid",
+          gridTemplateColumns:"1fr 1fr",
+          gap:"12px"
+        }}>
+          <div style={{
+            padding:"17px",
+            borderRadius:"17px",
+            background:"#151b22"
+          }}>
+            <div style={{fontSize:"11px",color:"#8e99a6"}}>
+              CURRENT BALANCE
+            </div>
+            <div style={{
+              fontSize:"26px",
+              fontWeight:"900",
+              marginTop:"7px"
+            }}>
+              ₹{Number(wallet?.balance || 0).toFixed(2)}
+            </div>
+          </div>
+
+          <div style={{
+            padding:"17px",
+            borderRadius:"17px",
+            background:"#151b22"
+          }}>
+            <div style={{fontSize:"11px",color:"#8e99a6"}}>
+              WINNING BALANCE
+            </div>
+            <div style={{
+              fontSize:"26px",
+              fontWeight:"900",
+              marginTop:"7px"
+            }}>
+              ₹{Number(wallet?.winningBalance || 0).toFixed(2)}
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          display:"grid",
+          gridTemplateColumns:"1fr 1fr",
+          gap:"10px",
+          marginTop:"14px"
+        }}>
+          <button
+            onClick={() =>
+              alert("Add Money will be enabled after verified payment-gateway integration.")
+            }
+            style={{
+              padding:"14px",
+              border:0,
+              borderRadius:"14px",
+              background:"#25e878",
+              color:"#06120b",
+              fontWeight:"900",
+              fontSize:"15px"
+            }}
+          >
+            ＋ ADD MONEY
+          </button>
+
+          <button
+            onClick={() =>
+              alert("Withdrawals are available through eligible winning balance.")
+            }
+            style={{
+              padding:"14px",
+              border:"1px solid rgba(255,255,255,.18)",
+              borderRadius:"14px",
+              background:"#11161d",
+              color:"#fff",
+              fontWeight:"900",
+              fontSize:"15px"
+            }}
+          >
+            ↗ WITHDRAW
+          </button>
+        </div>
+
+        <div style={{marginTop:"22px"}}>
+          <h3 style={{margin:"0 0 12px"}}>
+            Transaction History
+          </h3>
+
+          {transactions.length === 0 ? (
+            <div style={{
+              padding:"17px",
+              borderRadius:"15px",
+              background:"#10151b",
+              color:"#89939f",
+              textAlign:"center"
+            }}>
+              No transactions yet
+            </div>
+          ) : (
+            <div style={{
+              display:"flex",
+              flexDirection:"column",
+              gap:"8px"
+            }}>
+              {transactions.slice(0,10).map((tx, i) => (
+                <div
+                  key={tx.id || tx.reference || i}
+                  style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    alignItems:"center",
+                    padding:"13px 14px",
+                    borderRadius:"13px",
+                    background:"#10151b"
+                  }}
+                >
+                  <div>
+                    <div style={{
+                      fontWeight:"800",
+                      textTransform:"capitalize"
+                    }}>
+                      {String(tx.type || "transaction").replace("_"," ")}
+                    </div>
+                    <small style={{color:"#7f8995"}}>
+                      {tx.status || "pending"}
+                    </small>
+                  </div>
+
+                  <strong>
+                    ₹{Number(tx.amount || 0).toFixed(2)}
+                  </strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+/* ===== END BATZO_WALLET_FINAL_PANEL ===== */
+
 
 function App() {
   return (

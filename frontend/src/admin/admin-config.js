@@ -5,7 +5,6 @@ export const ADMIN_MODULES = [
   "players",
   "contests",
   "teams",
-  "wallet",
   "withdrawals",
   "notifications",
   "settings"
@@ -18,7 +17,6 @@ export const ADMIN_READINESS = {
   players: true,
   contests: true,
   teams: true,
-  wallet: true,
   withdrawals: true,
   notifications: true,
   settings: true

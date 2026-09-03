@@ -14,6 +14,25 @@ function writeDB(db){
 
 function registerRoutes(app, authenticateToken){
 
+
+function money(n) {
+  return Math.round(Number(n)*100)/100;
+}
+
+
+
+// 1 + 2: Current + Winning Balance
+// 5: Transaction history
+// Internal helper: idempotency
+
+
+// 3: Add Money.
+// Production payment must be verified before this endpoint is called.
+// NEVER trust client-supplied balance.
+// 4: Withdraw request.
+
+
+
   app.get('/api/matches',(req,res)=>{
     const db=readDB();
     res.json({success:true,matches:db.matches});
@@ -161,6 +180,103 @@ function registerRoutes(app, authenticateToken){
       teams
     });
   });
+
+
+// ============================================================
+// BATZO WALLET API
+// ============================================================
+app.get('/api/wallet', authenticateToken, (req, res) => {
+  try {
+    const db = readDB();
+
+    if (!Array.isArray(db.transactions)) {
+      db.transactions = [];
+    }
+
+    const userId = String(req.user.userId);
+
+    const userTx = db.transactions.filter(
+      tx => String(tx.userId ?? tx.user_id) === userId
+    );
+
+    let balance = 0;
+    let winning = 0;
+
+    for (const tx of userTx) {
+      const amount = Number(tx.amount || 0);
+      const status = String(tx.status || '').toLowerCase();
+
+      if (status !== 'success') continue;
+
+      const type = String(tx.type || '').toLowerCase();
+
+      if (type === 'winning' || type === 'refund') {
+        winning += amount;
+      } else if (type === 'deposit') {
+        balance += amount;
+      } else if (type === 'withdrawal') {
+        winning -= Math.abs(amount);
+      }
+    }
+
+    return res.json({
+      success: true,
+      balance: Number(balance.toFixed(2)),
+      winning: Number(winning.toFixed(2)),
+      transactions: userTx
+        .slice()
+        .sort((a,b) =>
+          new Date(b.createdAt || b.created_at || 0) -
+          new Date(a.createdAt || a.created_at || 0)
+        )
+    });
+
+  } catch (error) {
+    console.error('Wallet load failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load wallet'
+    });
+  }
+});
+
+// Wallet transaction history
+app.get('/api/wallet/transactions', authenticateToken, (req, res) => {
+  try {
+    const db = readDB();
+
+    if (!Array.isArray(db.transactions)) {
+      db.transactions = [];
+    }
+
+    const userId = String(req.user.userId);
+
+    const transactions = db.transactions
+      .filter(tx => String(tx.userId ?? tx.user_id) === userId)
+      .slice()
+      .sort((a,b) =>
+        new Date(b.createdAt || b.created_at || 0) -
+        new Date(a.createdAt || a.created_at || 0)
+      );
+
+    return res.json({
+      success: true,
+      transactions
+    });
+
+  } catch (error) {
+    console.error('Transaction history failed:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load transaction history'
+    });
+  }
+});
 }
+
+
+// ============================================================
+
+// ================================================================
 
 module.exports={registerRoutes};

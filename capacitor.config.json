@@ -1,0 +1,13 @@
+{
+  "appId": "com.batzo.app",
+  "appName": "Batzo",
+  "webDir": "frontend/dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com"
+      ]
+    }
+  }
+}
