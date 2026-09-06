@@ -1584,7 +1584,12 @@ function BatzoApp() {
               m?.matchStarted === true &&
               m?.matchEnded !== true
           )
-          .map(batzoLiveAdapter);
+          .map((m) =>
+            batzoLiveAdapter({
+              ...m,
+              status: "LIVE"
+            })
+          );
 
         const upcomingRows = rows
           .filter(
@@ -1699,10 +1704,7 @@ function BatzoApp() {
 
   const displayLiveMatches = realLiveMatches;
 
-  const displayUpcomingMatches =
-    realUpcomingMatches.length > 0
-      ? realUpcomingMatches
-      : upcomingMatches;
+  const displayUpcomingMatches = realUpcomingMatches;
 
   const openMatch = (match) => {
     try {
@@ -1966,13 +1968,25 @@ function BatzoApp() {
             </div>
 
             <div className="upcoming-list">
-              {upcomingFiltered.map((m) => (
-                <UpcomingCard
-                  key={m.id}
-                  match={m}
-                  onOpen={openMatch}
-                />
-              ))}
+              {upcomingFiltered.length > 0 ? (
+                upcomingFiltered.map((m) => (
+                  <UpcomingCard
+                    key={m.id}
+                    match={m}
+                    onOpen={openMatch}
+                  />
+                ))
+              ) : (
+                <div
+                  style={{
+                    padding: "24px 16px",
+                    textAlign: "center",
+                    opacity: 0.7
+                  }}
+                >
+                  No upcoming real matches available right now.
+                </div>
+              )}
             </div>
           </section>
         )}
