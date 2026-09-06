@@ -16,10 +16,79 @@ import "./App.css";
 import { installJoinFlow } from "./services/join-flow-ui";
 
 import AuthGate from "./AuthGate";
+import { getLiveMatches } from "./services/cricketService.js";
+
+function batzoLiveAdapter(m) {
+  const teams = Array.isArray(m?.teams) ? m.teams : [];
+  const info = Array.isArray(m?.teamInfo) ? m.teamInfo : [];
+  const score = Array.isArray(m?.score) ? m.score : [];
+
+  const teamA = info[0] || {};
+  const teamB = info[1] || {};
+
+  const current =
+    score.length > 0
+      ? score[score.length - 1]
+      : {};
+
+  const code = (team, fallback) =>
+    String(team?.shortname || fallback || "")
+      .toUpperCase()
+      .slice(0, 4);
+
+  return {
+    id: m?.id || `${m?.name || "match"}-${m?.date || ""}`,
+    raw: m,
+    status: "LIVE",
+    league: m?.name || m?.matchType || "Cricket",
+
+    a: teamA?.name || teams[0] || "Team A",
+    ac: code(teamA, teams[0]),
+    af: "🏏",
+
+    b: teamB?.name || teams[1] || "Team B",
+    bc: code(teamB, teams[1]),
+    bf: "🏏",
+
+    as: current?.r != null
+      ? `${current.r}/${current.w ?? 0}`
+      : "-",
+
+    bs: m?.status || "LIVE",
+
+    over: current?.o != null
+      ? `${current.o} ov`
+      : "LIVE",
+
+    viewers: "Live score",
+
+    innings: {
+      battingTeam: current?.inning || "",
+      bowlingTeam: "",
+      score: current?.r != null
+        ? `${current.r}/${current.w ?? 0}`
+        : "-",
+      overs: current?.o != null
+        ? String(current.o)
+        : "-",
+      runRate: "-",
+      target: "-",
+      need: m?.status || "Live score updating..."
+    },
+
+    batsmen: [],
+    bowlers: [],
+    recentBalls: [],
+    lastUpdated: "Live API"
+  };
+}
+
+
 const liveMatches = [
   {
     id: 1,
-    league: "T20",
+    league: "T20 International",
+    status: "LIVE",
     a: "India",
     ac: "IND",
     af: "🇮🇳",
@@ -29,7 +98,30 @@ const liveMatches = [
     bf: "🇦🇺",
     bs: "142/7",
     over: "17.2 ov",
-    viewers: "2.1L people watching"
+    viewers: "2.1L people watching",
+
+    innings: {
+      battingTeam: "India",
+      bowlingTeam: "Australia",
+      score: "168/4",
+      overs: "17.2",
+      runRate: "9.69",
+      target: "201",
+      need: "33 runs from 16 balls"
+    },
+
+    batsmen: [
+      { name: "Virat Kohli", runs: 72, balls: 48, fours: 6, sixes: 3, strikeRate: "150.00", status: "not out" },
+      { name: "Hardik Pandya", runs: 31, balls: 18, fours: 2, sixes: 2, strikeRate: "172.22", status: "not out" }
+    ],
+
+    bowlers: [
+      { name: "Pat Cummins", overs: "4", runs: 32, wickets: 1, economy: "8.00" },
+      { name: "Mitchell Starc", overs: "3.2", runs: 41, wickets: 2, economy: "12.30" }
+    ],
+
+    recentBalls: ["1", "4", "1", "6", "W", "2"],
+    lastUpdated: "Live now"
   }
 ];
 
@@ -73,9 +165,39 @@ const upcomingMatches = [
 ];
 
 const contests = [
-  { title: "Mega Contest", prize: "₹50 Lakhs", entry: "₹49", spots: "2.1L" },
-  { title: "Head To Head", prize: "₹1,800", entry: "₹49", spots: "2" },
-  { title: "Small Contest", prize: "₹25,000", entry: "₹99", spots: "1,000" }
+  {
+    id: "batzo-free-demo-home",
+    title: "BATZO FREE DEMO CONTEST",
+    name: "BATZO FREE DEMO CONTEST",
+    prize: "FREE DEMO",
+    entry: "₹0",
+    entryFee: 0,
+    spots: "100",
+    type: "practice",
+    practice: true,
+    isDemo: true
+  },
+  {
+    id: "contest-mega",
+    title: "Mega Contest",
+    prize: "₹50 Lakhs",
+    entry: "₹49",
+    spots: "2.1L"
+  },
+  {
+    id: "contest-head",
+    title: "Head To Head",
+    prize: "₹1,800",
+    entry: "₹49",
+    spots: "2"
+  },
+  {
+    id: "contest-small",
+    title: "Small Contest",
+    prize: "₹25,000",
+    entry: "₹99",
+    spots: "1,000"
+  }
 ];
 
 function Logo() {
@@ -158,6 +280,161 @@ function Header({ setNotice }) {
   );
 }
 
+
+function LiveScoreboard({ match, onBack }) {
+  if (!match) return null;
+
+  const inn = match.innings || {};
+  const batsmen = match.batsmen || [];
+  const bowlers = match.bowlers || [];
+  const balls = match.recentBalls || [];
+
+  return (
+    <section className="matches-page" style={{ paddingBottom: "110px" }}>
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+          marginBottom: "16px",
+          padding: "10px 14px",
+          borderRadius: "12px",
+          border: "1px solid rgba(50,245,138,.35)",
+          background: "rgba(16,25,22,.92)",
+          color: "#32f58a",
+          fontWeight: 900
+        }}
+      >
+        ← BACK
+      </button>
+
+      <div className="page-heading">
+        <span>🔴 LIVE SCOREBOARD</span>
+        <h1>{match.ac} vs {match.bc}</h1>
+        <p>{match.league}</p>
+      </div>
+
+      <div style={{
+        padding: "20px",
+        borderRadius: "20px",
+        background: "linear-gradient(135deg,#10251a,#08130e)",
+        border: "1px solid rgba(50,245,138,.28)",
+        marginBottom: "16px"
+      }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          textAlign: "center"
+        }}>
+          <div>
+            <div style={{ fontSize: "30px" }}>{match.af}</div>
+            <strong>{match.ac}</strong>
+          </div>
+
+          <div>
+            <div style={{
+              fontSize: "30px",
+              fontWeight: 900,
+              color: "#32f58a"
+            }}>
+              {inn.score || match.as}
+            </div>
+            <small>{inn.overs || match.over} overs</small>
+          </div>
+
+          <div>
+            <div style={{ fontSize: "30px" }}>{match.bf}</div>
+            <strong>{match.bc}</strong>
+          </div>
+        </div>
+
+        <div style={{
+          textAlign: "center",
+          marginTop: "16px",
+          paddingTop: "14px",
+          borderTop: "1px solid rgba(255,255,255,.08)"
+        }}>
+          <strong>🎯 Target: {inn.target || "-"}</strong>
+          <div style={{ marginTop: "6px", color: "#32f58a" }}>
+            {inn.need || "Live score updating..."}
+          </div>
+          <small style={{ opacity: .65 }}>
+            Run Rate: {inn.runRate || "-"} • 🔄 {match.lastUpdated || "Live"}
+          </small>
+        </div>
+      </div>
+
+      <div className="simple-page" style={{ padding: "16px", marginBottom: "14px" }}>
+        <h2>🏏 Batting</h2>
+        {batsmen.map((x, i) => (
+          <div key={i} style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 42px 42px 70px",
+            gap: "6px",
+            padding: "12px 0",
+            borderBottom: "1px solid rgba(255,255,255,.08)"
+          }}>
+            <div>
+              <strong>{x.name}</strong>
+              <small style={{ display: "block", opacity: .65 }}>{x.status}</small>
+            </div>
+            <strong>{x.runs}</strong>
+            <span>{x.balls}b</span>
+            <span>{x.strikeRate} SR</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="simple-page" style={{ padding: "16px", marginBottom: "14px" }}>
+        <h2>🎯 Bowling</h2>
+        {bowlers.map((x, i) => (
+          <div key={i} style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 55px 45px 45px",
+            gap: "6px",
+            padding: "12px 0",
+            borderBottom: "1px solid rgba(255,255,255,.08)"
+          }}>
+            <strong>{x.name}</strong>
+            <span>{x.overs} ov</span>
+            <span>{x.runs} R</span>
+            <strong style={{ color: "#32f58a" }}>{x.wickets} W</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="simple-page" style={{ padding: "16px" }}>
+        <h2>🔴 Last 6 Balls</h2>
+
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {balls.map((ball, i) => (
+            <span
+              key={i}
+              style={{
+                width: "40px",
+                height: "40px",
+                display: "grid",
+                placeItems: "center",
+                borderRadius: "50%",
+                fontWeight: 900,
+                background:
+                  ball === "W"
+                    ? "#c33"
+                    : ball === "6"
+                    ? "#32f58a"
+                    : "rgba(255,255,255,.12)",
+                color: ball === "6" ? "#07130b" : "#fff"
+              }}
+            >
+              {ball}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function QuickCard({ icon, title, sub, type, onClick }) {
   return (
     <button className={`quick-card ${type || ""}`} onClick={onClick}>
@@ -166,6 +443,37 @@ function QuickCard({ icon, title, sub, type, onClick }) {
       <div className="quick-sub">{sub}</div>
       <span className="quick-arrow">›</span>
     </button>
+  );
+}
+
+
+function NoLiveMatches() {
+  return (
+    <div
+      style={{
+        padding: "24px 16px",
+        border: "1px solid rgba(255,255,255,.08)",
+        borderRadius: "18px",
+        background: "rgba(255,255,255,.03)",
+        textAlign: "center",
+        color: "#9ca3af",
+        marginTop: "10px"
+      }}
+    >
+      <div style={{ fontSize: "28px", marginBottom: "8px" }}>🏏</div>
+      <strong
+        style={{
+          display: "block",
+          color: "#ffffff",
+          marginBottom: "6px"
+        }}
+      >
+        No live matches right now
+      </strong>
+      <small>
+        Real cricket matches will appear here automatically.
+      </small>
+    </div>
   );
 }
 
@@ -365,6 +673,8 @@ function BatzoAccountSettings({ onBack }) {
   const [confirmation, setConfirmation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
+
+  const [selectedLiveMatch, setSelectedLiveMatch] = useState(null);
   const accountRecaptchaRef = useRef(null);
 
   async function loadUser() {
@@ -830,9 +1140,10 @@ function BatzoAccountSettings({ onBack }) {
           color: "#fff"
         }}
       >
-        <button
+        <button data-batzo-account-back="1"
           type="button"
           onClick={onBack}
+          data-batzo-account-header-back="true"
           style={{
             border: 0,
             background: "transparent",
@@ -1237,134 +1548,175 @@ function BatzoApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  useEffect(() => {
-    let active = true;
-    let handle = null;
 
-    const onBack = async () => {
-      if (!active) return;
-
-      try {
-        // ACCOUNT SETTINGS MUST CLOSE FIRST.
-
-
-  if (accountSettings) {
-          setAccountSettings(false);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-        /*
-         * ONE Android Back controller.
-         *
-         * If Login/AuthGate is visible:
-         *   close Login first, then go Home.
-         *
-         * No fake Back button is created.
-         */
-        if (
-          typeof window.__BATZO_AUTH_BACK__ === "function" &&
-          window.__BATZO_AUTH_BACK__() === true
-        ) {
-          batzoTabHistory.current = [];
-          batzoPreviousTab.current = "home";
-          setTab("home");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-
-        /*
-         * Existing contest/team flow gets second priority.
-         */
-        if (
-          typeof window.__BATZO_FLOW_BACK__ === "function" &&
-          window.__BATZO_FLOW_BACK__() === true
-        ) {
-          return;
-        }
-
-        /*
-         * Normal app navigation.
-         */
-        if (batzoTabHistory.current.length > 0) {
-          const previous = batzoTabHistory.current.pop();
-          batzoPreviousTab.current = previous;
-          setTab(previous);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-
-        /*
-         * Any non-home screen -> Home.
-         */
-        if (tab !== "home") {
-          batzoTabHistory.current = [];
-          batzoPreviousTab.current = "home";
-          setTab("home");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-
-        /*
-         * Already Home:
-         * do not consume Android Back.
-         */
-      } catch (error) {
-        console.warn("[BATZO] Android Back:", error);
-      }
-    };
-
-    // BATZO: connect browser + Capacitor Android Back to the
-    // single onBack controller above.
-    let browserBackHandler = () => {
-      onBack();
-    };
-
-    window.addEventListener("popstate", browserBackHandler);
-
-    let capacitorBackListener = null;
-
-    try {
-      const capacitorApp = window.Capacitor?.Plugins?.App;
-
-      if (capacitorApp?.addListener) {
-        capacitorBackListener = capacitorApp.addListener(
-          "backButton",
-          onBack
-        );
-      }
-    } catch (error) {
-      console.warn("[BATZO] Capacitor Back listener:", error);
-    }
-
-    return () => {
-      active = false;
-
-      window.removeEventListener(
-        "popstate",
-        browserBackHandler
-      );
-
-      try {
-        if (capacitorBackListener?.remove) {
-          capacitorBackListener.remove();
-        }
-      } catch (error) {
-        console.warn("[BATZO] Remove Back listener:", error);
-      }
-
-      if (handle) {
-        clearTimeout(handle);
-      }
-    };
-
-  }, [tab, accountSettings]);
 
   const [notice, setNotice] = useState("");
+  const [realLiveMatches, setRealLiveMatches] = useState([]);
+  const [realUpcomingMatches, setRealUpcomingMatches] = useState([]);
   const [search, setSearch] = useState("");
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRealMatches = async () => {
+      try {
+        const response = await fetch(
+          "https://batzo.onrender.com/api/cricket/matches",
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Cricket API HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+
+        const rows = Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : [];
+
+        const liveRows = rows
+          .filter(
+            (m) =>
+              m?.matchStarted === true &&
+              m?.matchEnded !== true
+          )
+          .map(batzoLiveAdapter);
+
+        const upcomingRows = rows
+          .filter(
+            (m) =>
+              m?.matchStarted !== true &&
+              m?.matchEnded !== true
+          )
+          .map((m, index) => {
+            const teams = Array.isArray(m?.teams) ? m.teams : [];
+            const a = teams[0] || "Team 1";
+            const b = teams[1] || "Team 2";
+
+            const teamInfo = Array.isArray(m?.teamInfo)
+              ? m.teamInfo
+              : [];
+
+            const metaA =
+              teamInfo.find((t) => t?.name === a) || {};
+            const metaB =
+              teamInfo.find((t) => t?.name === b) || {};
+
+            const shortName = (name, meta) => {
+              if (meta?.shortname) return meta.shortname;
+
+              return String(name || "")
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((word) => word[0])
+                .join("")
+                .slice(0, 4)
+                .toUpperCase() || "TEAM";
+            };
+
+            let startDate = null;
+
+            try {
+              const raw =
+                m?.dateTimeGMT ||
+                m?.date ||
+                "";
+
+              if (raw) {
+                const normalized =
+                  /Z$|[+-]\d\d:\d\d$/.test(raw)
+                    ? raw
+                    : `${raw}Z`;
+
+                const parsed = new Date(normalized);
+
+                if (!Number.isNaN(parsed.getTime())) {
+                  startDate = parsed;
+                }
+              }
+            } catch (_) {}
+
+            return {
+              id: m?.id || `real-upcoming-${index}`,
+              league:
+                m?.name ||
+                String(m?.matchType || "CRICKET").toUpperCase(),
+
+              a,
+              ac: shortName(a, metaA),
+              af: "🏏",
+
+              b,
+              bc: shortName(b, metaB),
+              bf: "🏏",
+
+              time: startDate
+                ? startDate.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short"
+                  })
+                : "Upcoming",
+
+              clock: startDate
+                ? startDate.toLocaleTimeString("en-IN", {
+                    hour: "numeric",
+                    minute: "2-digit"
+                  })
+                : "TBA",
+
+              status: "UPCOMING",
+              raw: m
+            };
+          });
+
+        if (!cancelled) {
+          setRealLiveMatches(liveRows);
+          setRealUpcomingMatches(upcomingRows);
+        }
+      } catch (error) {
+        console.warn("BATZO real cricket refresh:", error);
+      }
+    };
+
+    loadRealMatches();
+
+    // Lifetime Free API has a small daily hit allowance.
+    // Refresh every 30 minutes; backend cache protects provider hits too.
+    const timer = setInterval(
+      loadRealMatches,
+      30 * 60 * 1000
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const displayLiveMatches = realLiveMatches;
+
+  const displayUpcomingMatches =
+    realUpcomingMatches.length > 0
+      ? realUpcomingMatches
+      : upcomingMatches;
 
   const openMatch = (match) => {
     try {
-      // Preserve the exact match selected by the user.
+      // Live matches open the dedicated scoreboard.
+      if (String(match?.status || "").toUpperCase() === "LIVE" || match?.innings) {
+        batzoTabHistory.current.push(tab);
+        batzoPreviousTab.current = tab;
+        setSelectedLiveMatch(match);
+        setTab("live-scoreboard");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Existing upcoming match -> contest flow remains unchanged.
       window.BATZO_ACTIVE_MATCH = match;
 
       try {
@@ -1376,25 +1728,24 @@ function BatzoApp() {
         console.warn("BATZO selected match storage:", e);
       }
 
-      // Open the existing contest tab with the selected match context.
       setSelectedMatch?.(match);
       setTab("contests");
     } catch (e) {
-      console.warn("BATZO match -> contest flow:", e);
+      console.warn("BATZO match flow:", e);
       setTab("contests");
     }
   };
 
   const upcomingFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return upcomingMatches;
+    if (!q) return displayUpcomingMatches;
 
-    return upcomingMatches.filter((m) =>
+    return displayUpcomingMatches.filter((m) =>
       `${m.a} ${m.b} ${m.ac} ${m.bc} ${m.league}`
         .toLowerCase()
         .includes(q)
     );
-  }, [search]);
+  }, [search, displayUpcomingMatches]);
 
   const showComing = (name) => {
     // BATZO CONTEST NAVIGATION FIX
@@ -1524,13 +1875,17 @@ function BatzoApp() {
                 <button onClick={() => navigateTab("matches")}>View all →</button>
               </div>
 
-              {liveMatches.map((m) => (
-                <LiveMatchCard
-                  key={m.id}
-                  match={m}
-                  onOpen={openMatch}
-                />
-              ))}
+              {displayLiveMatches.length > 0 ? (
+                displayLiveMatches.map((m) => (
+                  <LiveMatchCard
+                    key={m.id}
+                    match={m}
+                    onOpen={openMatch}
+                  />
+                ))
+              ) : (
+                <NoLiveMatches />
+              )}
             </section>
 
             <section className="section-block batzo-hidden-home-section">
@@ -1543,7 +1898,7 @@ function BatzoApp() {
               </div>
 
               <div className="upcoming-list">
-                {upcomingMatches.slice(0, 2).map((m) => (
+                {displayUpcomingMatches.slice(0, 2).map((m) => (
                   <UpcomingCard
                     key={m.id}
                     match={m}
@@ -1594,13 +1949,17 @@ function BatzoApp() {
 
             <div className="match-section-title">LIVE</div>
 
-            {liveMatches.map((m) => (
-              <LiveMatchCard
-                key={m.id}
-                match={m}
-                onOpen={openMatch}
-              />
-            ))}
+            {displayLiveMatches.length > 0 ? (
+              displayLiveMatches.map((m) => (
+                <LiveMatchCard
+                  key={m.id}
+                  match={m}
+                  onOpen={openMatch}
+                />
+              ))
+            ) : (
+              <NoLiveMatches />
+            )}
 
             <div className="match-section-title upcoming-title">
               UPCOMING
@@ -1618,7 +1977,18 @@ function BatzoApp() {
           </section>
         )}
 
-        {tab === "contests" && (
+        {tab === "live-scoreboard" && (
+        <LiveScoreboard
+          match={selectedLiveMatch}
+          onBack={() => {
+            const previous = batzoPreviousTab.current || "matches";
+            setTab(previous);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      )}
+
+      {tab === "contests" && (
           <section className="simple-page">
             <div className="page-heading">
               <span>COMPETE</span>
@@ -1826,47 +2196,60 @@ function BatzoApp() {
     writeJSON(TEAM_KEY, all);
   }
 
-  function getContests() {
-    try {
-      if (
-        typeof BATZO_CONTESTS !== "undefined" &&
-        Array.isArray(BATZO_CONTESTS) &&
-        BATZO_CONTESTS.length
-      ) {
-        return BATZO_CONTESTS;
-      }
-    } catch (e) {}
+  
+function getContests() {
+  /* BATZO_DEMO_CONTEST_FRONTEND_V1 */
 
-    return [
-      {
-        id: "mega-001",
-        name: "Mega Contest",
-        prize: "₹1,00,000",
-        entry: "₹49",
-        spots: 10000,
-        joined: 3210,
-        type: "popular"
-      },
-      {
-        id: "grand-002",
-        name: "Grand Contest",
-        prize: "₹50,000",
-        entry: "₹99",
-        spots: 5000,
-        joined: 1800,
-        type: "popular"
-      },
-      {
-        id: "small-003",
-        name: "Small Contest",
-        prize: "₹5,000",
-        entry: "₹25",
-        spots: 500,
-        joined: 210,
-        type: "complete"
+  const contests = [
+    {
+      id: 900001,
+      name: "BATZO FREE DEMO CONTEST",
+      title: "BATZO FREE DEMO CONTEST",
+      match: "BATZO DEMO: INDIA vs AUSTRALIA",
+      matchName: "BATZO DEMO: INDIA vs AUSTRALIA",
+      matchId: 3,
+      entryFee: 0,
+      entry_fee: 0,
+      entry: "₹0",
+      prizePool: 0,
+      prize_pool: 0,
+      prize: "₹0",
+      spots: 100,
+      maxSpots: 100,
+      max_spots: 100,
+      joinedSpots: 0,
+      status: "open",
+      type: "practice",
+      practice: true,
+      isPractice: true,
+      isDemo: true,
+      description: "Free practice contest. No real money deducted."
+    }
+  ];
+
+  try {
+    const existing = (
+      typeof window.BATZO_CONTESTS !== "undefined" &&
+      Array.isArray(window.BATZO_CONTESTS)
+    )
+      ? window.BATZO_CONTESTS
+      : [];
+
+    for (const contest of existing) {
+      if (
+        !contests.some(
+          item => String(item.name || item.title) ===
+            String(contest.name || contest.title)
+        )
+      ) {
+        contests.push(contest);
       }
-    ];
-  }
+    }
+  } catch (_) {}
+
+  return contests;
+}
+
 
   function players() {
     try {
@@ -1942,6 +2325,29 @@ function BatzoApp() {
 
   function showContestTabs(selected) {
     const list = getContests();
+    const demoContest = {
+      id: "batzo-free-demo-visible",
+      name: "BATZO FREE DEMO CONTEST",
+      title: "BATZO FREE DEMO CONTEST",
+      entry: "₹0",
+      entryFee: 0,
+      entry_fee: 0,
+      prize: "₹0",
+      prizePool: 0,
+      spots: 100,
+      maxSpots: 100,
+      joinedSpots: 0,
+      match: "BATZO DEMO: INDIA vs AUSTRALIA",
+      type: "practice",
+      practice: true,
+      isPractice: true,
+      isDemo: true,
+      description: "Free BATZO demo contest. Entry is ₹0 and no wallet money is deducted."
+    };
+
+    if (!list.some(c => String(c.id) === String(demoContest.id))) {
+      list.unshift(demoContest);
+    }
     const popular = list.filter(
       c => String(c.type || "popular").toLowerCase() !== "complete"
     );
@@ -2120,7 +2526,25 @@ function BatzoApp() {
         </div>
 
         <div style="margin-top:16px">
-          <button id="bzV11Teams" type="button" style="
+          
+          <button
+            id="bzContestLeaderboardButton"
+            type="button"
+            style="
+              width:100%;
+              margin-top:10px;
+              padding:14px;
+              border:0;
+              border-radius:12px;
+              background:#18231e;
+              color:#24e778;
+              font-weight:900;
+            "
+          >
+            VIEW LEADERBOARD
+          </button>
+
+<button id="bzV11Teams" type="button" style="
             width:100%;
             padding:15px;
             border:0;
@@ -2152,7 +2576,17 @@ function BatzoApp() {
       );
     };
 
-    r.querySelector("#bzV11Teams").onclick = function () {
+    
+    const leaderboardButton =
+      r.querySelector("#bzContestLeaderboardButton");
+
+    if (leaderboardButton) {
+      leaderboardButton.onclick = function () {
+        openBatzoWinnerLeaderboard(contest);
+      };
+    }
+
+r.querySelector("#bzV11Teams").onclick = function () {
       showMyTeams(match, contest);
     };
 
@@ -2397,7 +2831,13 @@ function BatzoApp() {
           return;
         }
 
-        batzoRequireLogin(() => showJoinConfirmation(match, contest, team));
+        
+        window.BATZO_SELECTED_TEAM = team;
+
+        batzoRequireLogin(() => {
+          showJoinConfirmation(match, contest, team);
+        });
+
       };
     }
   }
@@ -3167,50 +3607,54 @@ function BatzoApp() {
     return Number.isFinite(n) ? n : 49;
   }
 
-  function showJoinConfirmation(match, contest, team) {
-    const fee = entryAmount(contest);
+  
+function showJoinConfirmation(match, contest, team) {
+  const fee = entryAmount(contest);
 
-    const r = shell(
-      "Join Contest",
-      match + " • " + (contest.name || "Contest"),
-      `
+  const r = shell(
+    "Join Contest",
+    match + " • " + (contest.name || "Contest"),
+    `
+      <div style="
+        padding:18px;
+        border-radius:17px;
+        background:#101a16;
+        border:1px solid rgba(255,255,255,.10);
+      ">
         <div style="
-          padding:18px;
-          border-radius:17px;
-          background:#101a16;
-          border:1px solid rgba(255,255,255,.10);
+          color:#24e778;
+          font-weight:900;
         ">
-          <div style="color:#24e778;font-weight:900">
-            SELECTED TEAM
-          </div>
-
-          <h2>${team.name || "My Team"}</h2>
-
-          <div style="color:#929aa7;font-size:13px">
-            ${team.players.length}/11 players
-            · C: ${team.captainName || "-"}
-            · VC: ${team.viceCaptainName || "-"}
-          </div>
-
-          <div style="
-            margin-top:18px;
-            display:flex;
-            justify-content:space-between;
-          ">
-            <span>Entry Fee</span>
-            <strong>₹${fee}</strong>
-          </div>
-
-          <div style="
-            margin-top:8px;
-            display:flex;
-            justify-content:space-between;
-          ">
-            <span>Wallet</span>
-          </div>
+          SELECTED TEAM
         </div>
 
-        <button id="bzFinalJoin" type="button" style="
+        <h2>${team.name || "My Team"}</h2>
+
+        <div style="
+          color:#929aa7;
+          font-size:13px;
+        ">
+          ${Array.isArray(team.players)
+            ? team.players.length
+            : 0}/11 players
+          · C: ${team.captainName || "-"}
+          · VC: ${team.viceCaptainName || "-"}
+        </div>
+
+        <div style="
+          margin-top:18px;
+          display:flex;
+          justify-content:space-between;
+        ">
+          <span>Entry Fee</span>
+          <strong>₹${fee}</strong>
+        </div>
+      </div>
+
+      <button
+        id="bzFinalJoin"
+        type="button"
+        style="
           width:100%;
           margin-top:15px;
           padding:16px;
@@ -3219,57 +3663,246 @@ function BatzoApp() {
           background:#24e778;
           color:#061008;
           font-weight:900;
+        "
+      >
+        JOIN CONTEST • ₹${fee}
+      </button>
+    `
+  );
+
+  r.querySelector("#bzV11Back").onclick =
+    function () {
+      showMyTeams(match, contest);
+    };
+
+  r.querySelector("#bzFinalJoin").onclick =
+    async function () {
+
+      const button = this;
+      button.disabled = true;
+      button.textContent = "JOINING...";
+
+      try {
+        const token =
+          batzoAuthToken();
+
+        if (!token) {
+          throw new Error(
+            "Please login before joining a contest."
+          );
+        }
+
+        const base =
+          batzoApiBase();
+
+        if (!base) {
+          throw new Error(
+            "API URL is not configured."
+          );
+        }
+
+        const response = await fetch(
+          base +
+          "/api/contests/" +
+          encodeURIComponent(
+            contest.id
+          ) +
+          "/join",
+          {
+            method:"POST",
+            headers:{
+              "Content-Type":
+                "application/json",
+              Authorization:
+                "Bearer " + token
+            },
+            body:JSON.stringify({
+              teamId: team.backendId || team.id
+            })
+          }
+        );
+
+        const data =
+          await response.json()
+            .catch(function () {
+              return {};
+            });
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+          throw new Error(
+            data.message ||
+            "Contest join failed"
+          );
+        }
+
+        alert(
+          "Contest joined successfully."
+        );
+
+        await loadBatzoMyContests();
+
+        window.BATZO_ACTIVE_CONTEST =
+          contest;
+
+        showContestDetails(contest);
+
+      } catch (error) {
+        console.warn(
+          "BATZO CONTEST JOIN ERROR:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Failed to join contest."
+        );
+
+        button.disabled = false;
+        button.textContent =
+          "JOIN CONTEST • ₹" + fee;
+      }
+    };
+}
+
+
+
+
+/* BATZO_WINNER_LEADERBOARD_V2 */
+async function openBatzoWinnerLeaderboard(contest) {
+  try {
+    const contestId = contest && (contest.id || contest.contestId);
+
+    if (!contestId) {
+      alert("Contest ID not found.");
+      return;
+    }
+
+    const data = await batzoMyContestsRequest(
+      "/api/contests/" + encodeURIComponent(contestId) + "/leaderboard"
+    );
+
+    const leaderboard = Array.isArray(data.leaderboard)
+      ? data.leaderboard
+      : [];
+
+    const rows = leaderboard.length
+      ? leaderboard.map(function(entry, index) {
+          const rank = entry.rank || index + 1;
+          const prize = Number(entry.prize || 0);
+
+          return `
+            <div style="
+              padding:14px;
+              margin:8px 0;
+              border-radius:14px;
+              background:#101a16;
+              border:1px solid rgba(255,255,255,.10);
+            ">
+              <div style="
+                display:flex;
+                justify-content:space-between;
+                gap:10px;
+              ">
+                <strong>#${rank}</strong>
+                <strong style="color:#24e778">
+                  ${Number(entry.points || 0)} pts
+                </strong>
+              </div>
+
+              <div style="
+                margin-top:8px;
+                font-size:13px;
+                color:#9ca5b1;
+              ">
+                Status: ${entry.status || "joined"}
+              </div>
+
+              <div style="
+                margin-top:5px;
+                font-size:13px;
+                color:#fff;
+              ">
+                Prize: ₹${prize}
+              </div>
+            </div>
+          `;
+        }).join("")
+      : `
+          <div style="
+            padding:30px 10px;
+            text-align:center;
+            color:#9ca5b1;
+          ">
+            No leaderboard entries yet.
+          </div>
+        `;
+
+    const r = shell(
+      "Leaderboard",
+      contest.name || "Contest",
+      `
+        <div style="
+          margin-bottom:12px;
+          color:#24e778;
+          font-weight:900;
         ">
-          JOIN CONTEST • ₹${fee}
-        </button>
+          LIVE CONTEST RANKING
+        </div>
+
+        ${rows}
       `
     );
 
     r.querySelector("#bzV11Back").onclick = function () {
-      showMyTeams(match, contest);
-    };
-
-    r.querySelector("#bzFinalJoin").onclick = function () {
-      const joined = readJSON(JOIN_KEY, []);
-
-      const duplicate = joined.some(function (x) {
-        return String(x.contestId) === String(contest.id) &&
-               String(x.match) === String(matchKey(match)) &&
-               String(x.teamId) === String(team.id);
-      });
-
-      if (duplicate) {
-        alert("This team is already joined in this contest.");
-        return;
-      }
-
-
-      if (balance < fee) {
-        alert(
-          "Insufficient wallet balance. Required ₹" +
-          fee +
-          ", available ₹" +
-          balance + "."
-        );
-        return;
-      }
-
-      const record = {
-        contestId: contest.id || contest.name,
-        contestName: contest.name || "Contest",
-        match: matchKey(match),
-        teamId: team.id,
-        joinedAt: Date.now()
-      };
-
-      writeJSON(JOIN_KEY, joined.concat(record));
-
-      alert("Contest joined successfully.");
       showContestDetails(contest);
     };
+
+  } catch (error) {
+    console.error("BATZO LEADERBOARD ERROR:", error);
+
+    alert(
+      error && error.message
+        ? error.message
+        : "Failed to load leaderboard."
+    );
+  }
+}
+
+
+
+
+/* BATZO_REAL_CONTEST_JOIN_V2 */
+async function batzoJoinContestApi(match, contest, team) {
+  const contestId = Number(
+    contest && (contest.id || contest.contestId)
+  );
+
+  if (!contestId) {
+    throw new Error("Contest ID not found.");
   }
 
-  function openContests() {
+  if (!team || !team.id) {
+    throw new Error("Selected team not found.");
+  }
+
+  const result = await batzoMyContestsRequest(
+    "/api/contests/" + encodeURIComponent(contestId) + "/join",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        teamId: team.id
+      })
+    }
+  );
+
+  return result;
+}
+
+
+function openContests() {
     window.BATZO_ACTIVE_MATCH =
       window.BATZO_ACTIVE_MATCH || "IND vs AUS";
 
@@ -3417,6 +4050,57 @@ function batzoAuthToken() {
   return "";
 }
 
+
+/* BATZO_DEMO_CONTEST_API_V1 */
+async function batzoLoadDemoContests() {
+  const base = batzoApiBase();
+
+  if (!base) {
+    console.warn("[BATZO] API base URL missing; demo contests will use local fallback.");
+    return [];
+  }
+
+  try {
+    const response = await fetch(base + "/api/contests");
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data.success === false) {
+      console.warn("[BATZO] Contest API unavailable");
+      return [];
+    }
+
+    const contests = Array.isArray(data.contests)
+      ? data.contests
+      : [];
+
+    return contests.map(c => ({
+      ...c,
+      id: c.id,
+      name: c.name || c.title || "Contest",
+      title: c.title || c.name || "Contest",
+      entry:
+        Number(c.entryFee ?? c.entry_fee ?? 0) === 0
+          ? "₹0"
+          : "₹" + Number(c.entryFee ?? c.entry_fee ?? 0),
+      prize:
+        Number(c.prizePool ?? c.prize_pool ?? 0) === 0
+          ? "₹0"
+          : "₹" + Number(c.prizePool ?? c.prize_pool ?? 0),
+      spots:
+        Number(c.maxSpots ?? c.max_spots ?? 0),
+      entryFee:
+        Number(c.entryFee ?? c.entry_fee ?? 0),
+      practice:
+        !!(c.practice || c.isPractice || c.isDemo),
+      isDemo:
+        !!c.isDemo
+    }));
+  } catch (error) {
+    console.warn("[BATZO] Demo contest API fetch failed:", error);
+    return [];
+  }
+}
+
 function batzoApiBase() {
   const value =
     typeof import.meta !== "undefined" &&
@@ -3428,8 +4112,390 @@ function batzoApiBase() {
   return value.replace(/\/+$/, "");
 }
 
+
+/* BATZO_MY_CONTESTS_API_BRIDGE_V1 */
+async function batzoMyContestsRequest(path, options = {}) {
+  const token = batzoAuthToken();
+
+  if (!token) {
+    const error = new Error("AUTH_REQUIRED");
+    error.code = "AUTH_REQUIRED";
+    error.status = 401;
+    throw error;
+  }
+
+  const base = batzoApiBase();
+
+  if (!base) {
+    const error = new Error("API_BASE_URL_MISSING");
+    error.code = "API_BASE_URL_MISSING";
+    throw error;
+  }
+
+  const response = await fetch(base + path, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    }
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.success === false) {
+    const error = new Error(
+      data.message || "My contests request failed"
+    );
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+
+  return data;
+}
+
+async function loadBatzoMyContests() {
+  try {
+    const data = await batzoMyContestsRequest(
+      "/api/my-contests"
+    );
+
+    const contests = Array.isArray(data.contests)
+      ? data.contests
+      : Array.isArray(data.entries)
+        ? data.entries
+        : [];
+
+    window.BATZO_MY_CONTESTS = contests;
+
+    console.log(
+      "BATZO MY CONTESTS LOADED:",
+      contests.length,
+      contests
+    );
+
+    return contests;
+
+  } catch (error) {
+    console.warn(
+      "BATZO MY CONTESTS LOAD FAILED:",
+      error
+    );
+
+    window.BATZO_MY_CONTESTS = [];
+
+    return [];
+  }
+}
+
+
+
+
+/* BATZO_WINNER_UI_V2 */
+
+function batzoWinnerText(entry) {
+  const status = String(entry.status || "").toLowerCase();
+
+  if (status === "winner") return "🏆 WINNER";
+  if (status === "settled") return "COMPLETED";
+  return "JOINED";
+}
+
+function batzoContestStatusCard(entry) {
+  const points =
+    entry.points !== undefined &&
+    entry.points !== null
+      ? Number(entry.points)
+      : 0;
+
+  const rank =
+    entry.rank !== undefined &&
+    entry.rank !== null
+      ? "#" + entry.rank
+      : "-";
+
+  const prize =
+    entry.prize !== undefined &&
+    entry.prize !== null
+      ? Number(entry.prize)
+      : 0;
+
+  return `
+    <div style="
+      margin:10px 0;
+      padding:16px;
+      border-radius:16px;
+      background:#101a16;
+      border:1px solid rgba(36,231,120,.25);
+    ">
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        align-items:center;
+      ">
+        <strong>${entry.contestName || "Practice Contest"}</strong>
+        <span style="
+          color:#24e778;
+          font-size:11px;
+          font-weight:900;
+        ">${batzoWinnerText(entry)}</span>
+      </div>
+
+      <div style="
+        margin-top:7px;
+        color:#929aa7;
+        font-size:12px;
+      ">
+        ${entry.matchName || entry.match || "Match"}
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-top:15px;
+        padding-top:12px;
+        border-top:1px solid rgba(255,255,255,.08);
+      ">
+        <div>
+          <div style="font-size:10px;color:#929aa7">POINTS</div>
+          <strong style="color:#fff">${points}</strong>
+        </div>
+
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#929aa7">RANK</div>
+          <strong style="color:#24e778">${rank}</strong>
+        </div>
+
+        <div style="text-align:right">
+          <div style="font-size:10px;color:#929aa7">PRIZE</div>
+          <strong style="color:#fff">₹${prize}</strong>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        data-bz-my-contest="${entry.contestId || entry.contest_id}"
+        style="
+          width:100%;
+          margin-top:14px;
+          padding:11px;
+          border:0;
+          border-radius:10px;
+          background:#18231e;
+          color:#24e778;
+          font-weight:900;
+        "
+      >
+        VIEW LEADERBOARD
+      </button>
+    </div>
+  `;
+}
+
+function showBatzoMyContests() {
+  const r = shell(
+    "My Contests",
+    currentMatch(),
+    `
+      <div id="bzMyContestsLoading"
+        style="padding:25px;text-align:center;color:#929aa7">
+        Loading contests...
+      </div>
+
+      <div id="bzMyContestsList"></div>
+    `
+  );
+
+  r.querySelector("#bzV11Back").onclick = goBack;
+
+  (async function () {
+    const loading = r.querySelector("#bzMyContestsLoading");
+    const list = r.querySelector("#bzMyContestsList");
+
+    const contests = await loadBatzoMyContests();
+
+    if (loading) loading.remove();
+
+    if (!contests.length) {
+      list.innerHTML = `
+        <div style="
+          text-align:center;
+          padding:35px 10px;
+          color:#929aa7;
+        ">
+          No contests joined yet.
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = contests
+      .map(batzoContestStatusCard)
+      .join("");
+
+    list
+      .querySelectorAll("[data-bz-my-contest]")
+      .forEach(function (btn) {
+        btn.onclick = function () {
+          showBatzoLeaderboard(
+            btn.getAttribute("data-bz-my-contest")
+          );
+        };
+      });
+  })();
+}
+
+async function showBatzoLeaderboard(contestId) {
+  const r = shell(
+    "Leaderboard",
+    "Live contest ranking",
+    `
+      <div id="bzLeaderboardLoading"
+        style="padding:25px;text-align:center;color:#929aa7">
+        Loading leaderboard...
+      </div>
+
+      <div id="bzLeaderboardList"></div>
+    `
+  );
+
+  r.querySelector("#bzV11Back").onclick = goBack;
+
+  try {
+    const data = await batzoMyContestsRequest(
+      "/api/contests/" + encodeURIComponent(contestId) +
+      "/leaderboard"
+    );
+
+    const loading =
+      r.querySelector("#bzLeaderboardLoading");
+
+    const list =
+      r.querySelector("#bzLeaderboardList");
+
+    if (loading) loading.remove();
+
+    const leaderboard =
+      Array.isArray(data.leaderboard)
+        ? data.leaderboard
+        : [];
+
+    if (!leaderboard.length) {
+      list.innerHTML =
+        '<div style="padding:30px;text-align:center;color:#929aa7">No leaderboard entries yet.</div>';
+      return;
+    }
+
+    list.innerHTML = leaderboard.map(function (entry) {
+      const rank =
+        entry.rank !== undefined &&
+        entry.rank !== null
+          ? entry.rank
+          : "-";
+
+      return `
+        <div style="
+          margin:9px 0;
+          padding:14px;
+          border-radius:14px;
+          background:#101a16;
+          border:1px solid rgba(255,255,255,.09);
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+        ">
+          <div>
+            <strong>Rank #${rank}</strong>
+            <div style="
+              margin-top:5px;
+              font-size:12px;
+              color:#929aa7;
+            ">
+              ${entry.points || 0} Points
+            </div>
+          </div>
+
+          <div style="
+            color:#24e778;
+            font-weight:900;
+            font-size:12px;
+          ">
+            ${batzoWinnerText(entry)}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (error) {
+    const loading =
+      r.querySelector("#bzLeaderboardLoading");
+
+    if (loading) {
+      loading.innerHTML =
+        "Failed to load leaderboard.";
+    }
+
+    console.warn(
+      "BATZO LEADERBOARD ERROR:",
+      error
+    );
+  }
+}
+
+
+
+/* BATZO_MY_CONTEST_STATUS_HELPER_V1 */
+function batzoContestStatusText(entry) {
+
+  const status =
+    String(entry && entry.status || "")
+      .toLowerCase();
+
+  const points =
+    Number(entry && entry.points || 0);
+
+  const rank =
+    entry && entry.rank;
+
+  if (status === "winner") {
+    return {
+      label: "WINNER",
+      points,
+      rank: rank || 1,
+      prize: Number(entry.prize || 0)
+    };
+  }
+
+  if (status === "settled") {
+    return {
+      label: "COMPLETED",
+      points,
+      rank: rank || "-",
+      prize: Number(entry.prize || 0)
+    };
+  }
+
+  return {
+    label: "JOINED",
+    points,
+    rank: rank || "-",
+    prize: Number(entry && entry.prize || 0)
+  };
+}
+
+
 async function batzoWalletRequest(path, options = {}) {
-  let token = batzoAuthToken();
+  let token =
+      localStorage.getItem("batzo_token") ||
+      localStorage.getItem("batzoToken") ||
+      localStorage.getItem("token") ||
+      "";
+
+    if (!token) {
+      token = await batzoRecoverAuthToken();
+    }
 
   // If the Batzo JWT is missing, recover it from the
   // currently authenticated Firebase user.
@@ -3587,6 +4653,65 @@ async function batzoWalletRequest(path, options = {}) {
 
 
 
+
+
+
+/* BATZO STEP1 AUTH TOKEN RECOVERY */
+async function batzoRecoverAuthToken() {
+  let token =
+    localStorage.getItem("batzo_token") ||
+    localStorage.getItem("batzoToken") ||
+    localStorage.getItem("token") ||
+    "";
+
+  if (token) return token;
+
+  const userJson =
+    localStorage.getItem("batzo_user") ||
+    localStorage.getItem("batzoUser") ||
+    localStorage.getItem("user");
+
+  if (userJson) {
+    try {
+      const user = JSON.parse(userJson);
+      token =
+        user?.token ||
+        user?.jwt ||
+        user?.accessToken ||
+        "";
+
+      if (token) {
+        localStorage.setItem("batzo_token", token);
+        return token;
+      }
+    } catch (_) {}
+  }
+
+  try {
+    if (
+      typeof FirebaseAuthentication !== "undefined" &&
+      FirebaseAuthentication &&
+      typeof FirebaseAuthentication.getCurrentUser === "function"
+    ) {
+      const current = await FirebaseAuthentication.getCurrentUser();
+
+      if (current && current.user) {
+        token =
+          current.user.idToken ||
+          current.user.token ||
+          current.user.accessToken ||
+          "";
+
+        if (token) {
+          localStorage.setItem("batzo_token", token);
+          return token;
+        }
+      }
+    }
+  } catch (_) {}
+
+  return "";
+}
 
 function BatzoWalletScreen() {
   const [wallet,setWallet] = React.useState(null);
@@ -4074,7 +5199,78 @@ function BatzoWalletFinalPanel() {
 
 
 function App() {
-  return (
+
+
+  // BATZO_SINGLE_ANDROID_BACK_V3
+  useEffect(() => {
+    let handle = null;
+    let alive = true;
+    let processing = false;
+
+    const onAndroidBack = async () => {
+      if (!alive || processing) return;
+      processing = true;
+      
+      // Account Settings gets the physical Android Back event first.
+      const accountBack = document.querySelector(
+        '[data-batzo-account-back="1"]'
+      );
+      if (accountBack) {
+        accountBack.click();
+        setTimeout(() => {
+          processing = false;
+        }, 300);
+        return;
+      }
+
+
+      try {
+        // First: authentication/inner-screen navigation.
+        if (
+          typeof window.__BATZO_AUTH_BACK__ === "function" &&
+          window.__BATZO_AUTH_BACK__() === true
+        ) {
+          return;
+        }
+
+        // Second: normal Batzo page/tab navigation.
+        if (
+          typeof window.__BATZO_FLOW_BACK__ === "function" &&
+          window.__BATZO_FLOW_BACK__() === true
+        ) {
+          return;
+        }
+
+        // Final SPA fallback.
+        if (window.history.length > 1) {
+          window.history.back();
+        }
+      } catch (err) {
+        console.warn("BATZO Android Back error:", err);
+      } finally {
+        setTimeout(() => {
+          processing = false;
+        }, 300);
+      }
+    };
+
+    CapacitorApp.addListener("backButton", onAndroidBack).then((h) => {
+      if (alive) {
+        handle = h;
+      } else if (h && typeof h.remove === "function") {
+        h.remove();
+      }
+    });
+
+    return () => {
+      alive = false;
+      if (handle && typeof handle.remove === "function") {
+        handle.remove();
+      }
+    };
+  }, []);
+
+return (
     <AuthGate>
       <BatzoApp />
     </AuthGate>
