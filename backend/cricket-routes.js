@@ -17,47 +17,74 @@ function rows(payload) {
       : [];
 }
 
+function uniqueMatches(list) {
+  const result = [];
+  const seen = new Set();
+
+  for (const match of list) {
+    const id =
+      match?.id ||
+      `${match?.name || ""}:${match?.dateTimeGMT || match?.date || ""}`;
+
+    if (!id || seen.has(id)) continue;
+
+    seen.add(id);
+    result.push(match);
+  }
+
+  return result;
+}
+
 router.get("/matches", async (req, res) => {
   try {
     /*
-     * currentMatches gives live/recent matches.
-     * matches gives scheduled/upcoming matches.
-     * Merge both so Batzo receives one real list.
+     * Pull several schedule pages.
+     * This broadens coverage beyond only the first few
+     * international fixtures.
      */
-    const [currentResult, scheduleResult] =
-      await Promise.allSettled([
-        getCurrentMatches(),
-        getMatches()
-      ]);
+    const offsets = [0, 25, 50, 75, 100];
 
-    const current =
-      currentResult.status === "fulfilled"
-        ? rows(currentResult.value)
-        : [];
+    const results = await Promise.allSettled([
+      getCurrentMatches(),
+      ...offsets.map((offset) => getMatches(offset))
+    ]);
 
-    const scheduled =
-      scheduleResult.status === "fulfilled"
-        ? rows(scheduleResult.value)
-        : [];
+    let all = [];
 
-    const merged = [];
-    const seen = new Set();
-
-    for (const match of [...current, ...scheduled]) {
-      const id =
-        match?.id ||
-        `${match?.name || ""}-${match?.dateTimeGMT || match?.date || ""}`;
-
-      if (seen.has(id)) continue;
-
-      seen.add(id);
-      merged.push(match);
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        all.push(...rows(result.value));
+      } else {
+        console.warn(
+          "CRICKET PAGE:",
+          result.reason?.response?.data ||
+          result.reason?.message
+        );
+      }
     }
+
+    all = uniqueMatches(all);
+
+    all.sort((a, b) => {
+      const at = Date.parse(
+        a?.dateTimeGMT || a?.date || ""
+      );
+
+      const bt = Date.parse(
+        b?.dateTimeGMT || b?.date || ""
+      );
+
+      if (Number.isNaN(at) && Number.isNaN(bt)) return 0;
+      if (Number.isNaN(at)) return 1;
+      if (Number.isNaN(bt)) return -1;
+
+      return at - bt;
+    });
 
     res.json({
       status: "success",
-      data: merged,
-      count: merged.length
+      count: all.length,
+      data: all
     });
   } catch (error) {
     console.error(
@@ -76,7 +103,7 @@ router.get("/live", async (req, res) => {
   try {
     const data = await getCurrentMatches();
 
-    const matches = rows(data).filter(
+    const live = rows(data).filter(
       (match) =>
         match?.matchStarted === true &&
         match?.matchEnded !== true
@@ -84,7 +111,8 @@ router.get("/live", async (req, res) => {
 
     res.json({
       status: "success",
-      data: matches
+      count: live.length,
+      data: live
     });
   } catch (error) {
     console.error(
@@ -101,7 +129,9 @@ router.get("/live", async (req, res) => {
 
 router.get("/scorecard/:id", async (req, res) => {
   try {
-    res.json(await getScorecard(req.params.id));
+    res.json(
+      await getScorecard(req.params.id)
+    );
   } catch (error) {
     console.error(
       "SCORECARD:",
@@ -117,7 +147,9 @@ router.get("/scorecard/:id", async (req, res) => {
 
 router.get("/squad/:id", async (req, res) => {
   try {
-    res.json(await getSquad(req.params.id));
+    res.json(
+      await getSquad(req.params.id)
+    );
   } catch (error) {
     console.error(
       "SQUAD:",
