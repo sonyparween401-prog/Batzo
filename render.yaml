@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: batzo-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/cricket/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CRICKET_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
