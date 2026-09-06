@@ -1789,151 +1789,290 @@ function BatzoApp() {
 
   useEffect(() => {
     let cancelled = false;
+    let retryTimer = null;
+
+    const apiBase =
+      (import.meta.env.VITE_API_BASE_URL ||
+        "https://batzo.onrender.com"
+      ).replace(/\/+$/, "");
+
+    const json = async (path) => {
+      const response = await fetch(
+        `${apiBase}${path}`,
+        {
+          headers: {
+            Accept: "application/json"
+          },
+          cache: "no-store"
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `${path} HTTP ${response.status}`
+        );
+      }
+
+      return response.json();
+    };
+
+    const upcomingAdapter = (m, index) => {
+      const teams =
+        Array.isArray(m?.teams)
+          ? m.teams
+          : [];
+
+      const a = teams[0] || "Team 1";
+      const b = teams[1] || "Team 2";
+
+      const info =
+        Array.isArray(m?.teamInfo)
+          ? m.teamInfo
+          : [];
+
+      const metaA =
+        info.find((t) => t?.name === a) || {};
+
+      const metaB =
+        info.find((t) => t?.name === b) || {};
+
+      const short = (name, meta) => {
+        if (meta?.shortname) {
+          return meta.shortname;
+        }
+
+        return String(name || "")
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 4)
+          .toUpperCase() || "TEAM";
+      };
+
+      let dt = null;
+
+      try {
+        const raw =
+          m?.dateTimeGMT ||
+          m?.date ||
+          "";
+
+        if (raw) {
+          const normalized =
+            /Z$|[+-]\d\d:\d\d$/.test(raw)
+              ? raw
+              : `${raw}Z`;
+
+          const parsed =
+            new Date(normalized);
+
+          if (!Number.isNaN(parsed.getTime())) {
+            dt = parsed;
+          }
+        }
+      } catch (_) {}
+
+      return {
+        id:
+          m?.id ||
+          `real-upcoming-${index}`,
+
+        league:
+          m?.name ||
+          String(
+            m?.matchType || "CRICKET"
+          ).toUpperCase(),
+
+        a,
+        ac: short(a, metaA),
+        af: "🏏",
+
+        b,
+        bc: short(b, metaB),
+        bf: "🏏",
+
+        time: dt
+          ? dt.toLocaleDateString(
+              "en-IN",
+              {
+                day: "numeric",
+                month: "short"
+              }
+            )
+          : "Upcoming",
+
+        clock: dt
+          ? dt.toLocaleTimeString(
+              "en-IN",
+              {
+                hour: "numeric",
+                minute: "2-digit"
+              }
+            )
+          : "TBA",
+
+        status: "UPCOMING",
+        raw: m
+      };
+    };
 
     const loadRealMatches = async () => {
       try {
-        const response = await fetch(
-          "https://batzo.onrender.com/api/cricket/matches",
-          { cache: "no-store" }
-        );
+        const [liveResult, matchesResult] =
+          await Promise.allSettled([
+            json("/api/cricket/live"),
+            json("/api/cricket/matches")
+          ]);
 
-        if (!response.ok) {
-          throw new Error(`Cricket API HTTP ${response.status}`);
-        }
+        let gotSomething = false;
 
-        const payload = await response.json();
+        if (
+          liveResult.status === "fulfilled"
+        ) {
+          const livePayload =
+            liveResult.value;
 
-        const rows = Array.isArray(payload?.data)
-          ? payload.data
-          : Array.isArray(payload)
-            ? payload
-            : [];
-
-        const liveRows = rows
-          .filter(
-            (m) =>
-              m?.matchStarted === true &&
-              m?.matchEnded !== true
-          )
-          .map((m) =>
-            batzoLiveAdapter({
-              ...m,
-              status: "LIVE"
-            })
-          );
-
-        const upcomingRows = rows
-          .filter(
-            (m) =>
-              m?.matchStarted !== true &&
-              m?.matchEnded !== true
-          )
-          .map((m, index) => {
-            const teams = Array.isArray(m?.teams) ? m.teams : [];
-            const a = teams[0] || "Team 1";
-            const b = teams[1] || "Team 2";
-
-            const teamInfo = Array.isArray(m?.teamInfo)
-              ? m.teamInfo
+          const liveRows =
+            Array.isArray(livePayload?.data)
+              ? livePayload.data
               : [];
 
-            const metaA =
-              teamInfo.find((t) => t?.name === a) || {};
-            const metaB =
-              teamInfo.find((t) => t?.name === b) || {};
+          const genuineLive =
+            liveRows
+              .filter(
+                (m) =>
+                  m?.matchStarted === true &&
+                  m?.matchEnded !== true
+              )
+              .map((m) =>
+                batzoLiveAdapter({
+                  ...m,
+                  status: "LIVE"
+                })
+              );
 
-            const shortName = (name, meta) => {
-              if (meta?.shortname) return meta.shortname;
+          if (!cancelled) {
+            setRealLiveMatches(
+              genuineLive
+            );
+          }
 
-              return String(name || "")
-                .split(/\s+/)
-                .filter(Boolean)
-                .map((word) => word[0])
-                .join("")
-                .slice(0, 4)
-                .toUpperCase() || "TEAM";
-            };
+          gotSomething = true;
+        }
 
-            let startDate = null;
+        if (
+          matchesResult.status === "fulfilled"
+        ) {
+          const payload =
+            matchesResult.value;
 
-            try {
-              const raw =
-                m?.dateTimeGMT ||
-                m?.date ||
-                "";
+          const rows =
+            Array.isArray(payload?.data)
+              ? payload.data
+              : [];
 
-              if (raw) {
-                const normalized =
-                  /Z$|[+-]\d\d:\d\d$/.test(raw)
-                    ? raw
-                    : `${raw}Z`;
+          const upcoming =
+            rows
+              .filter(
+                (m) =>
+                  m?.matchStarted !== true &&
+                  m?.matchEnded !== true
+              )
+              .map(upcomingAdapter);
 
-                const parsed = new Date(normalized);
+          if (!cancelled) {
+            setRealUpcomingMatches(
+              upcoming
+            );
+          }
 
-                if (!Number.isNaN(parsed.getTime())) {
-                  startDate = parsed;
-                }
-              }
-            } catch (_) {}
+          gotSomething = true;
+        }
 
-            return {
-              id: m?.id || `real-upcoming-${index}`,
-              league:
-                m?.name ||
-                String(m?.matchType || "CRICKET").toUpperCase(),
+        /*
+         * If Render was waking/redeploying and both
+         * requests failed, retry automatically.
+         */
+        if (!gotSomething && !cancelled) {
+          clearTimeout(retryTimer);
 
-              a,
-              ac: shortName(a, metaA),
-              af: "🏏",
-
-              b,
-              bc: shortName(b, metaB),
-              bf: "🏏",
-
-              time: startDate
-                ? startDate.toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short"
-                  })
-                : "Upcoming",
-
-              clock: startDate
-                ? startDate.toLocaleTimeString("en-IN", {
-                    hour: "numeric",
-                    minute: "2-digit"
-                  })
-                : "TBA",
-
-              status: "UPCOMING",
-              raw: m
-            };
-          });
-
-        if (!cancelled) {
-          setRealLiveMatches(liveRows);
-          setRealUpcomingMatches(upcomingRows);
+          retryTimer = setTimeout(
+            loadRealMatches,
+            15000
+          );
         }
       } catch (error) {
-        console.warn("BATZO real cricket refresh:", error);
+        console.warn(
+          "BATZO real cricket refresh:",
+          error
+        );
+
+        if (!cancelled) {
+          clearTimeout(retryTimer);
+
+          retryTimer = setTimeout(
+            loadRealMatches,
+            15000
+          );
+        }
       }
     };
 
     loadRealMatches();
 
-    // Lifetime Free API has a small daily hit allowance.
-    // Refresh every 30 minutes; backend cache protects provider hits too.
-    const timer = setInterval(
+    /*
+     * Refresh from Batzo backend occasionally.
+     * Backend caching protects CricketData quota.
+     */
+    const interval = setInterval(
       loadRealMatches,
-      30 * 60 * 1000
+      10 * 60 * 1000
+    );
+
+    const onFocus = () => {
+      loadRealMatches();
+    };
+
+    const onVisible = () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        loadRealMatches();
+      }
+    };
+
+    window.addEventListener(
+      "focus",
+      onFocus
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      onVisible
     );
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+
+      clearTimeout(retryTimer);
+      clearInterval(interval);
+
+      window.removeEventListener(
+        "focus",
+        onFocus
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        onVisible
+      );
     };
   }, []);
 
-  const displayLiveMatches = realLiveMatches;
+  const displayLiveMatches =
+    realLiveMatches;
 
   const displayUpcomingMatches = realUpcomingMatches;
 
