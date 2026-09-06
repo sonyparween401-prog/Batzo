@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+  getBallByBall,
   getMatches,
   getCurrentMatches,
   getScorecard,
@@ -123,6 +124,94 @@ router.get("/live", async (req, res) => {
     res.status(502).json({
       success: false,
       error: "Unable to fetch live cricket data"
+    });
+  }
+});
+
+
+function findBallArray(value, depth = 0) {
+  if (depth > 8 || value == null) return null;
+
+  if (Array.isArray(value)) {
+    const looksLikeBalls = value.some(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        item.over !== undefined &&
+        item.ball !== undefined
+    );
+
+    if (looksLikeBalls) return value;
+
+    for (const item of value) {
+      const found = findBallArray(item, depth + 1);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  if (typeof value === "object") {
+    for (const item of Object.values(value)) {
+      const found = findBallArray(item, depth + 1);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
+router.get("/ball-by-ball/:id", async (req, res) => {
+  try {
+    const id = String(req.params.id || "").trim();
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: "Match id is required"
+      });
+    }
+
+    const payload = await getBallByBall(id);
+
+    const match =
+      payload?.data && typeof payload.data === "object"
+        ? payload.data
+        : payload;
+
+    const allBalls =
+      findBallArray(match) || [];
+
+    /*
+     * Only recent balls are needed by the mobile UI.
+     * Never expose the provider API key.
+     */
+    const recentBalls = allBalls.slice(-24);
+
+    res.json({
+      status: "success",
+      match: {
+        id: match?.id || id,
+        name: match?.name || "",
+        status: match?.status || "",
+        matchStarted: !!match?.matchStarted,
+        matchEnded: !!match?.matchEnded,
+        score: Array.isArray(match?.score)
+          ? match.score
+          : []
+      },
+      count: allBalls.length,
+      balls: recentBalls
+    });
+  } catch (error) {
+    console.error(
+      "BALL BY BALL:",
+      error.response?.data || error.message
+    );
+
+    res.status(502).json({
+      success: false,
+      error: "Unable to fetch ball-by-ball data"
     });
   }
 });

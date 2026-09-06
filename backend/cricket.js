@@ -98,6 +98,23 @@ async function getMatches(offset = 0) {
   );
 }
 
+async function getBallByBall(id) {
+  if (!id) {
+    throw new Error("Match id is required");
+  }
+
+  /*
+   * Fantasy Ball-by-Ball is expensive on the free quota.
+   * Cache provider results for 5 minutes so multiple users
+   * do not create duplicate CricketData hits.
+   */
+  return request(
+    "match_bbb",
+    { id },
+    5 * 60 * 1000
+  );
+}
+
 async function getScorecard(id) {
   return request(
     "match_scorecard",
@@ -115,6 +132,7 @@ async function getSquad(id) {
 }
 
 module.exports = {
+  getBallByBall,
   getMatches,
   getCurrentMatches,
   getScorecard,

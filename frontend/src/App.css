@@ -4946,3 +4946,159 @@ section.batzo-hidden-home-section {
   color: #ff2947 !important;
   border-color: #8f0019 !important;
 }
+
+/* =================================================
+   BATZO BALL BY BALL LIVE COMMENTARY
+   ================================================= */
+
+.batzo-bbb-panel {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px;
+  background: rgba(12,18,24,.96);
+}
+
+.batzo-bbb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.batzo-bbb-head h3 {
+  margin: 4px 0 0;
+  font-size: 21px;
+}
+
+.batzo-bbb-kicker {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  color: #ff2947;
+}
+
+.batzo-bbb-refresh {
+  min-width: 90px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,41,71,.55);
+  background: rgba(90,0,17,.45);
+  color: #ff4961;
+  font-weight: 800;
+}
+
+.batzo-bbb-refresh:disabled {
+  opacity: .5;
+}
+
+.batzo-bbb-updated {
+  display: block;
+  margin-top: 7px;
+  opacity: .6;
+}
+
+.batzo-bbb-latest {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.055);
+}
+
+.batzo-bbb-ballno {
+  min-width: 54px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.batzo-bbb-latest-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.batzo-bbb-latest-main strong {
+  font-size: 21px;
+}
+
+.batzo-bbb-latest-main span {
+  font-size: 12px;
+  opacity: .72;
+}
+
+.batzo-bbb-recent-title {
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.3px;
+  opacity: .65;
+}
+
+.batzo-bbb-balls {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding-bottom: 7px;
+}
+
+.batzo-ball-chip {
+  flex: 0 0 auto;
+  min-width: 50px;
+  height: 58px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.055);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.batzo-ball-chip small {
+  font-size: 9px;
+  opacity: .55;
+}
+
+.batzo-ball-chip strong {
+  margin-top: 3px;
+  font-size: 14px;
+}
+
+.batzo-ball-chip.four {
+  border-color: rgba(0,220,120,.5);
+}
+
+.batzo-ball-chip.six {
+  border-color: rgba(0,220,120,.75);
+  box-shadow: 0 0 14px rgba(0,220,120,.14);
+}
+
+.batzo-ball-chip.wicket {
+  border-color: rgba(255,40,65,.75);
+  background: rgba(100,0,15,.34);
+}
+
+.batzo-ball-chip.extra {
+  border-color: rgba(255,185,40,.55);
+}
+
+.batzo-bbb-empty,
+.batzo-bbb-error {
+  margin-top: 14px;
+  padding: 15px;
+  text-align: center;
+  border-radius: 14px;
+  background: rgba(255,255,255,.045);
+  font-size: 13px;
+  opacity: .75;
+}
+
+.batzo-bbb-error {
+  color: #ff6074;
+}
+

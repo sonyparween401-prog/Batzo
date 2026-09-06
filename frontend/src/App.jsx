@@ -281,6 +281,235 @@ function Header({ setNotice }) {
 }
 
 
+
+function BallByBallPanel({ match }) {
+  const [balls, setBalls] = useState([]);
+  const [bbbLoading, setBbbLoading] = useState(false);
+  const [bbbError, setBbbError] = useState("");
+  const [bbbUpdated, setBbbUpdated] = useState("");
+
+  const matchId =
+    match?.id ||
+    match?.raw?.id ||
+    match?.matchId ||
+    "";
+
+  const apiBase =
+    (import.meta.env.VITE_API_BASE_URL ||
+      "https://batzo.onrender.com"
+    ).replace(/\/+$/, "");
+
+  const loadBallByBall = async () => {
+    if (!matchId || bbbLoading) return;
+
+    setBbbLoading(true);
+    setBbbError("");
+
+    try {
+      const response = await fetch(
+        `${apiBase}/api/cricket/ball-by-ball/${encodeURIComponent(matchId)}`,
+        {
+          headers: {
+            Accept: "application/json"
+          },
+          cache: "no-store"
+        }
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.error ||
+          `HTTP ${response.status}`
+        );
+      }
+
+      const rows = Array.isArray(payload?.balls)
+        ? payload.balls
+        : [];
+
+      setBalls(rows);
+      setBbbUpdated(
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "numeric",
+          minute: "2-digit"
+        })
+      );
+    } catch (error) {
+      console.warn(
+        "BATZO ball-by-ball:",
+        error
+      );
+
+      setBbbError(
+        "Ball-by-ball data is not available right now."
+      );
+    } finally {
+      setBbbLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setBalls([]);
+    setBbbError("");
+    setBbbUpdated("");
+
+    if (matchId) {
+      loadBallByBall();
+    }
+  }, [matchId]);
+
+  const ballLabel = (ball) => {
+    const penalty = String(
+      ball?.penalty ||
+      ball?.extraType ||
+      ""
+    ).toLowerCase();
+
+    if (
+      ball?.wicket ||
+      ball?.isWicket ||
+      ball?.dismissal
+    ) {
+      return "W";
+    }
+
+    if (penalty.includes("wide")) {
+      return "WD";
+    }
+
+    if (
+      penalty.includes("no ball") ||
+      penalty.includes("noball") ||
+      penalty.includes("no-ball")
+    ) {
+      return "NB";
+    }
+
+    if (penalty.includes("leg bye")) {
+      return "LB";
+    }
+
+    if (penalty.includes("bye")) {
+      return "B";
+    }
+
+    const runs = Number(ball?.runs ?? 0);
+
+    if (runs === 0) return "DOT";
+
+    return String(runs);
+  };
+
+  const latest =
+    balls.length > 0
+      ? balls[balls.length - 1]
+      : null;
+
+  return (
+    <section className="batzo-bbb-panel">
+      <div className="batzo-bbb-head">
+        <div>
+          <span className="batzo-bbb-kicker">
+            ● LIVE COMMENTARY
+          </span>
+          <h3>Ball by Ball</h3>
+        </div>
+
+        <button
+          type="button"
+          className="batzo-bbb-refresh"
+          onClick={loadBallByBall}
+          disabled={bbbLoading || !matchId}
+        >
+          {bbbLoading ? "Loading…" : "Refresh"}
+        </button>
+      </div>
+
+      {bbbUpdated && (
+        <small className="batzo-bbb-updated">
+          Updated {bbbUpdated}
+        </small>
+      )}
+
+      {latest && (
+        <div className="batzo-bbb-latest">
+          <div className="batzo-bbb-ballno">
+            {latest?.over ?? "-"}.
+            {latest?.ball ?? "-"}
+          </div>
+
+          <div className="batzo-bbb-latest-main">
+            <strong>
+              {ballLabel(latest)}
+            </strong>
+
+            <span>
+              {latest?.batsman?.name ||
+               "Batsman"}
+              {" • "}
+              {latest?.bowler?.name ||
+               "Bowler"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {balls.length > 0 ? (
+        <>
+          <div className="batzo-bbb-recent-title">
+            RECENT BALLS
+          </div>
+
+          <div className="batzo-bbb-balls">
+            {balls.slice(-18).map((ball, index) => {
+              const label = ballLabel(ball);
+
+              const special =
+                label === "W"
+                  ? " wicket"
+                  : label === "4"
+                    ? " four"
+                    : label === "6"
+                      ? " six"
+                      : label === "WD" ||
+                        label === "NB"
+                        ? " extra"
+                        : "";
+
+              return (
+                <div
+                  key={`${ball?.inning ?? 0}-${ball?.over ?? 0}-${ball?.ball ?? 0}-${index}`}
+                  className={`batzo-ball-chip${special}`}
+                  title={`${ball?.over ?? "-"}.${ball?.ball ?? "-"}`}
+                >
+                  <small>
+                    {ball?.over ?? "-"}.
+                    {ball?.ball ?? "-"}
+                  </small>
+                  <strong>{label}</strong>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : !bbbLoading && !bbbError ? (
+        <div className="batzo-bbb-empty">
+          Ball-by-ball events will appear here
+          when the provider has them.
+        </div>
+      ) : null}
+
+      {bbbError && (
+        <div className="batzo-bbb-error">
+          {bbbError}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function LiveScoreboard({ match, onBack }) {
   if (!match) return null;
 
@@ -431,7 +660,9 @@ function LiveScoreboard({ match, onBack }) {
           ))}
         </div>
       </div>
-    </section>
+    
+        <BallByBallPanel match={match} />
+      </section>
   );
 }
 
