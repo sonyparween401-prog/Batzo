@@ -184,3 +184,20 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Batzo API running on http://0.0.0.0:${PORT}`);
 });
 
+
+/* BATZO_BACKEND_HEALTH_ROUTE */
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'Batzo Backend',
+    message: 'Batzo backend is running',
+    time: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'Batzo Backend'
+  });
+});
