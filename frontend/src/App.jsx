@@ -6204,22 +6204,14 @@ function BatzoWalletScreen() {
 
             <button
               type="button"
-              onClick={() =>
-                alert(
-                  "Add Money will be enabled after verified payment-gateway integration."
-                )
-              }
+              onClick={() => {}}
             >
               ADD MONEY
             </button>
 
             <button
               type="button"
-              onClick={() =>
-                alert(
-                  "Withdrawals are available through eligible winning balance."
-                )
-              }
+              onClick={() => {}}
             >
               WITHDRAW
             </button>
@@ -6451,9 +6443,7 @@ function BatzoWalletFinalPanel() {
           marginTop:"14px"
         }}>
           <button
-            onClick={() =>
-              alert("Add Money will be enabled after verified payment-gateway integration.")
-            }
+            onClick={() => {}}
             style={{
               padding:"14px",
               border:0,
@@ -6468,9 +6458,7 @@ function BatzoWalletFinalPanel() {
           </button>
 
           <button
-            onClick={() =>
-              alert("Withdrawals are available through eligible winning balance.")
-            }
+            onClick={() => {}}
             style={{
               padding:"14px",
               border:"1px solid rgba(255,255,255,.18)",
@@ -6725,4 +6713,161 @@ if (
     true
   );
 }
+
+
+/* ===== BATZO WALLET UI ACTION FIX V2 ===== */
+if (
+  typeof window !== "undefined" &&
+  !window.__BATZO_WALLET_UI_ACTION_FIX_V2__
+) {
+  window.__BATZO_WALLET_UI_ACTION_FIX_V2__ = true;
+
+  /* ADD MONEY / WITHDRAW:
+     Match buttons even when they contain + or arrow icons.
+     Capture phase blocks old placeholder React alert handlers.
+  */
+  document.addEventListener(
+    "click",
+    async function batzoWalletActionV2(event) {
+      const button = event.target?.closest?.("button");
+      if (!button) return;
+
+      const label = String(button.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+
+      const isDeposit = label.includes("ADD MONEY");
+      const isWithdraw = label.includes("WITHDRAW");
+
+      if (!isDeposit && !isWithdraw) return;
+
+      const walletScreen = document.querySelector(
+        ".bz-wallet-page, .batzo-wallet-final"
+      );
+
+      if (!walletScreen) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof event.stopImmediatePropagation === "function") {
+        event.stopImmediatePropagation();
+      }
+
+      const raw = window.prompt(
+        isDeposit
+          ? "Enter amount to add (₹)"
+          : "Enter winning amount to withdraw (₹)",
+        isDeposit ? "100" : ""
+      );
+
+      if (raw === null) return;
+
+      const amount = Number(
+        String(raw).replace(/[₹,\s]/g, "")
+      );
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        window.alert("Please enter a valid amount.");
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        const result = await batzoWalletRequest(
+          isDeposit
+            ? "/api/wallet/demo/deposit"
+            : "/api/wallet/demo/withdraw",
+          {
+            method: "POST",
+            body: JSON.stringify({ amount })
+          }
+        );
+
+        if (!result || result.success !== true) {
+          throw new Error(
+            result?.message || "Wallet transaction failed."
+          );
+        }
+
+        window.alert(
+          result.message ||
+          (isDeposit
+            ? "Money added successfully."
+            : "Withdrawal successful.")
+        );
+
+        /* Reload Wallet from backend so balance/history refresh together */
+        window.location.reload();
+      } catch (error) {
+        console.error("[BATZO WALLET ACTION V2]", error);
+
+        window.alert(
+          error?.message || "Wallet transaction failed."
+        );
+      } finally {
+        button.disabled = false;
+      }
+    },
+    true
+  );
+
+  /* Hide accidental floating LOGOUT only while Wallet is visible.
+     Restore it automatically outside Wallet/Profile flow.
+  */
+  function batzoFixWalletLogout() {
+    const walletVisible = !!document.querySelector(
+      ".bz-wallet-page, .batzo-wallet-final"
+    );
+
+    const candidates = document.querySelectorAll(
+      'button,a,[role="button"],div'
+    );
+
+    candidates.forEach((el) => {
+      const text = String(el.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+
+      if (text !== "LOGOUT") return;
+
+      if (walletVisible) {
+        if (!el.dataset.batzoWalletLogoutHidden) {
+          el.dataset.batzoWalletLogoutHidden = "1";
+          el.dataset.batzoOldDisplay = el.style.display || "";
+        }
+        el.style.setProperty("display", "none", "important");
+      } else if (el.dataset.batzoWalletLogoutHidden === "1") {
+        const oldDisplay = el.dataset.batzoOldDisplay || "";
+        el.style.removeProperty("display");
+        if (oldDisplay) el.style.display = oldDisplay;
+
+        delete el.dataset.batzoWalletLogoutHidden;
+        delete el.dataset.batzoOldDisplay;
+      }
+    });
+  }
+
+  batzoFixWalletLogout();
+
+  const batzoWalletLogoutObserver =
+    new MutationObserver(batzoFixWalletLogout);
+
+  batzoWalletLogoutObserver.observe(
+    document.documentElement,
+    {
+      childList: true,
+      subtree: true
+    }
+  );
+}
+/* ===== END BATZO WALLET UI ACTION FIX V2 ===== */
+
+
+
+
+
 
