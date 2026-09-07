@@ -19,6 +19,130 @@ const {
 
 const router = express.Router();
 
+/* BATZO_CRICBUZZ_WEB_PRIMARY_V1 */
+const {
+  getCricbuzzWebData
+} = require("./cricbuzz-web-fallback");
+
+/*
+ * These routes run BEFORE the older providers.
+ * If Cricbuzz returns real data, use it immediately.
+ * If Cricbuzz fails, next() falls through to existing
+ * CricketData/ESPN/other fallback routes.
+ */
+
+router.get(
+  "/matches",
+  async (req, res, next) => {
+    try {
+      const data =
+        await getCricbuzzWebData();
+
+      const all =
+        uniqueMatches([
+          ...(data.live || []),
+          ...(data.upcoming || []),
+          ...(data.recent || [])
+        ]);
+
+      if (!all.length) {
+        return next();
+      }
+
+      return res.json({
+        status: "success",
+        count: all.length,
+        data: all,
+        source:
+          "cricbuzz-web"
+      });
+
+    } catch (error) {
+      console.warn(
+        "CRICBUZZ WEB /matches:",
+        error.message
+      );
+
+      return next();
+    }
+  }
+);
+
+router.get(
+  "/live",
+  async (req, res, next) => {
+    try {
+      const data =
+        await getCricbuzzWebData();
+
+      const live =
+        uniqueMatches(
+          data.live || []
+        );
+
+      if (!live.length) {
+        return next();
+      }
+
+      return res.json({
+        status: "success",
+        count: live.length,
+        data: live,
+        source:
+          "cricbuzz-web"
+      });
+
+    } catch (error) {
+      console.warn(
+        "CRICBUZZ WEB /live:",
+        error.message
+      );
+
+      return next();
+    }
+  }
+);
+
+router.get(
+  "/upcoming",
+  async (req, res, next) => {
+    try {
+      const data =
+        await getCricbuzzWebData();
+
+      const upcoming =
+        uniqueMatches(
+          data.upcoming || []
+        );
+
+      if (!upcoming.length) {
+        return next();
+      }
+
+      return res.json({
+        status: "success",
+        count:
+          upcoming.length,
+        data:
+          upcoming,
+        source:
+          "cricbuzz-web"
+      });
+
+    } catch (error) {
+      console.warn(
+        "CRICBUZZ WEB /upcoming:",
+        error.message
+      );
+
+      return next();
+    }
+  }
+);
+/* END BATZO_CRICBUZZ_WEB_PRIMARY_V1 */
+
+
+
 function rows(payload) {
   return Array.isArray(payload?.data)
     ? payload.data
