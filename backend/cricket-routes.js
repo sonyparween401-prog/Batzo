@@ -175,9 +175,69 @@ router.get("/matches", async (req, res) => {
 
 router.get("/live", async (req, res) => {
   try {
-    const data = await getCurrentMatches();
+    /*
+     * Search several current-match pages because a real live
+     * international match is not guaranteed to be on offset 0.
+     */
+    const offsets = [0, 25, 50, 75, 100];
 
-    const live = rows(data).filter(isLiveMatch);
+    const results = await Promise.allSettled(
+      offsets.map((offset) => getCurrentMatches(offset))
+    );
+
+    const all = [];
+
+    for (const result of results) {
+      if (
+        result.status === "fulfilled" &&
+        Array.isArray(result.value?.data)
+      ) {
+        all.push(...result.value.data);
+      }
+    }
+
+    const seen = new Set();
+
+    const live = all.filter((match) => {
+      const id =
+        match?.id ||
+        `${match?.name || ""}-${match?.dateTimeGMT || ""}`;
+
+      if (seen.has(id)) return false;
+      seen.add(id);
+
+      const status =
+        String(match?.status || "").toLowerCase();
+
+      const ended =
+        match?.matchEnded === true ||
+        /\b(won|completed|finished|drawn|abandoned|cancelled|canceled|no result)\b/.test(
+          status
+        );
+
+      if (ended) return false;
+
+      const started =
+        match?.matchStarted === true ||
+        /\b(live|in progress|innings break|lunch|tea break)\b/.test(
+          status
+        );
+
+      const score =
+        Array.isArray(match?.score)
+          ? match.score
+          : [];
+
+      const hasRealScore = score.some((x) => {
+        const runs = Number(x?.r || 0);
+        const wickets = Number(x?.w || 0);
+        const overs = Number(x?.o || 0);
+
+        return runs > 0 || wickets > 0 || overs > 0;
+      });
+
+      return started || hasRealScore;
+    });
 
     res.json({
       status: "success",
@@ -196,8 +256,6 @@ router.get("/live", async (req, res) => {
     });
   }
 });
-
-
 
 router.get("/upcoming", async (req, res) => {
   try {

@@ -74,22 +74,14 @@ async function request(endpoint, params = {}, ttlMs = 0) {
  * Current/live data:
  * cache 30 minutes to protect Lifetime Free quota.
  */
-async function getCurrentMatches() {
+async function getCurrentMatches(offset = 0) {
   return request(
     "currentMatches",
-    { offset: 0 },
-    20 * 60 * 1000
+    { offset },
+    2 * 60 * 1000
   );
 }
 
-/*
- * Scheduled matches:
- * multiple pages allow Batzo to discover international,
- * domestic, women's and Indian/state fixtures when
- * CricketData exposes them.
- *
- * Cache each page for 6 hours.
- */
 async function getMatches(offset = 0) {
   return request(
     "matches",

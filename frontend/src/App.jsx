@@ -2350,6 +2350,19 @@ function BatzoApp() {
         const genuineUpcoming = unique(upcomingSource)
           .filter(upcoming)
           .filter(batzoWantedMatch)
+          .filter((m) => {
+            const t = timeOf(m);
+
+            /* Only upcoming matches in the next 30 days. */
+            if (!Number.isFinite(t)) return false;
+
+            return (
+              t > Date.now() &&
+              t <=
+                Date.now() +
+                  30 * 24 * 60 * 60 * 1000
+            );
+          })
           .sort((a, b) => {
             const at = timeOf(a);
             const bt = timeOf(b);
@@ -2405,7 +2418,7 @@ function BatzoApp() {
      */
     const interval = setInterval(
       loadRealMatches,
-      10 * 60 * 1000
+      60 * 1000
     );
 
     const onFocus = () => {
