@@ -13,6 +13,10 @@ const {
   getFallbackMatches
 } = require("./live-fallback");
 
+const {
+  getLiveScoreMatches
+} = require("./livescore-fallback");
+
 const router = express.Router();
 
 function rows(payload) {
@@ -162,6 +166,24 @@ router.get("/matches", async (req, res) => {
       );
     }
 
+    /* BATZO_LIVESCORE_MATCHES_V1 */
+    try {
+      const extra =
+        await getLiveScoreMatches();
+
+      all =
+        uniqueMatches([
+          ...all,
+          ...extra
+        ]);
+
+    } catch (error) {
+      console.warn(
+        "LIVESCORE MATCHES FALLBACK:",
+        error.message
+      );
+    }
+
     all.sort((a, b) => {
       const at = Date.parse(
         a?.dateTimeGMT || a?.date || ""
@@ -224,6 +246,26 @@ router.get("/live", async (req, res) => {
     } catch (error) {
       console.warn(
         "LIVE FALLBACK:",
+        error.message
+      );
+    }
+
+    /* BATZO_LIVESCORE_LIVE_V1 */
+    try {
+      const board =
+        await getLiveScoreMatches();
+
+      fallbackLive =
+        uniqueMatches([
+          ...fallbackLive,
+          ...board.filter(
+            isLiveMatch
+          )
+        ]);
+
+    } catch (error) {
+      console.warn(
+        "LIVESCORE LIVE FALLBACK:",
         error.message
       );
     }
@@ -317,6 +359,24 @@ router.get("/upcoming", async (req, res) => {
     } catch (error) {
       console.warn(
         "UPCOMING FALLBACK:",
+        error.message
+      );
+    }
+
+    /* BATZO_LIVESCORE_UPCOMING_V1 */
+    try {
+      const extra =
+        await getLiveScoreMatches();
+
+      all =
+        uniqueMatches([
+          ...all,
+          ...extra
+        ]);
+
+    } catch (error) {
+      console.warn(
+        "LIVESCORE UPCOMING FALLBACK:",
         error.message
       );
     }
