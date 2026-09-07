@@ -2234,10 +2234,46 @@ function BatzoApp() {
       "tripura",
       "uttar pradesh",
       "uttarakhand",
-      "vidarbha"
+      "vidarbha",
+      "east zone",
+      "south zone",
+      "north zone",
+      "west zone",
+      "central zone",
+      "north east zone"
     ]);
 
     const batzoMatchCategory = (m) => {
+      /* BATZO_INDIA_LEAGUE_CLASSIFIER_V1 */
+      const seriesScopeText = [
+        m?.name,
+        m?.series,
+        m?.seriesName,
+        m?.raw?.seriesName
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const isIndiaWomenLeague =
+        /\b(women'?s premier league|womens premier league|\bwpl\b)\b/.test(
+          seriesScopeText
+        );
+
+      const isIndiaMenLeague =
+        /\b(indian premier league|\bipl\b|tamil nadu premier league|\btnpl\b|maharaja trophy|sher-e-punjab t20 league|uttar pradesh t20|up t20 league|delhi premier league|bengal pro t20|kerala cricket league)\b/.test(
+          seriesScopeText
+        );
+
+      if (isIndiaWomenLeague) {
+        return "INDIA LEAGUE WOMEN";
+      }
+
+      if (isIndiaMenLeague) {
+        return "INDIA LEAGUE MEN";
+      }
+
+
       const teams = batzoRawTeams(m);
 
       if (teams.length < 2) {
@@ -2776,6 +2812,21 @@ function BatzoApp() {
         return false;
       }
 
+      if (
+        matchesFilter === "league" &&
+        !category.startsWith("INDIA LEAGUE")
+      ) {
+        return false;
+      }
+
+      if (
+        matchesFilter === "women" &&
+        category !== "INDIA DOMESTIC WOMEN" &&
+        category !== "INDIA LEAGUE WOMEN"
+      ) {
+        return false;
+      }
+
       if (!q) return true;
 
       const haystack = [
@@ -3092,6 +3143,20 @@ function BatzoApp() {
               <button
                 type="button"
                 className={
+                  matchesFilter === "league"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesFilter("league")
+                }
+              >
+                League
+              </button>
+
+              <button
+                type="button"
+                className={
                   matchesFilter === "domestic"
                     ? "active"
                     : ""
@@ -3101,6 +3166,20 @@ function BatzoApp() {
                 }
               >
                 India Domestic
+              </button>
+
+              <button
+                type="button"
+                className={
+                  matchesFilter === "women"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesFilter("women")
+                }
+              >
+                Women
               </button>
             </div>
 

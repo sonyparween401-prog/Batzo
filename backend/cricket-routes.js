@@ -8,6 +8,8 @@ const {
   getSquad
 } = require("./cricket");
 
+const { getFallbackLive } = require("./live-fallback");
+
 const router = express.Router();
 
 function rows(payload) {
@@ -175,74 +177,80 @@ router.get("/matches", async (req, res) => {
 
 router.get("/live", async (req, res) => {
   try {
-    /*
-     * Search several current-match pages because a real live
-     * international match is not guaranteed to be on offset 0.
-     */
     const offsets = [0, 25, 50, 75, 100];
 
-    const results = await Promise.allSettled(
-      offsets.map((offset) => getCurrentMatches(offset))
+    const primaryResults = await Promise.allSettled(
+      offsets.map((offset) =>
+        getCurrentMatches(offset)
+      )
     );
 
-    const all = [];
+    const primary = [];
 
-    for (const result of results) {
-      if (
-        result.status === "fulfilled" &&
-        Array.isArray(result.value?.data)
-      ) {
-        all.push(...result.value.data);
+    for (const result of primaryResults) {
+      if (result.status === "fulfilled") {
+        primary.push(...rows(result.value));
       }
     }
 
+    const primaryLive =
+      uniqueMatches(primary).filter(isLiveMatch);
+
+    let fallbackLive = [];
+
+    try {
+      fallbackLive = await getFallbackLive();
+    } catch (error) {
+      console.warn(
+        "LIVE FALLBACK:",
+        error.message
+      );
+    }
+
+    /*
+     * Merge providers and remove obvious duplicate
+     * team-vs-team matches.
+     */
+    const merged = [];
     const seen = new Set();
 
-    const live = all.filter((match) => {
-      const id =
-        match?.id ||
-        `${match?.name || ""}-${match?.dateTimeGMT || ""}`;
-
-      if (seen.has(id)) return false;
-      seen.add(id);
-
-      const status =
-        String(match?.status || "").toLowerCase();
-
-      const ended =
-        match?.matchEnded === true ||
-        /\b(won|completed|finished|drawn|abandoned|cancelled|canceled|no result)\b/.test(
-          status
-        );
-
-      if (ended) return false;
-
-      const started =
-        match?.matchStarted === true ||
-        /\b(live|in progress|innings break|lunch|tea break)\b/.test(
-          status
-        );
-
-      const score =
-        Array.isArray(match?.score)
-          ? match.score
+    for (const match of [
+      ...primaryLive,
+      ...fallbackLive
+    ]) {
+      const teams =
+        Array.isArray(match?.teams)
+          ? match.teams
           : [];
 
-      const hasRealScore = score.some((x) => {
-        const runs = Number(x?.r || 0);
-        const wickets = Number(x?.w || 0);
-        const overs = Number(x?.o || 0);
+      const key =
+        teams.length >= 2
+          ? teams
+              .slice(0, 2)
+              .map((x) =>
+                String(x || "")
+                  .toLowerCase()
+                  .replace(/\s+/g, " ")
+                  .trim()
+              )
+              .sort()
+              .join("|")
+          : String(match?.id || "");
 
-        return runs > 0 || wickets > 0 || overs > 0;
-      });
+      if (!key || seen.has(key)) continue;
 
-      return started || hasRealScore;
-    });
+      seen.add(key);
+      merged.push(match);
+    }
 
     res.json({
       status: "success",
-      count: live.length,
-      data: live
+      count: merged.length,
+      data: merged,
+      sources: {
+        cricketData: primaryLive.length,
+        fallback: fallbackLive.length
+      }
     });
   } catch (error) {
     console.error(
