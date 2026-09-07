@@ -5390,3 +5390,13 @@ section.batzo-hidden-home-section {
 
 /* BATZO_MATCH_HUB_CSS_V1_END */
 
+
+
+/* BATZO_REAL_TEAM_LOGO_FINAL_V3 */
+.bz-team-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
+}

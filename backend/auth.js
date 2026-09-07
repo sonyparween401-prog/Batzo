@@ -55,8 +55,18 @@ async function loginUser(mobile, password) {
     throw new Error('Mobile and password are required');
   }
 
+  const normalizeMobile = (value) => {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) {
+      digits = digits.slice(2);
+    }
+    return digits;
+  };
+
+  const normalizedMobile = normalizeMobile(mobile);
+
   const user = db.users.find(
-    u => String(u.mobile) === String(mobile)
+    u => normalizeMobile(u.mobile) === normalizedMobile
   );
 
   if (!user || !user.password_hash) {

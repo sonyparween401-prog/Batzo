@@ -81,6 +81,18 @@ export function clearNavigation() {
 
 function handleDynamicBack() {
   /*
+   * BATZO V11 dynamic screen Back.
+   * Always use the currently visible screen's own Back action.
+   */
+  const v11Back =
+    visibleElement("bzV11Back");
+
+  if (v11Back) {
+    v11Back.click();
+    return true;
+  }
+
+  /*
    * Team Builder is dynamically rendered outside the React tab tree.
    * Its back target is the Contest screen.
    */

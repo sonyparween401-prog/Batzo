@@ -11,7 +11,7 @@
       "id": 2,
       "name": "Rashid ansari",
       "mobile": "8809512830",
-      "password_hash": "$2b$12$pt.x2FnlyQpUXdCeX1V1vuTFMcrIi1bwF2UD/MZMlvV/6KYn13J5O",
+      "password_hash": "$2b$12$LqXtdwpT47rfxMiUk0ks7uoeJFuP9EvN0p/zR/WoONzTVc9Cv1d7C",
       "created_at": "2026-08-29T15:49:59.484Z"
     },
     {
@@ -63,6 +63,20 @@
       "title": "England vs South Africa",
       "status": "upcoming",
       "start_time": "2026-08-21T17:17:01.076Z"
+    },
+    {
+      "id": 3,
+      "name": "BATZO DEMO: INDIA vs AUSTRALIA",
+      "title": "BATZO DEMO: INDIA vs AUSTRALIA",
+      "matchName": "BATZO DEMO: INDIA vs AUSTRALIA",
+      "team1": "IND",
+      "team2": "AUS",
+      "status": "live",
+      "type": "demo",
+      "practice": true,
+      "isDemo": true,
+      "createdAt": "2026-09-06T13:14:28.338Z",
+      "updatedAt": "2026-09-06T13:14:28.338Z"
     }
   ],
   "teams": [
@@ -164,6 +178,105 @@
         "AUS": 6
       },
       "created_at": "2026-08-29T08:34:45.838Z"
+    },
+    {
+      "id": 1788685497315,
+      "user_id": 2,
+      "match_id": 1,
+      "team_name": "Rashid Test Team 1",
+      "players": [
+        {
+          "id": 101,
+          "name": "WK IND",
+          "role": "WK",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 102,
+          "name": "BAT IND 1",
+          "role": "BAT",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 103,
+          "name": "BAT IND 2",
+          "role": "BAT",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 104,
+          "name": "BAT AUS 1",
+          "role": "BAT",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 105,
+          "name": "BAT AUS 2",
+          "role": "BAT",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 106,
+          "name": "AR IND",
+          "role": "AR",
+          "team": "IND",
+          "credits": 9
+        },
+        {
+          "id": 107,
+          "name": "AR AUS",
+          "role": "AR",
+          "team": "AUS",
+          "credits": 9
+        },
+        {
+          "id": 108,
+          "name": "BOWL IND 1",
+          "role": "BOWL",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 109,
+          "name": "BOWL IND 2",
+          "role": "BOWL",
+          "team": "IND",
+          "credits": 8
+        },
+        {
+          "id": 110,
+          "name": "BOWL AUS 1",
+          "role": "BOWL",
+          "team": "AUS",
+          "credits": 8
+        },
+        {
+          "id": 111,
+          "name": "BOWL AUS 2",
+          "role": "BOWL",
+          "team": "AUS",
+          "credits": 8
+        }
+      ],
+      "captainId": 106,
+      "viceCaptainId": 102,
+      "credits": 90,
+      "roles": {
+        "WK": 1,
+        "BAT": 4,
+        "AR": 2,
+        "BOWL": 4
+      },
+      "teams": {
+        "IND": 6,
+        "AUS": 5
+      },
+      "created_at": "2026-09-06T09:04:57.316Z"
     }
   ],
   "contests": [
@@ -173,7 +286,12 @@
       "name": "Practice Contest",
       "entry_type": "virtual",
       "entry_points": 100,
-      "max_users": 100
+      "max_users": 100,
+      "joinedSpots": 1,
+      "joined_spots": 1,
+      "status": "settled",
+      "settledAt": "2026-09-06T09:13:53.320Z",
+      "updatedAt": "2026-09-06T09:13:53.320Z"
     },
     {
       "id": 2,
@@ -182,10 +300,56 @@
       "entry_type": "virtual",
       "entry_points": 100,
       "max_users": 100
+    },
+    {
+      "id": 3,
+      "name": "BATZO FREE DEMO CONTEST",
+      "title": "BATZO FREE DEMO CONTEST",
+      "matchId": 3,
+      "match_id": 3,
+      "match": "BATZO DEMO: INDIA vs AUSTRALIA",
+      "matchName": "BATZO DEMO: INDIA vs AUSTRALIA",
+      "entryFee": 0,
+      "entry_fee": 0,
+      "prizePool": 0,
+      "prize_pool": 0,
+      "maxSpots": 100,
+      "max_spots": 100,
+      "joinedSpots": 0,
+      "joined_spots": 0,
+      "status": "open",
+      "type": "practice",
+      "practice": true,
+      "isPractice": true,
+      "isDemo": true,
+      "description": "Free BATZO demo contest. Entry is ₹0 and no real money is deducted.",
+      "createdAt": "2026-09-06T13:14:28.338Z",
+      "updatedAt": "2026-09-06T13:14:28.338Z"
     }
   ],
   "transactions": [],
-  "contestEntries": [],
+  "contestEntries": [
+    {
+      "id": "entry-1788685563772-633ulr",
+      "contestId": 1,
+      "contest_id": 1,
+      "matchId": 1,
+      "match_id": 1,
+      "userId": "2",
+      "user_id": "2",
+      "teamId": "1788685497315",
+      "team_id": "1788685497315",
+      "entryFee": 0,
+      "entry_fee": 0,
+      "points": 125,
+      "rank": 1,
+      "prize": 0,
+      "status": "winner",
+      "createdAt": "2026-09-06T09:06:03.772Z",
+      "created_at": "2026-09-06T09:06:03.772Z",
+      "updatedAt": "2026-09-06T09:13:53.320Z"
+    }
+  ],
   "wallets": [
     {
       "userId": "6",

@@ -275,25 +275,7 @@ useEffect(() => {
         <>
           {children}
 
-          <button
-            type="button"
-            onClick={logout}
-            style={{
-              position: "fixed",
-              right: 12,
-              bottom: 86,
-              zIndex: 99999,
-              border: 0,
-              borderRadius: 12,
-              padding: "8px 12px",
-              fontWeight: 800,
-              background: "#111",
-              color: "#fff"
-            }}
-          >
-            LOGOUT
-          </button>
-        </>
+</>
       );
     }
 
@@ -645,25 +627,7 @@ async function requestPhoneOtp() {
       <>
         {children}
 
-        <button
-          type="button"
-          onClick={logout}
-          style={{
-            position: "fixed",
-            right: 12,
-            bottom: 86,
-            zIndex: 99999,
-            border: 0,
-            borderRadius: 12,
-            padding: "8px 12px",
-            fontWeight: 800,
-            background: "#111",
-            color: "#fff"
-          }}
-        >
-          LOGOUT
-        </button>
-      </>
+</>
     );
   }
 
