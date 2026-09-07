@@ -8,7 +8,10 @@ const {
   getSquad
 } = require("./cricket");
 
-const { getFallbackLive } = require("./live-fallback");
+const {
+  getFallbackLive,
+  getFallbackMatches
+} = require("./live-fallback");
 
 const router = express.Router();
 
@@ -140,6 +143,24 @@ router.get("/matches", async (req, res) => {
     }
 
     all = uniqueMatches(all);
+
+    /* BATZO_MATCHES_ESPN_FALLBACK_V1 */
+    try {
+      const fallback =
+        await getFallbackMatches();
+
+      all =
+        uniqueMatches([
+          ...all,
+          ...fallback
+        ]);
+
+    } catch (error) {
+      console.warn(
+        "MATCHES FALLBACK:",
+        error.message
+      );
+    }
 
     all.sort((a, b) => {
       const at = Date.parse(
@@ -280,6 +301,24 @@ router.get("/upcoming", async (req, res) => {
       if (result.status === "fulfilled") {
         all.push(...rows(result.value));
       }
+    }
+
+    /* BATZO_UPCOMING_ESPN_FALLBACK_V1 */
+    try {
+      const fallback =
+        await getFallbackMatches();
+
+      all =
+        uniqueMatches([
+          ...all,
+          ...fallback
+        ]);
+
+    } catch (error) {
+      console.warn(
+        "UPCOMING FALLBACK:",
+        error.message
+      );
     }
 
     const upcoming = uniqueMatches(all)

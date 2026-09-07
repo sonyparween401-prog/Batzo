@@ -18,6 +18,57 @@ import { installJoinFlow } from "./services/join-flow-ui";
 import AuthGate from "./AuthGate";
 import { getLiveMatches } from "./services/cricketService.js";
 
+/* BATZO_TEAM_FLAG_HELPER_FINAL_V3 */
+function batzoTeamFlag(value) {
+  const clean = String(value || "")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/\b(women|womens|woman|ladies|men|mens)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const flags = {
+    "india":"🇮🇳",
+    "australia":"🇦🇺",
+    "pakistan":"🇵🇰",
+    "new zealand":"🇳🇿",
+    "south africa":"🇿🇦",
+    "sri lanka":"🇱🇰",
+    "bangladesh":"🇧🇩",
+    "afghanistan":"🇦🇫",
+    "ireland":"🇮🇪",
+    "netherlands":"🇳🇱",
+    "nepal":"🇳🇵",
+    "zimbabwe":"🇿🇼",
+    "united states":"🇺🇸",
+    "united states of america":"🇺🇸",
+    "usa":"🇺🇸",
+    "canada":"🇨🇦",
+    "uae":"🇦🇪",
+    "united arab emirates":"🇦🇪",
+    "oman":"🇴🇲",
+    "namibia":"🇳🇦",
+    "kenya":"🇰🇪",
+    "hong kong":"🇭🇰",
+    "england":"🏴",
+    "scotland":"🏴",
+    "west indies":"🌴"
+  };
+
+  if (flags[clean]) return flags[clean];
+
+  for (const key of Object.keys(flags)) {
+    if (
+      clean === key ||
+      clean.startsWith(key + " ")
+    ) {
+      return flags[key];
+    }
+  }
+
+  return "🏏";
+}
+
 function batzoLiveAdapter(m) {
   const teams = Array.isArray(m?.teams) ? m.teams : [];
   const info = Array.isArray(m?.teamInfo) ? m.teamInfo : [];
@@ -93,12 +144,12 @@ function batzoLiveAdapter(m) {
 
     a: teamA?.name || teams[0] || "Team A",
     ac: code(teamA, teams[0]),
-    af: "🏏",
+    af: batzoTeamFlag(teamA?.name || teams[0]),
     aImg: teamA?.img || "",
 
     b: teamB?.name || teams[1] || "Team B",
     bc: code(teamB, teams[1]),
-    bf: "🏏",
+    bf: batzoTeamFlag(teamB?.name || teams[1]),
     bImg: teamB?.img || "",
 
     as: scoreText(scoreAObj),
@@ -905,7 +956,7 @@ function BatzoMatchSeriesGroup({
                       alt=""
                     />
                   ) : (
-                    "🏏"
+                    match.af || "🏏"
                   )}
                 </span>
 
@@ -931,7 +982,7 @@ function BatzoMatchSeriesGroup({
                       alt=""
                     />
                   ) : (
-                    "🏏"
+                    match.bf || "🏏"
                   )}
                 </span>
 
@@ -1957,16 +2008,29 @@ function BatzoApp() {
    * Keep a real React tab history so Android hardware
    * Back can return to the previous Batzo screen.
    */
-  const navigateTab = (nextTab) => {
-    /* batzo-master-navigate-fix */
-    const previousTab = tab;
-    
+    const navigateTab = (nextTab) => {
+    /* BATZO_BOTTOM_TAB_BACK_HOME_FINAL */
     if (!nextTab || nextTab === tab) return;
 
-    batzoTabHistory.current.push(tab);
-    batzoPreviousTab.current = tab;
+    /*
+     * Bottom navigation is not a browser-history stack.
+     * Android Back from Matches / Contest / My Team / Wallet
+     * returns directly Home.
+     */
+    batzoTabHistory.current = [];
+
+    try {
+      clearNavigation();
+    } catch (_) {}
+
+    batzoPreviousTab.current = "home";
+
     setTab(nextTab);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
 
@@ -2314,11 +2378,9 @@ function BatzoApp() {
        * INTERNATIONAL WOMEN explicitly removed.
        */
       if (international) {
-        if (batzoIsWomenMatch(m)) {
-          return null;
-        }
-
-        return "INTERNATIONAL MEN";
+        return batzoIsWomenMatch(m)
+          ? "INTERNATIONAL WOMEN"
+          : "INTERNATIONAL MEN";
       }
 
       const indiaDomestic =
@@ -2332,14 +2394,16 @@ function BatzoApp() {
       }
 
       /*
-       * Everything else:
-       * foreign domestic, franchise, county, CPL, BBL etc.
+       * Foreign domestic, franchise, county,
+       * CPL, BBL and other series.
        */
-      return null;
+      return batzoIsWomenMatch(m)
+        ? "LEAGUE WOMEN"
+        : "LEAGUE";
     };
 
     const batzoWantedMatch = (m) =>
-      batzoMatchCategory(m) !== null;
+      Boolean(m);
 
     /* BATZO_MATCH_SCOPE_V3_END */
 
@@ -2400,6 +2464,33 @@ function BatzoApp() {
         }
       } catch (_) {}
 
+      /* BATZO_UPCOMING_SERIES_FINAL_V3 */
+      const nameParts = String(m?.name || "")
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      const seriesName =
+        String(
+          m?.series ||
+          m?.seriesName ||
+          ""
+        ).trim() ||
+        (
+          nameParts.length >= 3
+            ? nameParts.slice(2).join(", ")
+            : String(
+                m?.matchType || "CRICKET"
+              ).toUpperCase()
+        );
+
+      const matchLine =
+        nameParts.length >= 2
+          ? nameParts[1]
+          : String(
+              m?.matchType || "Match"
+            ).toUpperCase();
+
       return {
         id:
           m?.id ||
@@ -2413,11 +2504,13 @@ function BatzoApp() {
 
         a,
         ac: short(a, metaA),
-        af: "🏏",
+        af: batzoTeamFlag(a),
+        aImg: metaA?.img || "",
 
         b,
         bc: short(b, metaB),
-        bf: "🏏",
+        bf: batzoTeamFlag(b),
+        bImg: metaB?.img || "",
 
         time: dt
           ? dt.toLocaleDateString(
@@ -2439,8 +2532,17 @@ function BatzoApp() {
             )
           : "TBA",
 
+        series: seriesName,
+        matchLine,
+        venue: m?.venue || "",
         status: "UPCOMING",
-        category: batzoMatchCategory(m),
+        category:
+          batzoMatchCategory(m) ||
+          (
+            batzoIsWomenMatch(m)
+              ? "LEAGUE WOMEN"
+              : "LEAGUE"
+          ),
         raw: m
       };
     };
@@ -2542,10 +2644,29 @@ function BatzoApp() {
         return /\b(upcoming|scheduled|not started|starts at|match starts)\b/.test(status);
       };
 
-      const payloadRows = (payload) =>
-        Array.isArray(payload?.data)
-          ? payload.data
-          : [];
+      const payloadRows = (payload) => {
+        if (Array.isArray(payload)) {
+          return payload;
+        }
+
+        if (Array.isArray(payload?.data)) {
+          return payload.data;
+        }
+
+        if (Array.isArray(payload?.matches)) {
+          return payload.matches;
+        }
+
+        if (Array.isArray(payload?.results)) {
+          return payload.results;
+        }
+
+        if (Array.isArray(payload?.data?.data)) {
+          return payload.data.data;
+        }
+
+        return [];
+      };
 
       const unique = (list) => {
         const seen = new Set();
@@ -2591,67 +2712,64 @@ function BatzoApp() {
          * /matches also contains currentMatches,
          * so use it as a LIVE fallback.
          */
-        const genuineLive = unique([
-          ...liveRows,
-          ...matchRows
-        ])
-          .filter(live)
-          .filter(batzoWantedMatch)
-          .map((m) =>
-            batzoLiveAdapter({
-              ...m,
-              batzoCategory: batzoMatchCategory(m),
-              status: "LIVE"
-            })
-          );
+        const liveSource =
+          liveRows.length > 0
+            ? liveRows
+            : matchRows.filter(live);
+
+        const genuineLive =
+          unique(liveSource)
+            .filter(Boolean)
+            .slice(0, 60)
+            .map((m) =>
+              batzoLiveAdapter({
+                ...m,
+                batzoCategory:
+                  batzoMatchCategory(m) ||
+                  (
+                    batzoIsWomenMatch(m)
+                      ? "LEAGUE WOMEN"
+                      : "LEAGUE"
+                  ),
+                status: "LIVE"
+              })
+            );
 
         const upcomingSource =
           upcomingRows.length > 0
             ? upcomingRows
-            : matchRows;
+            : matchRows.filter(upcoming);
 
-        const genuineUpcoming = unique(upcomingSource)
-          .filter(upcoming)
-          .filter(batzoWantedMatch)
-          .filter((m) => {
-            const t = timeOf(m);
+        const genuineUpcoming =
+          unique(upcomingSource)
+            .filter(Boolean)
+            .sort((a, b) => {
+              const at = timeOf(a);
+              const bt = timeOf(b);
 
-            /* Only upcoming matches in the next 30 days. */
-            if (!Number.isFinite(t)) return false;
+              if (!Number.isFinite(at)) return 1;
+              if (!Number.isFinite(bt)) return -1;
 
-            return (
-              t > Date.now() &&
-              t <=
-                Date.now() +
-                  30 * 24 * 60 * 60 * 1000
-            );
-          })
-          .sort((a, b) => {
-            const at = timeOf(a);
-            const bt = timeOf(b);
+              return at - bt;
+            })
+            .slice(0, 120)
+            .map(upcomingAdapter);
 
-            if (!Number.isFinite(at)) return 1;
-            if (!Number.isFinite(bt)) return -1;
+        const genuineResults =
+          unique(matchRows)
+            .filter(ended)
+            .filter(Boolean)
+            .sort((a, b) => {
+              const at = timeOf(a);
+              const bt = timeOf(b);
 
-            return at - bt;
-          })
-          .slice(0, 80)
-          .map(upcomingAdapter);
+              if (!Number.isFinite(at)) return 1;
+              if (!Number.isFinite(bt)) return -1;
 
-        const genuineResults = unique(matchRows)
-          .filter(ended)
-          .filter(batzoWantedMatch)
-          .sort((a, b) => {
-            const at = timeOf(a);
-            const bt = timeOf(b);
-
-            if (!Number.isFinite(at)) return 1;
-            if (!Number.isFinite(bt)) return -1;
-
-            return bt - at;
-          })
-          .slice(0, 40)
-          .map(resultAdapter);
+              return bt - at;
+            })
+            .slice(0, 80)
+            .map(resultAdapter);
 
         if (!cancelled) {
           setRealLiveMatches(genuineLive);
@@ -2814,15 +2932,14 @@ function BatzoApp() {
 
       if (
         matchesFilter === "league" &&
-        !category.startsWith("INDIA LEAGUE")
+        !category.includes("LEAGUE")
       ) {
         return false;
       }
 
       if (
         matchesFilter === "women" &&
-        category !== "INDIA DOMESTIC WOMEN" &&
-        category !== "INDIA LEAGUE WOMEN"
+        !category.includes("WOMEN")
       ) {
         return false;
       }
@@ -2907,13 +3024,21 @@ function BatzoApp() {
     }, 0);
   };
 
-  const goHome = () => {
-    if (tab !== "home") {
-      batzoTabHistory.current.push(tab);
-    }
+    const goHome = () => {
+    batzoTabHistory.current = [];
+
+    try {
+      clearNavigation();
+    } catch (_) {}
+
     batzoPreviousTab.current = "home";
+
     setTab("home");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
 
@@ -3107,7 +3232,7 @@ function BatzoApp() {
                   setMatchesTopTab("result")
                 }
               >
-                RESULT
+                COMPLETE
               </button>
             </div>
 
@@ -3151,7 +3276,7 @@ function BatzoApp() {
                   setMatchesFilter("league")
                 }
               >
-                League
+                Series
               </button>
 
               <button
@@ -3199,7 +3324,7 @@ function BatzoApp() {
                 ? "LIVE MATCHES"
                 : matchesTopTab === "upcoming"
                   ? "UPCOMING MATCHES"
-                  : "RECENT RESULTS"}
+                  : "COMPLETED MATCHES"}
             </div>
 
             {groupedMatches.length > 0 ? (
@@ -3223,7 +3348,7 @@ function BatzoApp() {
                     ? "No live matches right now"
                     : matchesTopTab === "upcoming"
                       ? "No upcoming matches available"
-                      : "No recent results available"}
+                      : "No completed matches available"}
                 </strong>
 
                 <small>
@@ -3459,12 +3584,12 @@ function getContests() {
 
   const contests = [
     {
-      id: 900001,
+      id: 1,
       name: "BATZO FREE DEMO CONTEST",
       title: "BATZO FREE DEMO CONTEST",
-      match: "BATZO DEMO: INDIA vs AUSTRALIA",
-      matchName: "BATZO DEMO: INDIA vs AUSTRALIA",
-      matchId: 3,
+      match: "IND vs AUS",
+      matchName: "India vs Australia",
+      matchId: 1,
       entryFee: 0,
       entry_fee: 0,
       entry: "₹0",
@@ -3583,7 +3708,8 @@ function getContests() {
   function showContestTabs(selected) {
     const list = getContests();
     const demoContest = {
-      id: "batzo-free-demo-visible",
+      id: 1,
+      matchId: 1,
       name: "BATZO FREE DEMO CONTEST",
       title: "BATZO FREE DEMO CONTEST",
       entry: "₹0",
@@ -3594,7 +3720,7 @@ function getContests() {
       spots: 100,
       maxSpots: 100,
       joinedSpots: 0,
-      match: "BATZO DEMO: INDIA vs AUSTRALIA",
+      match: "IND vs AUS",
       type: "practice",
       practice: true,
       isPractice: true,
@@ -4013,7 +4139,7 @@ r.querySelector("#bzV11Teams").onclick = function () {
     );
 
     r.querySelector("#bzV11Back").onclick = function () {
-      showContestDetails(contest);
+      goBack();
     };
 
     const create = r.querySelector("#bzCreateAnother");
@@ -4070,33 +4196,76 @@ r.querySelector("#bzV11Teams").onclick = function () {
 
     const cont = r.querySelector("#bzContinueSelected");
 
+    /* BATZO_CONTINUE_AUTOSELECT_FINAL_V1 */
     if (cont) {
       cont.onclick = function () {
-        const selected = readJSON("batzo_v11_selected_team", null);
+        const teamsNow = getTeams(match);
 
-        if (!selected || selected.match !== matchKey(match)) {
-          alert("Please select a team first.");
+        if (
+          !Array.isArray(teamsNow) ||
+          teamsNow.length === 0
+        ) {
+          alert("Please create a team first.");
           return;
         }
 
-        const team = getTeams(match).find(
-          t => String(t.id) === String(selected.teamId)
-        );
+        let selected = null;
+
+        try {
+          selected = readJSON(
+            "batzo_v11_selected_team",
+            null
+          );
+        } catch (_) {}
+
+        let team = null;
+
+        if (
+          selected &&
+          selected.match === matchKey(match)
+        ) {
+          team = teamsNow.find(
+            t =>
+              String(t.id) ===
+              String(selected.teamId)
+          );
+        }
+
+        /*
+         * Main fix:
+         * if saved team exists, Continue works
+         * without pressing SELECT again.
+         */
+        if (!team) {
+          team = teamsNow[0];
+        }
 
         if (!team) {
-          alert("Selected team not found.");
+          alert("Saved team not found.");
           return;
         }
 
-        
+        try {
+          localStorage.setItem(
+            "batzo_v11_selected_team",
+            JSON.stringify({
+              match: matchKey(match),
+              teamId: team.id
+            })
+          );
+        } catch (_) {}
+
         window.BATZO_SELECTED_TEAM = team;
+        window.BATZO_PENDING_TEAM = team;
 
-        batzoRequireLogin(() => {
-          showJoinConfirmation(match, contest, team);
-        });
-
+        showJoinConfirmation(
+          match,
+          contest,
+          team
+        );
       };
     }
+
   }
 
   function showTeamBuilder(match, contest, editing) {
@@ -4760,8 +4929,34 @@ r.querySelector("#bzV11Teams").onclick = function () {
 
       saveTeams(match, next);
       syncTeamToBackend(match, contest, team).then(function(result) {
-        if (result.ok) {
-          console.log("BATZO: Team Builder backend sync PASS");
+        if (
+          result &&
+          result.ok &&
+          result.team &&
+          result.team.id
+        ) {
+          team.backendId = result.team.id;
+
+          const refreshed =
+            getTeams(match).map(function(x) {
+              return String(x.id) === String(team.id)
+                ? Object.assign(
+                    {},
+                    x,
+                    { backendId: result.team.id }
+                  )
+                : x;
+            });
+
+          saveTeams(match, refreshed);
+
+          window.BATZO_SELECTED_TEAM = team;
+          window.BATZO_PENDING_TEAM = team;
+
+          console.log(
+            "BATZO: Team Builder backend sync PASS",
+            result.team.id
+          );
         }
       });
 
@@ -4780,88 +4975,203 @@ r.querySelector("#bzV11Teams").onclick = function () {
   /* BATZO_TEAM_API_SYNC_V1 */
   async function syncTeamToBackend(match, contest, team) {
     try {
-      const token =
-        localStorage.getItem("batzo_token") ||
-        localStorage.getItem("batzo_auth_token") ||
-        localStorage.getItem("authToken") ||
-        localStorage.getItem("token");
-
-      if (!token) {
-        console.warn("BATZO: no JWT token; keeping local team only.");
-        return { ok:false, skipped:true };
-      }
-
-      const matchId = Number(
-        match && (match.id || match.match_id)
-      );
-
-      if (!matchId) {
-        console.warn("BATZO: match id missing; keeping local team.");
-        return { ok:false, skipped:true };
-      }
-
-      const players = Array.isArray(team.players)
-        ? team.players
-        : [];
-
-      const response = await fetch("/api/teams", {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization":"Bearer " + token
-        },
-        body:JSON.stringify({
-          match_id:matchId,
-          team_name:team.name || team.team_name || "Team",
-          players,
-          captainId:team.captainId,
-          viceCaptainId:team.viceCaptainId
-        })
-      });
-
-      const data = await response.json().catch(function(){
-        return {};
-      });
-
-      if (!response.ok || !data.success) {
-        console.warn(
-          "BATZO: backend team sync failed:",
-          data.message || data.error || response.status
-        );
+      if (team?.backendId) {
         return {
-          ok:false,
-          status:response.status,
-          data
+          ok: true,
+          team: {
+            id: team.backendId
+          }
         };
       }
 
+      const matchId = Number(
+        contest?.matchId ||
+        contest?.match_id ||
+        match?.matchId ||
+        match?.match_id ||
+        match?.id ||
+        1
+      );
+
+      if (!matchId) {
+        return {
+          ok: false,
+          error: new Error("Match ID missing")
+        };
+      }
+
+      const rawPlayers =
+        Array.isArray(team?.players)
+          ? team.players
+          : [];
+
+      const players =
+        rawPlayers.map(function (p, index) {
+          return {
+            id: String(
+              p?.id ??
+              p?.playerId ??
+              p?.name ??
+              ("player-" + index)
+            ),
+
+            name:
+              String(
+                p?.name ||
+                ("Player " + (index + 1))
+              ),
+
+            role:
+              String(
+                p?.role || ""
+              )
+                .trim()
+                .toUpperCase(),
+
+            team:
+              String(
+                p?.team || ""
+              )
+                .trim()
+                .toUpperCase(),
+
+            credits:
+              Number(
+                p?.credits ??
+                p?.credit ??
+                0
+              )
+          };
+        });
+
+      const captainId =
+        String(
+          team?.captainId ??
+          team?.captain ??
+          ""
+        );
+
+      const viceCaptainId =
+        String(
+          team?.viceCaptainId ??
+          team?.viceCaptain ??
+          ""
+        );
+
+      if (players.length !== 11) {
+        throw new Error(
+          "Exactly 11 players required"
+        );
+      }
+
+      if (!captainId || !viceCaptainId) {
+        throw new Error(
+          "Captain and Vice-Captain are required"
+        );
+      }
+
+      /*
+       * batzoWalletRequest is actually our generic
+       * authenticated backend request bridge:
+       * it refreshes Firebase -> Batzo JWT on 401.
+       */
+      const data =
+        await batzoWalletRequest(
+          "/api/teams",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              match_id: matchId,
+
+              team_name:
+                team?.name ||
+                team?.team_name ||
+                "Team",
+
+              players,
+              captainId,
+              viceCaptainId
+            })
+          }
+        );
+
+      if (
+        !data ||
+        data.success !== true ||
+        !data.team?.id
+      ) {
+        throw new Error(
+          data?.message ||
+          "Team sync failed"
+        );
+      }
+
+      team.backendId =
+        data.team.id;
+
+      try {
+        const refreshed =
+          getTeams(match)
+            .map(function (item) {
+              return (
+                String(item.id) ===
+                String(team.id)
+              )
+                ? Object.assign(
+                    {},
+                    item,
+                    {
+                      backendId:
+                        data.team.id
+                    }
+                  )
+                : item;
+            });
+
+        saveTeams(
+          match,
+          refreshed
+        );
+      } catch (_) {}
+
       console.log(
-        "BATZO: team synced to backend:",
-        data.team && data.team.id
+        "BATZO BACKEND TEAM READY:",
+        data.team.id
       );
 
       return {
-        ok:true,
-        team:data.team
+        ok: true,
+        team: data.team
       };
 
-    } catch(error) {
+    } catch (error) {
       console.warn(
-        "BATZO: backend unavailable; local team retained.",
+        "BATZO TEAM SYNC ERROR:",
         error
       );
 
       return {
-        ok:false,
-        error
+        ok: false,
+        error,
+        data: error?.data || null
       };
     }
   }
 
   function entryAmount(contest) {
-    const raw = String(contest.entry || "49");
-    const n = Number(raw.replace(/[^\d.]/g, ""));
-    return Number.isFinite(n) ? n : 49;
+    const raw =
+      contest?.entry ??
+      contest?.entryFee ??
+      contest?.entry_fee ??
+      0;
+
+    const n = Number(
+      String(raw).replace(/[^\d.]/g, "")
+    );
+
+    return Number.isFinite(n)
+      ? n
+      : 0;
   }
 
   
@@ -4955,6 +5265,54 @@ function showJoinConfirmation(match, contest, team) {
         if (!base) {
           throw new Error(
             "API URL is not configured."
+          );
+        }
+
+        /* BATZO_FINAL_JOIN_TEAM_SYNC_V1 */
+        if (!team.backendId) {
+          const synced =
+            await syncTeamToBackend(
+              match,
+              contest,
+              team
+            );
+
+          if (
+            synced &&
+            synced.ok &&
+            synced.team &&
+            synced.team.id
+          ) {
+            team.backendId =
+              synced.team.id;
+
+            const refreshed =
+              getTeams(match).map(function(item) {
+                return String(item.id) ===
+                  String(team.id)
+                  ? Object.assign(
+                      {},
+                      item,
+                      {
+                        backendId:
+                          synced.team.id
+                      }
+                    )
+                  : item;
+              });
+
+            saveTeams(
+              match,
+              refreshed
+            );
+          }
+        }
+
+        if (!team.backendId) {
+          throw new Error(
+            synced?.data?.message ||
+            synced?.error?.message ||
+            "Team could not be synced. Please try again."
           );
         }
 
@@ -5150,7 +5508,8 @@ async function batzoJoinContestApi(match, contest, team) {
     {
       method: "POST",
       body: JSON.stringify({
-        teamId: team.id
+        teamId:
+          team.backendId || team.id
       })
     }
   );
@@ -6560,6 +6919,26 @@ function App() {
 
 
       try {
+        /*
+         * BATZO_ANDROID_FLOW_BACK_FINAL
+         *
+         * Raw contest/team screens replace #root with HTML.
+         * Their visible Back button is the only correct authority.
+         */
+        const flowBack =
+          document.getElementById("bzV11Back") ||
+          document.getElementById("bzBack") ||
+          document.getElementById("bzContestBack") ||
+          document.getElementById("bzTeamsBack");
+
+        if (
+          flowBack &&
+          flowBack.offsetParent !== null
+        ) {
+          flowBack.click();
+          return;
+        }
+
         // First: authentication/inner-screen navigation.
         if (
           typeof window.__BATZO_AUTH_BACK__ === "function" &&
@@ -6576,10 +6955,14 @@ function App() {
           return;
         }
 
-        // Final SPA fallback.
-        if (window.history.length > 1) {
-          window.history.back();
-        }
+        /*
+         * Final SPA fallback.
+         * NEVER replay browser history.
+         * Non-home Batzo tabs return directly Home.
+         */
+        window.dispatchEvent(
+          new Event("batzo-native-back")
+        );
       } catch (err) {
         console.warn("BATZO Android Back error:", err);
       } finally {
@@ -6615,259 +6998,140 @@ return (
 export default App;
 
 
-/* ===== BATZO_WALLET_BUTTON_BRIDGE_V1 =====
-   Makes the existing ADD MONEY and WITHDRAW buttons functional.
-*/
+
+
+
+
+
+
+
+
+
+
+/* ===== BATZO_WALLET_ACTION_CLEAN_FINAL ===== */
 if (
   typeof window !== "undefined" &&
-  !window.__BATZO_WALLET_BUTTON_BRIDGE_V1__
+  !window.__BATZO_WALLET_ACTION_CLEAN_FINAL__
 ) {
-  window.__BATZO_WALLET_BUTTON_BRIDGE_V1__ = true;
+  window.__BATZO_WALLET_ACTION_CLEAN_FINAL__ = true;
 
   document.addEventListener(
     "click",
-    async (event) => {
-      const button = event.target?.closest?.("button");
+    async function(event) {
+      const button =
+        event.target?.closest?.("button");
+
       if (!button) return;
 
-      const label = String(button.textContent || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toUpperCase();
+      const label =
+        String(button.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toUpperCase();
 
-      if (label !== "ADD MONEY" && label !== "WITHDRAW") {
+      const isDeposit =
+        label.includes("ADD MONEY");
+
+      const isWithdraw =
+        label.includes("WITHDRAW");
+
+      if (!isDeposit && !isWithdraw) {
         return;
       }
+
+      const wallet =
+        document.querySelector(
+          ".bz-wallet-page, .batzo-wallet-final"
+        );
+
+      if (!wallet) return;
 
       event.preventDefault();
       event.stopPropagation();
 
-      if (typeof event.stopImmediatePropagation === "function") {
+      if (
+        typeof event.stopImmediatePropagation ===
+        "function"
+      ) {
         event.stopImmediatePropagation();
       }
 
-      const isDeposit = label === "ADD MONEY";
-
-      const raw = window.prompt(
-        isDeposit
-          ? "Enter amount to add (₹)"
-          : "Enter winning amount to withdraw (₹)",
-        isDeposit ? "100" : ""
-      );
+      const raw =
+        window.prompt(
+          isDeposit
+            ? "Enter amount to add (₹)"
+            : "Enter winning amount to withdraw (₹)",
+          isDeposit ? "100" : ""
+        );
 
       if (raw === null) return;
 
-      const amount = Number(
-        String(raw).replace(/[₹,\s]/g, "")
-      );
+      const amount =
+        Number(
+          String(raw)
+            .replace(/[₹,\s]/g, "")
+        );
 
-      if (!Number.isFinite(amount) || amount <= 0) {
-        window.alert("Please enter a valid amount.");
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        window.alert(
+          "Please enter a valid amount."
+        );
         return;
       }
 
       button.disabled = true;
 
       try {
-        const result = await batzoWalletRequest(
-          isDeposit
-            ? "/api/wallet/demo/deposit"
-            : "/api/wallet/demo/withdraw",
-          {
-            method: "POST",
-            body: JSON.stringify({ amount })
-          }
-        );
+        const result =
+          await batzoWalletRequest(
+            isDeposit
+              ? "/api/wallet/demo/deposit"
+              : "/api/wallet/demo/withdraw",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                amount
+              })
+            }
+          );
 
-        if (!result || result.success !== true) {
+        if (
+          !result ||
+          result.success !== true
+        ) {
           throw new Error(
-            result?.message || "Wallet transaction failed"
+            result?.message ||
+            "Wallet transaction failed."
           );
         }
 
         window.alert(
           result.message ||
-            (isDeposit
-              ? "Money added successfully."
-              : "Withdrawal successful.")
+          "Wallet updated successfully."
         );
 
-        const refresh =
-          document.querySelector(".bz-wallet-refresh");
-
-        if (refresh && refresh !== button) {
-          refresh.click();
-        } else {
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error("[BATZO WALLET ACTION]", error);
-
-        window.alert(
-          error?.message || "Wallet transaction failed."
-        );
-      } finally {
-        button.disabled = false;
-      }
-    },
-    true
-  );
-}
-
-
-/* ===== BATZO WALLET UI ACTION FIX V2 ===== */
-if (
-  typeof window !== "undefined" &&
-  !window.__BATZO_WALLET_UI_ACTION_FIX_V2__
-) {
-  window.__BATZO_WALLET_UI_ACTION_FIX_V2__ = true;
-
-  /* ADD MONEY / WITHDRAW:
-     Match buttons even when they contain + or arrow icons.
-     Capture phase blocks old placeholder React alert handlers.
-  */
-  document.addEventListener(
-    "click",
-    async function batzoWalletActionV2(event) {
-      const button = event.target?.closest?.("button");
-      if (!button) return;
-
-      const label = String(button.textContent || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toUpperCase();
-
-      const isDeposit = label.includes("ADD MONEY");
-      const isWithdraw = label.includes("WITHDRAW");
-
-      if (!isDeposit && !isWithdraw) return;
-
-      const walletScreen = document.querySelector(
-        ".bz-wallet-page, .batzo-wallet-final"
-      );
-
-      if (!walletScreen) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (typeof event.stopImmediatePropagation === "function") {
-        event.stopImmediatePropagation();
-      }
-
-      const raw = window.prompt(
-        isDeposit
-          ? "Enter amount to add (₹)"
-          : "Enter winning amount to withdraw (₹)",
-        isDeposit ? "100" : ""
-      );
-
-      if (raw === null) return;
-
-      const amount = Number(
-        String(raw).replace(/[₹,\s]/g, "")
-      );
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        window.alert("Please enter a valid amount.");
-        return;
-      }
-
-      button.disabled = true;
-
-      try {
-        const result = await batzoWalletRequest(
-          isDeposit
-            ? "/api/wallet/demo/deposit"
-            : "/api/wallet/demo/withdraw",
-          {
-            method: "POST",
-            body: JSON.stringify({ amount })
-          }
-        );
-
-        if (!result || result.success !== true) {
-          throw new Error(
-            result?.message || "Wallet transaction failed."
-          );
-        }
-
-        window.alert(
-          result.message ||
-          (isDeposit
-            ? "Money added successfully."
-            : "Withdrawal successful.")
-        );
-
-        /* Reload Wallet from backend so balance/history refresh together */
         window.location.reload();
+
       } catch (error) {
-        console.error("[BATZO WALLET ACTION V2]", error);
+        console.error(
+          "[BATZO WALLET FINAL]",
+          error
+        );
 
         window.alert(
-          error?.message || "Wallet transaction failed."
+          error?.message ||
+          "Wallet transaction failed."
         );
+
       } finally {
         button.disabled = false;
       }
     },
     true
   );
-
-  /* Hide accidental floating LOGOUT only while Wallet is visible.
-     Restore it automatically outside Wallet/Profile flow.
-  */
-  function batzoFixWalletLogout() {
-    const walletVisible = !!document.querySelector(
-      ".bz-wallet-page, .batzo-wallet-final"
-    );
-
-    const candidates = document.querySelectorAll(
-      'button,a,[role="button"],div'
-    );
-
-    candidates.forEach((el) => {
-      const text = String(el.textContent || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toUpperCase();
-
-      if (text !== "LOGOUT") return;
-
-      if (walletVisible) {
-        if (!el.dataset.batzoWalletLogoutHidden) {
-          el.dataset.batzoWalletLogoutHidden = "1";
-          el.dataset.batzoOldDisplay = el.style.display || "";
-        }
-        el.style.setProperty("display", "none", "important");
-      } else if (el.dataset.batzoWalletLogoutHidden === "1") {
-        const oldDisplay = el.dataset.batzoOldDisplay || "";
-        el.style.removeProperty("display");
-        if (oldDisplay) el.style.display = oldDisplay;
-
-        delete el.dataset.batzoWalletLogoutHidden;
-        delete el.dataset.batzoOldDisplay;
-      }
-    });
-  }
-
-  batzoFixWalletLogout();
-
-  const batzoWalletLogoutObserver =
-    new MutationObserver(batzoFixWalletLogout);
-
-  batzoWalletLogoutObserver.observe(
-    document.documentElement,
-    {
-      childList: true,
-      subtree: true
-    }
-  );
 }
-/* ===== END BATZO WALLET UI ACTION FIX V2 ===== */
-
-
-
-
-
+/* ===== END BATZO_WALLET_ACTION_CLEAN_FINAL ===== */
 
