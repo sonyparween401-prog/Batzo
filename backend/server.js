@@ -153,6 +153,23 @@ app.post('/api/verify-otp', async (req, res) => {
 // BATZO TEAM / CONTEST API ROUTES
 registerRoutes(app, authenticateToken);
 
+
+/* BATZO_AUTH_STATUS_V1 */
+app.get('/api/auth/status', (req, res) => {
+  const jwtSecret = String(process.env.JWT_SECRET || '');
+  const projectId =
+    process.env.FIREBASE_PROJECT_ID ||
+    'batzo-369df';
+
+  res.json({
+    success: true,
+    firebaseProjectId: projectId,
+    jwtSecretConfigured: jwtSecret.length >= 32,
+    jwtSecretLengthOk: jwtSecret.length >= 32,
+    nodeEnv: process.env.NODE_ENV || 'unknown'
+  });
+});
+
 app.post('/api/auth/firebase', async (req, res) => {
   try {
     const { idToken } = req.body || {};
