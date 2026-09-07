@@ -78,7 +78,7 @@ async function getCurrentMatches() {
   return request(
     "currentMatches",
     { offset: 0 },
-    30 * 60 * 1000
+    20 * 60 * 1000
   );
 }
 

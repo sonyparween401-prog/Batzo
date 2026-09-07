@@ -36,6 +36,79 @@ function uniqueMatches(list) {
   return result;
 }
 
+
+/* BATZO_MATCH_CLASSIFIERS_V2 */
+function batzoTrue(value) {
+  return value === true ||
+    value === 1 ||
+    String(value || "").toLowerCase() === "true";
+}
+
+function batzoStatus(match) {
+  return String(match?.status || "").trim().toLowerCase();
+}
+
+function batzoTime(match) {
+  const raw = match?.dateTimeGMT || match?.date || "";
+  if (!raw) return NaN;
+
+  const normalized =
+    /Z$|[+-]\d\d:\d\d$/.test(raw)
+      ? raw
+      : `${raw}Z`;
+
+  return Date.parse(normalized);
+}
+
+function isEndedMatch(match) {
+  const status = batzoStatus(match);
+
+  return batzoTrue(match?.matchEnded) ||
+    /\b(won|completed|complete|finished|drawn|abandoned|cancelled|canceled|no result)\b/.test(status);
+}
+
+function isLiveMatch(match) {
+  if (!match || isEndedMatch(match)) return false;
+
+  const status = batzoStatus(match);
+  const time = batzoTime(match);
+
+  /* A future match must never become LIVE because of a bad provider flag. */
+  if (
+    Number.isFinite(time) &&
+    time > Date.now() + 30 * 60 * 1000
+  ) {
+    return false;
+  }
+
+  return batzoTrue(match?.matchStarted) ||
+    /\b(live|in progress|innings break|lunch|tea break)\b/.test(status);
+}
+
+function isUpcomingMatch(match) {
+  if (!match || isEndedMatch(match) || isLiveMatch(match)) {
+    return false;
+  }
+
+  const status = batzoStatus(match);
+  const time = batzoTime(match);
+
+  /* Date is the strongest signal for a scheduled match. */
+  if (
+    Number.isFinite(time) &&
+    time > Date.now() + 5 * 60 * 1000
+  ) {
+    return true;
+  }
+
+  if (!batzoTrue(match?.matchStarted)) {
+    return true;
+  }
+
+  return /\b(upcoming|scheduled|not started|starts at|match starts)\b/.test(status);
+}
+/* END BATZO_MATCH_CLASSIFIERS_V2 */
+
 router.get("/matches", async (req, res) => {
   try {
     /*
@@ -104,11 +177,7 @@ router.get("/live", async (req, res) => {
   try {
     const data = await getCurrentMatches();
 
-    const live = rows(data).filter(
-      (match) =>
-        match?.matchStarted === true &&
-        match?.matchEnded !== true
-    );
+    const live = rows(data).filter(isLiveMatch);
 
     res.json({
       status: "success",
@@ -128,6 +197,53 @@ router.get("/live", async (req, res) => {
   }
 });
 
+
+
+router.get("/upcoming", async (req, res) => {
+  try {
+    const offsets = [0, 25, 50, 75, 100];
+
+    const results = await Promise.allSettled([
+      getCurrentMatches(),
+      ...offsets.map((offset) => getMatches(offset))
+    ]);
+
+    let all = [];
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        all.push(...rows(result.value));
+      }
+    }
+
+    const upcoming = uniqueMatches(all)
+      .filter(isUpcomingMatch)
+      .sort((a, b) => {
+        const at = batzoTime(a);
+        const bt = batzoTime(b);
+
+        if (!Number.isFinite(at)) return 1;
+        if (!Number.isFinite(bt)) return -1;
+        return at - bt;
+      });
+
+    res.json({
+      status: "success",
+      count: upcoming.length,
+      data: upcoming
+    });
+  } catch (error) {
+    console.error(
+      "CRICKET UPCOMING:",
+      error.response?.data || error.message
+    );
+
+    res.status(502).json({
+      success: false,
+      error: "Unable to fetch upcoming cricket matches"
+    });
+  }
+});
 
 function findBallArray(value, depth = 0) {
   if (depth > 8 || value == null) return null;

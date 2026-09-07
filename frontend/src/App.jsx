@@ -1918,83 +1918,161 @@ function BatzoApp() {
     };
 
     const loadRealMatches = async () => {
+      const trueValue = (value) =>
+        value === true ||
+        value === 1 ||
+        String(value || "").toLowerCase() === "true";
+
+      const statusOf = (m) =>
+        String(m?.status || "").trim().toLowerCase();
+
+      const timeOf = (m) => {
+        const raw = m?.dateTimeGMT || m?.date || "";
+        if (!raw) return NaN;
+
+        const normalized =
+          /Z$|[+-]\d\d:\d\d$/.test(raw)
+            ? raw
+            : `${raw}Z`;
+
+        return Date.parse(normalized);
+      };
+
+      const ended = (m) => {
+        const status = statusOf(m);
+
+        return trueValue(m?.matchEnded) ||
+          /\b(won|completed|complete|finished|drawn|abandoned|cancelled|canceled|no result)\b/.test(status);
+      };
+
+      const live = (m) => {
+        if (!m || ended(m)) return false;
+
+        const status = statusOf(m);
+        const time = timeOf(m);
+
+        if (
+          Number.isFinite(time) &&
+          time > Date.now() + 30 * 60 * 1000
+        ) {
+          return false;
+        }
+
+        return trueValue(m?.matchStarted) ||
+          /\b(live|in progress|innings break|lunch|tea break)\b/.test(status);
+      };
+
+      const upcoming = (m) => {
+        if (!m || ended(m) || live(m)) return false;
+
+        const time = timeOf(m);
+        const status = statusOf(m);
+
+        if (
+          Number.isFinite(time) &&
+          time > Date.now() + 5 * 60 * 1000
+        ) {
+          return true;
+        }
+
+        if (!trueValue(m?.matchStarted)) {
+          return true;
+        }
+
+        return /\b(upcoming|scheduled|not started|starts at|match starts)\b/.test(status);
+      };
+
+      const payloadRows = (payload) =>
+        Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
+      const unique = (list) => {
+        const seen = new Set();
+
+        return list.filter((m, index) => {
+          const id =
+            m?.id ||
+            `${m?.name || "match"}-${m?.dateTimeGMT || m?.date || index}`;
+
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+      };
+
       try {
-        const [liveResult, matchesResult] =
-          await Promise.allSettled([
-            json("/api/cricket/live"),
-            json("/api/cricket/matches")
-          ]);
+        const [
+          liveResult,
+          matchesResult,
+          upcomingResult
+        ] = await Promise.allSettled([
+          json("/api/cricket/live"),
+          json("/api/cricket/matches"),
+          json("/api/cricket/upcoming")
+        ]);
 
-        let gotSomething = false;
-
-        if (
+        const liveRows =
           liveResult.status === "fulfilled"
-        ) {
-          const livePayload =
-            liveResult.value;
+            ? payloadRows(liveResult.value)
+            : [];
 
-          const liveRows =
-            Array.isArray(livePayload?.data)
-              ? livePayload.data
-              : [];
-
-          const genuineLive =
-            liveRows
-              .filter(
-                (m) =>
-                  m?.matchStarted === true &&
-                  m?.matchEnded !== true
-              )
-              .map((m) =>
-                batzoLiveAdapter({
-                  ...m,
-                  status: "LIVE"
-                })
-              );
-
-          if (!cancelled) {
-            setRealLiveMatches(
-              genuineLive
-            );
-          }
-
-          gotSomething = true;
-        }
-
-        if (
+        const matchRows =
           matchesResult.status === "fulfilled"
-        ) {
-          const payload =
-            matchesResult.value;
+            ? payloadRows(matchesResult.value)
+            : [];
 
-          const rows =
-            Array.isArray(payload?.data)
-              ? payload.data
-              : [];
-
-          const upcoming =
-            rows
-              .filter(
-                (m) =>
-                  m?.matchStarted !== true &&
-                  m?.matchEnded !== true
-              )
-              .map(upcomingAdapter);
-
-          if (!cancelled) {
-            setRealUpcomingMatches(
-              upcoming
-            );
-          }
-
-          gotSomething = true;
-        }
+        const upcomingRows =
+          upcomingResult.status === "fulfilled"
+            ? payloadRows(upcomingResult.value)
+            : [];
 
         /*
-         * If Render was waking/redeploying and both
-         * requests failed, retry automatically.
+         * /matches also contains currentMatches,
+         * so use it as a LIVE fallback.
          */
-        if (!gotSomething && !cancelled) {
+        const genuineLive = unique([
+          ...liveRows,
+          ...matchRows
+        ])
+          .filter(live)
+          .map((m) =>
+            batzoLiveAdapter({
+              ...m,
+              status: "LIVE"
+            })
+          );
+
+        const upcomingSource =
+          upcomingRows.length > 0
+            ? upcomingRows
+            : matchRows;
+
+        const genuineUpcoming = unique(upcomingSource)
+          .filter(upcoming)
+          .sort((a, b) => {
+            const at = timeOf(a);
+            const bt = timeOf(b);
+
+            if (!Number.isFinite(at)) return 1;
+            if (!Number.isFinite(bt)) return -1;
+
+            return at - bt;
+          })
+          .slice(0, 80)
+          .map(upcomingAdapter);
+
+        if (!cancelled) {
+          setRealLiveMatches(genuineLive);
+          setRealUpcomingMatches(genuineUpcoming);
+        }
+
+        const anySuccess =
+          liveResult.status === "fulfilled" ||
+          matchesResult.status === "fulfilled" ||
+          upcomingResult.status === "fulfilled";
+
+        if (!anySuccess && !cancelled) {
           clearTimeout(retryTimer);
 
           retryTimer = setTimeout(
