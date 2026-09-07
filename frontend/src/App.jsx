@@ -5744,123 +5744,6 @@ function batzoContestStatusText(entry) {
 
 
 async function batzoWalletRequest(path, options = {}) {
-  let token =
-      localStorage.getItem("batzo_token") ||
-      localStorage.getItem("batzoToken") ||
-      localStorage.getItem("token") ||
-      "";
-
-    if (!token) {
-      token = await batzoRecoverAuthToken();
-    }
-
-  // If the Batzo JWT is missing, recover it from the
-  // currently authenticated Firebase user.
-  if (!token) {
-    try {
-      let idToken = null;
-      let firebaseUser = auth.currentUser || null;
-
-      // Web Firebase user
-      if (
-        firebaseUser &&
-        typeof firebaseUser.getIdToken === "function"
-      ) {
-        idToken = await firebaseUser.getIdToken(true);
-      }
-
-      // Native Capacitor Firebase user/token
-      if (!idToken) {
-        try {
-          const nativeUser =
-            await FirebaseAuthentication.getCurrentUser();
-
-          if (nativeUser?.user) {
-            firebaseUser = nativeUser.user;
-          }
-        } catch (_) {}
-
-        try {
-          const tokenResult =
-            await FirebaseAuthentication.getIdToken({
-              forceRefresh: true
-            });
-
-          idToken = tokenResult?.token || null;
-        } catch (nativeTokenError) {
-          console.warn(
-            "[BATZO] Native Firebase ID token unavailable:",
-            nativeTokenError
-          );
-        }
-      }
-
-      // Exchange Firebase ID token for Batzo JWT
-      if (idToken) {
-        const base = batzoApiBase();
-
-        if (!base) {
-          throw new Error("API_BASE_URL_MISSING");
-        }
-
-        const syncResponse = await fetch(
-          base + "/api/auth/firebase",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ idToken })
-          }
-        );
-
-        const syncData =
-          await syncResponse.json().catch(() => ({}));
-
-        if (
-          syncResponse.ok &&
-          syncData.success &&
-          syncData.token
-        ) {
-          token = String(syncData.token).trim();
-
-          try {
-            localStorage.setItem("batzo_token", token);
-          } catch (_) {}
-
-          try {
-            localStorage.setItem("batzo_auth_token", token);
-          } catch (_) {}
-          if (syncData.user) {
-            try {
-              localStorage.setItem(
-                "batzo_firebase_user",
-                JSON.stringify(syncData.user)
-              );
-            } catch (_) {}
-          }
-        } else {
-          console.warn(
-            "[BATZO] Firebase-to-Batzo sync failed:",
-            syncData
-          );
-        }
-      }
-    } catch (refreshError) {
-      console.warn(
-        "[BATZO] Wallet Firebase token recovery:",
-        refreshError
-      );
-    }
-  }
-
-  if (!token) {
-    const error = new Error("AUTH_REQUIRED");
-    error.code = "AUTH_REQUIRED";
-    error.status = 401;
-    throw error;
-  }
-
   const base = batzoApiBase();
 
   if (!base) {
@@ -5869,106 +5752,313 @@ async function batzoWalletRequest(path, options = {}) {
     throw error;
   }
 
-  const headers = {
-    ...(options.headers || {}),
-    Authorization: "Bearer " + token,
-    "Content-Type": "application/json"
+  const saveBatzoJwt = (value) => {
+    const token = String(value || "").trim();
+
+    if (!token) return "";
+
+    try {
+      localStorage.setItem("batzo_token", token);
+      localStorage.setItem("batzo_auth_token", token);
+    } catch (_) {}
+
+    return token;
   };
 
-  const response = await fetch(base + path, {
-    ...options,
-    headers
-  });
+  const storedBatzoJwt = () => {
+    try {
+      return String(
+        localStorage.getItem("batzo_token") ||
+        localStorage.getItem("batzo_auth_token") ||
+        ""
+      ).trim();
+    } catch (_) {
+      return "";
+    }
+  };
 
-  let data = {};
-  try {
-    data = await response.json();
-  } catch (_) {}
+  const clearBatzoJwt = () => {
+    try {
+      localStorage.removeItem("batzo_token");
+      localStorage.removeItem("batzo_auth_token");
+      localStorage.removeItem("batzoToken");
+    } catch (_) {}
+  };
 
-  if (response.status === 401) {
-    const error = new Error(
-      data.message || data.error || "Authentication failed"
-    );
-    error.code = "AUTH_EXPIRED";
-    error.status = 401;
+  const getFirebaseIdToken = async () => {
+    /*
+     * Web Firebase login
+     */
+    try {
+      const user = auth?.currentUser;
+
+      if (
+        user &&
+        typeof user.getIdToken === "function"
+      ) {
+        const value = await user.getIdToken(true);
+
+        if (value) {
+          return String(value).trim();
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "[BATZO WALLET] Web Firebase token failed:",
+        error
+      );
+    }
+
+    /*
+     * Native Firebase login
+     */
+    try {
+      const current =
+        await FirebaseAuthentication.getCurrentUser();
+
+      if (current?.user) {
+        const result =
+          await FirebaseAuthentication.getIdToken({
+            forceRefresh: true
+          });
+
+        const value =
+          result?.token ||
+          result?.idToken ||
+          "";
+
+        if (value) {
+          return String(value).trim();
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "[BATZO WALLET] Native Firebase token failed:",
+        error
+      );
+    }
+
+    return "";
+  };
+
+  const createFreshBatzoJwt = async () => {
+    const idToken =
+      await getFirebaseIdToken();
+
+    if (!idToken) {
+      const error =
+        new Error(
+          "Please login with Google to use Wallet."
+        );
+
+      error.code = "AUTH_REQUIRED";
+      error.status = 401;
+
+      throw error;
+    }
+
+    const response =
+      await fetch(
+        base + "/api/auth/firebase",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            idToken
+          })
+        }
+      );
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
+
+    if (
+      !response.ok ||
+      data?.success !== true ||
+      !data?.token
+    ) {
+      const error =
+        new Error(
+          data?.message ||
+          data?.error ||
+          "Batzo login failed."
+        );
+
+      error.code = "AUTH_REQUIRED";
+      error.status = response.status || 401;
+
+      console.error(
+        "[BATZO WALLET] /api/auth/firebase failed:",
+        response.status,
+        data
+      );
+
+      throw error;
+    }
+
+    if (data?.user) {
+      try {
+        localStorage.setItem(
+          "batzo_firebase_user",
+          JSON.stringify(data.user)
+        );
+      } catch (_) {}
+    }
+
+    return saveBatzoJwt(data.token);
+  };
+
+  const callWallet = async (token) => {
+    const response =
+      await fetch(
+        base + path,
+        {
+          ...options,
+          headers: {
+            ...(options.headers || {}),
+            "Content-Type": "application/json",
+            Authorization:
+              "Bearer " + token
+          }
+        }
+      );
+
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch (_) {}
+
+    return {
+      response,
+      data
+    };
+  };
+
+  /*
+   * IMPORTANT:
+   * batzo_token must contain Batzo backend JWT,
+   * NOT Firebase ID token.
+   */
+  let token = storedBatzoJwt();
+
+  if (!token) {
+    token =
+      await createFreshBatzoJwt();
+  }
+
+  let result =
+    await callWallet(token);
+
+  /*
+   * Stale/invalid Batzo JWT:
+   * clear it, exchange a fresh Firebase token,
+   * then retry exactly once.
+   */
+  if (
+    result.response.status === 401 ||
+    result.response.status === 403
+  ) {
+    clearBatzoJwt();
+
+    token =
+      await createFreshBatzoJwt();
+
+    result =
+      await callWallet(token);
+  }
+
+  if (
+    result.response.status === 401 ||
+    result.response.status === 403
+  ) {
+    const error =
+      new Error(
+        result.data?.message ||
+        result.data?.error ||
+        "Authentication failed"
+      );
+
+    error.code = "AUTH_REQUIRED";
+    error.status =
+      result.response.status;
+
     throw error;
   }
 
-  if (!response.ok) {
-    const error = new Error(
-      data.message || data.error || "Wallet request failed"
-    );
-    error.status = response.status;
+  if (!result.response.ok) {
+    const error =
+      new Error(
+        result.data?.message ||
+        result.data?.error ||
+        "Wallet request failed"
+      );
+
+    error.status =
+      result.response.status;
+
     throw error;
   }
 
-  return data;
+  return result.data;
 }
-
-
-
-
-
-
 
 
 
 /* BATZO STEP1 AUTH TOKEN RECOVERY */
 async function batzoRecoverAuthToken() {
-  let token =
-    localStorage.getItem("batzo_token") ||
-    localStorage.getItem("batzoToken") ||
-    localStorage.getItem("token") ||
-    "";
+  /*
+   * Only recover an existing BATZO BACKEND JWT.
+   *
+   * Do NOT copy Firebase user.idToken/token/accessToken
+   * into batzo_token. Firebase ID tokens first have to be
+   * exchanged through /api/auth/firebase.
+   */
+  try {
+    const token =
+      localStorage.getItem("batzo_token") ||
+      localStorage.getItem("batzo_auth_token") ||
+      "";
 
-  if (token) return token;
+    if (token) {
+      return String(token).trim();
+    }
+  } catch (_) {}
 
-  const userJson =
-    localStorage.getItem("batzo_user") ||
-    localStorage.getItem("batzoUser") ||
-    localStorage.getItem("user");
+  try {
+    const raw =
+      localStorage.getItem("batzo_user") ||
+      localStorage.getItem("batzoUser") ||
+      "";
 
-  if (userJson) {
-    try {
-      const user = JSON.parse(userJson);
-      token =
-        user?.token ||
+    if (raw) {
+      const user =
+        JSON.parse(raw);
+
+      const token =
+        user?.batzoToken ||
         user?.jwt ||
-        user?.accessToken ||
         "";
 
       if (token) {
-        localStorage.setItem("batzo_token", token);
-        return token;
-      }
-    } catch (_) {}
-  }
+        localStorage.setItem(
+          "batzo_token",
+          String(token)
+        );
 
-  try {
-    if (
-      typeof FirebaseAuthentication !== "undefined" &&
-      FirebaseAuthentication &&
-      typeof FirebaseAuthentication.getCurrentUser === "function"
-    ) {
-      const current = await FirebaseAuthentication.getCurrentUser();
-
-      if (current && current.user) {
-        token =
-          current.user.idToken ||
-          current.user.token ||
-          current.user.accessToken ||
-          "";
-
-        if (token) {
-          localStorage.setItem("batzo_token", token);
-          return token;
-        }
+        return String(token);
       }
     }
   } catch (_) {}
 
   return "";
 }
+
+
 
 function BatzoWalletScreen() {
   const [wallet,setWallet] = React.useState(null);
@@ -6535,3 +6625,104 @@ return (
 }
 
 export default App;
+
+
+/* ===== BATZO_WALLET_BUTTON_BRIDGE_V1 =====
+   Makes the existing ADD MONEY and WITHDRAW buttons functional.
+*/
+if (
+  typeof window !== "undefined" &&
+  !window.__BATZO_WALLET_BUTTON_BRIDGE_V1__
+) {
+  window.__BATZO_WALLET_BUTTON_BRIDGE_V1__ = true;
+
+  document.addEventListener(
+    "click",
+    async (event) => {
+      const button = event.target?.closest?.("button");
+      if (!button) return;
+
+      const label = String(button.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+
+      if (label !== "ADD MONEY" && label !== "WITHDRAW") {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof event.stopImmediatePropagation === "function") {
+        event.stopImmediatePropagation();
+      }
+
+      const isDeposit = label === "ADD MONEY";
+
+      const raw = window.prompt(
+        isDeposit
+          ? "Enter amount to add (₹)"
+          : "Enter winning amount to withdraw (₹)",
+        isDeposit ? "100" : ""
+      );
+
+      if (raw === null) return;
+
+      const amount = Number(
+        String(raw).replace(/[₹,\s]/g, "")
+      );
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        window.alert("Please enter a valid amount.");
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        const result = await batzoWalletRequest(
+          isDeposit
+            ? "/api/wallet/demo/deposit"
+            : "/api/wallet/demo/withdraw",
+          {
+            method: "POST",
+            body: JSON.stringify({ amount })
+          }
+        );
+
+        if (!result || result.success !== true) {
+          throw new Error(
+            result?.message || "Wallet transaction failed"
+          );
+        }
+
+        window.alert(
+          result.message ||
+            (isDeposit
+              ? "Money added successfully."
+              : "Withdrawal successful.")
+        );
+
+        const refresh =
+          document.querySelector(".bz-wallet-refresh");
+
+        if (refresh && refresh !== button) {
+          refresh.click();
+        } else {
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("[BATZO WALLET ACTION]", error);
+
+        window.alert(
+          error?.message || "Wallet transaction failed."
+        );
+      } finally {
+        button.disabled = false;
+      }
+    },
+    true
+  );
+}
+
