@@ -5102,3 +5102,291 @@ section.batzo-hidden-home-section {
   color: #ff6074;
 }
 
+/* BATZO_MATCH_HUB_CSS_V1_START */
+
+.bz-match-hub {
+  padding: 0 0 110px;
+}
+
+.bz-match-title {
+  padding: 8px 18px 10px;
+}
+
+.bz-match-title span {
+  display: block;
+  color: #32f58a;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.bz-match-title h1 {
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: 31px;
+  line-height: 1.1;
+}
+
+.bz-main-match-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  background: #07100d;
+}
+
+.bz-main-match-tabs button {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: #929aa7;
+  padding: 17px 4px 15px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.bz-main-match-tabs button.active {
+  color: #32f58a;
+}
+
+.bz-main-match-tabs button.active::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: #32f58a;
+}
+
+.bz-match-filter-strip {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 14px 14px 12px;
+  background: #0b1210;
+  scrollbar-width: none;
+}
+
+.bz-match-filter-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.bz-match-filter-strip button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 999px;
+  background: transparent;
+  color: #a9b0b8;
+  padding: 9px 17px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bz-match-filter-strip button.active {
+  border-color: #32f58a;
+  color: #32f58a;
+  background: rgba(50,245,138,.07);
+}
+
+.bz-match-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 14px;
+  padding: 0 14px;
+  height: 46px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 13px;
+  background: #0c1311;
+}
+
+.bz-match-search span {
+  color: #7f8994;
+  font-size: 22px;
+}
+
+.bz-match-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+}
+
+.bz-list-section-label {
+  padding: 13px 16px;
+  background: #111917;
+  color: #9da6af;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.bz-series-block {
+  margin: 0 0 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: #08100e;
+}
+
+.bz-series-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 47px;
+  padding: 0 16px;
+  border-top: 1px solid rgba(50,245,138,.12);
+  border-bottom: 1px solid rgba(50,245,138,.12);
+  background: rgba(50,245,138,.10);
+}
+
+.bz-series-head strong {
+  color: #c8d1cf;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.bz-series-head span {
+  color: #32f58a;
+  font-size: 29px;
+  line-height: 1;
+}
+
+.bz-score-list-row {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: #0a100f;
+  color: #fff;
+  padding: 14px 16px 13px;
+  text-align: left;
+}
+
+.bz-score-list-row:active {
+  background: #0d1713;
+}
+
+.bz-match-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  color: #7f8994;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.bz-live-label {
+  flex: 0 0 auto;
+  color: #ff5b61;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.bz-team-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+}
+
+.bz-team-identity {
+  display: grid;
+  grid-template-columns: 31px 48px minmax(0,1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.bz-team-logo {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #121c19;
+  font-size: 16px;
+}
+
+.bz-team-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bz-team-identity strong {
+  color: #f4f7f6;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.bz-team-identity small {
+  overflow: hidden;
+  color: #7f8994;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bz-team-value {
+  margin-left: 10px;
+  color: #f5f7f6;
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.bz-match-status {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bz-match-status.live {
+  color: #32f58a;
+}
+
+.bz-match-status.upcoming {
+  color: #32f58a;
+  text-align: right;
+}
+
+.bz-match-status.result {
+  color: #57bdf8;
+}
+
+.bz-no-match-data {
+  margin: 18px 14px;
+  padding: 30px 16px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  background: #0a100f;
+  text-align: center;
+}
+
+.bz-no-match-data > div {
+  margin-bottom: 8px;
+  font-size: 28px;
+}
+
+.bz-no-match-data strong {
+  display: block;
+  color: #fff;
+  font-size: 15px;
+}
+
+.bz-no-match-data small {
+  display: block;
+  margin-top: 7px;
+  color: #7f8994;
+  line-height: 1.5;
+}
+
+/* BATZO_MATCH_HUB_CSS_V1_END */
+

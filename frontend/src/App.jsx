@@ -26,10 +26,54 @@ function batzoLiveAdapter(m) {
   const teamA = info[0] || {};
   const teamB = info[1] || {};
 
+  /* BATZO_MATCH_LIST_ADAPTER_V1 */
+  const matchName = String(m?.name || "");
+  const nameParts = matchName
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  const seriesName =
+    nameParts.length >= 3
+      ? nameParts.slice(2).join(", ")
+      : String(m?.matchType || "Cricket").toUpperCase();
+
+  const matchLine =
+    nameParts.length >= 2
+      ? nameParts[1]
+      : String(m?.matchType || "Match").toUpperCase();
+
+  const findTeamScore = (teamName, fallbackIndex) => {
+    const needle = String(teamName || "").toLowerCase();
+
+    const found = score.find((x) =>
+      String(x?.inning || "")
+        .toLowerCase()
+        .includes(needle)
+    );
+
+    return found || score[fallbackIndex] || {};
+  };
+
   const current =
     score.length > 0
       ? score[score.length - 1]
       : {};
+
+  const scoreAObj = findTeamScore(
+    teamA?.name || teams[0],
+    0
+  );
+
+  const scoreBObj = findTeamScore(
+    teamB?.name || teams[1],
+    1
+  );
+
+  const scoreText = (x) =>
+    x?.r != null
+      ? `${x.r}/${x.w ?? 0}`
+      : "-";
 
   const code = (team, fallback) =>
     String(team?.shortname || fallback || "")
@@ -40,21 +84,36 @@ function batzoLiveAdapter(m) {
     id: m?.id || `${m?.name || "match"}-${m?.date || ""}`,
     raw: m,
     status: "LIVE",
+    statusText: m?.status || "LIVE",
+    category: m?.batzoCategory || "",
+    series: seriesName,
+    matchLine,
+    venue: m?.venue || "",
     league: m?.name || m?.matchType || "Cricket",
 
     a: teamA?.name || teams[0] || "Team A",
     ac: code(teamA, teams[0]),
     af: "🏏",
+    aImg: teamA?.img || "",
 
     b: teamB?.name || teams[1] || "Team B",
     bc: code(teamB, teams[1]),
     bf: "🏏",
+    bImg: teamB?.img || "",
 
-    as: current?.r != null
-      ? `${current.r}/${current.w ?? 0}`
-      : "-",
+    as: scoreText(scoreAObj),
+    scoreA: scoreText(scoreAObj),
+    overA:
+      scoreAObj?.o != null
+        ? `${scoreAObj.o} ov`
+        : "",
 
-    bs: m?.status || "LIVE",
+    bs: scoreText(scoreBObj),
+    scoreB: scoreText(scoreBObj),
+    overB:
+      scoreBObj?.o != null
+        ? `${scoreBObj.o} ov`
+        : "",
 
     over: current?.o != null
       ? `${current.o} ov`
@@ -355,9 +414,15 @@ function BallByBallPanel({ match }) {
     setBbbError("");
     setBbbUpdated("");
 
-    if (matchId) {
+    if (!matchId) return;
+
+    loadBallByBall();
+
+    const timer = setInterval(() => {
       loadBallByBall();
-    }
+    }, 20000);
+
+    return () => clearInterval(timer);
   }, [matchId]);
 
   const ballLabel = (ball) => {
@@ -785,6 +850,131 @@ function UpcomingCard({ match, onOpen }) {
     </button>
   );
 }
+
+/* BATZO_MATCH_HUB_COMPONENT_V1_START */
+function BatzoMatchSeriesGroup({
+  title,
+  matches,
+  mode,
+  onOpen
+}) {
+  return (
+    <section className="bz-series-block">
+      <div className="bz-series-head">
+        <strong>{String(title || "CRICKET").toUpperCase()}</strong>
+        <span>›</span>
+      </div>
+
+      {matches.map((match) => {
+        const live = mode === "live";
+        const upcoming = mode === "upcoming";
+        const result = mode === "result";
+
+        return (
+          <button
+            type="button"
+            className="bz-score-list-row"
+            key={match.id}
+            onClick={() => {
+              if (live || upcoming) {
+                onOpen(match);
+              }
+            }}
+          >
+            <div className="bz-match-meta">
+              {live && (
+                <span className="bz-live-label">
+                  ● LIVE
+                </span>
+              )}
+
+              <span>
+                {match.matchLine || "Match"}
+                {match.venue
+                  ? ` • ${match.venue}`
+                  : ""}
+              </span>
+            </div>
+
+            <div className="bz-team-line">
+              <div className="bz-team-identity">
+                <span className="bz-team-logo">
+                  {match.aImg ? (
+                    <img
+                      src={match.aImg}
+                      alt=""
+                    />
+                  ) : (
+                    "🏏"
+                  )}
+                </span>
+
+                <strong>{match.ac}</strong>
+                <small>{match.a}</small>
+              </div>
+
+              <div className="bz-team-value">
+                {upcoming
+                  ? match.time
+                  : result
+                    ? match.scoreA
+                    : match.as}
+              </div>
+            </div>
+
+            <div className="bz-team-line">
+              <div className="bz-team-identity">
+                <span className="bz-team-logo">
+                  {match.bImg ? (
+                    <img
+                      src={match.bImg}
+                      alt=""
+                    />
+                  ) : (
+                    "🏏"
+                  )}
+                </span>
+
+                <strong>{match.bc}</strong>
+                <small>{match.b}</small>
+              </div>
+
+              <div className="bz-team-value">
+                {upcoming
+                  ? match.clock
+                  : result
+                    ? match.scoreB
+                    : match.bs}
+              </div>
+            </div>
+
+            {live && (
+              <div className="bz-match-status live">
+                {match.statusText ||
+                 match.raw?.status ||
+                 "Live score updating…"}
+              </div>
+            )}
+
+            {upcoming && (
+              <div className="bz-match-status upcoming">
+                VIEW CONTESTS →
+              </div>
+            )}
+
+            {result && (
+              <div className="bz-match-status result">
+                {match.resultText ||
+                 "Match completed"}
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </section>
+  );
+}
+/* BATZO_MATCH_HUB_COMPONENT_V1_END */
 
 function ContestCard({ contest, onClick }) {
   return (
@@ -1784,6 +1974,10 @@ function BatzoApp() {
   const [notice, setNotice] = useState("");
   const [realLiveMatches, setRealLiveMatches] = useState([]);
   const [realUpcomingMatches, setRealUpcomingMatches] = useState([]);
+  const [realResultMatches, setRealResultMatches] = useState([]);
+
+  const [matchesTopTab, setMatchesTopTab] = useState("live");
+  const [matchesFilter, setMatchesFilter] = useState("all");
   const [search, setSearch] = useState("");
 
 
@@ -2215,6 +2409,38 @@ function BatzoApp() {
       };
     };
 
+
+    const resultAdapter = (m, index) => {
+      const base = upcomingAdapter(m, index);
+
+      const scores =
+        Array.isArray(m?.score)
+          ? m.score
+          : [];
+
+      const formatScore = (x) => {
+        if (!x || x?.r == null) return "-";
+
+        const main =
+          `${x.r}/${x.w ?? 0}`;
+
+        return x?.o != null
+          ? `${main} (${x.o})`
+          : main;
+      };
+
+      return {
+        ...base,
+        status: "RESULT",
+        resultText:
+          m?.status ||
+          "Match completed",
+        scoreA: formatScore(scores[0]),
+        scoreB: formatScore(scores[1]),
+        raw: m
+      };
+    };
+
     const loadRealMatches = async () => {
       const trueValue = (value) =>
         value === true ||
@@ -2338,6 +2564,7 @@ function BatzoApp() {
           .map((m) =>
             batzoLiveAdapter({
               ...m,
+              batzoCategory: batzoMatchCategory(m),
               status: "LIVE"
             })
           );
@@ -2375,9 +2602,25 @@ function BatzoApp() {
           .slice(0, 80)
           .map(upcomingAdapter);
 
+        const genuineResults = unique(matchRows)
+          .filter(ended)
+          .filter(batzoWantedMatch)
+          .sort((a, b) => {
+            const at = timeOf(a);
+            const bt = timeOf(b);
+
+            if (!Number.isFinite(at)) return 1;
+            if (!Number.isFinite(bt)) return -1;
+
+            return bt - at;
+          })
+          .slice(0, 40)
+          .map(resultAdapter);
+
         if (!cancelled) {
           setRealLiveMatches(genuineLive);
           setRealUpcomingMatches(genuineUpcoming);
+          setRealResultMatches(genuineResults);
         }
 
         const anySuccess =
@@ -2499,16 +2742,89 @@ function BatzoApp() {
     }
   };
 
-  const upcomingFiltered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return displayUpcomingMatches;
+  const displayResultMatches = realResultMatches;
 
-    return displayUpcomingMatches.filter((m) =>
-      `${m.a} ${m.b} ${m.ac} ${m.bc} ${m.league}`
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [search, displayUpcomingMatches]);
+  const activeMatchList =
+    matchesTopTab === "live"
+      ? displayLiveMatches
+      : matchesTopTab === "upcoming"
+        ? displayUpcomingMatches
+        : displayResultMatches;
+
+  const matchesVisible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return activeMatchList.filter((m) => {
+      const category =
+        String(
+          m?.category ||
+          m?.raw?.batzoCategory ||
+          ""
+        ).toUpperCase();
+
+      if (
+        matchesFilter === "international" &&
+        !category.startsWith("INTERNATIONAL")
+      ) {
+        return false;
+      }
+
+      if (
+        matchesFilter === "domestic" &&
+        !category.startsWith("INDIA DOMESTIC")
+      ) {
+        return false;
+      }
+
+      if (!q) return true;
+
+      const haystack = [
+        m?.a,
+        m?.b,
+        m?.ac,
+        m?.bc,
+        m?.league,
+        m?.series,
+        m?.venue,
+        m?.matchLine,
+        m?.statusText,
+        m?.resultText
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [
+    activeMatchList,
+    search,
+    matchesFilter
+  ]);
+
+  const groupedMatches = useMemo(() => {
+    const groups = new Map();
+
+    for (const match of matchesVisible) {
+      const title =
+        String(
+          match?.series ||
+          match?.raw?.series ||
+          match?.raw?.matchType ||
+          "CRICKET"
+        ).trim();
+
+      const key = title || "CRICKET";
+
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+
+      groups.get(key).push(match);
+    }
+
+    return Array.from(groups.entries());
+  }, [matchesVisible]);
 
   const showComing = (name) => {
     // BATZO CONTEST NAVIGATION FIX
@@ -2694,64 +3010,151 @@ function BatzoApp() {
         )}
 
         {tab === "matches" && (
-          <section className="matches-page">
-            <div className="page-heading">
+          <section className="matches-page bz-match-hub">
+            <div className="bz-match-title">
               <span>BATZO CRICKET</span>
               <h1>Matches</h1>
-              <p>Choose a match and enter the action.</p>
             </div>
 
-            <div className="search-field">
+            <div className="bz-main-match-tabs">
+              <button
+                type="button"
+                className={
+                  matchesTopTab === "live"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesTopTab("live")
+                }
+              >
+                LIVE SCORE
+              </button>
+
+              <button
+                type="button"
+                className={
+                  matchesTopTab === "upcoming"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesTopTab("upcoming")
+                }
+              >
+                UPCOMING
+              </button>
+
+              <button
+                type="button"
+                className={
+                  matchesTopTab === "result"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesTopTab("result")
+                }
+              >
+                RESULT
+              </button>
+            </div>
+
+            <div className="bz-match-filter-strip">
+              <button
+                type="button"
+                className={
+                  matchesFilter === "all"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesFilter("all")
+                }
+              >
+                All
+              </button>
+
+              <button
+                type="button"
+                className={
+                  matchesFilter === "international"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesFilter("international")
+                }
+              >
+                International
+              </button>
+
+              <button
+                type="button"
+                className={
+                  matchesFilter === "domestic"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setMatchesFilter("domestic")
+                }
+              >
+                India Domestic
+              </button>
+            </div>
+
+            <div className="bz-match-search">
               <span>⌕</span>
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search teams or matches"
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+                placeholder="Search teams, series or venue"
               />
             </div>
 
-            <div className="match-section-title">LIVE</div>
-
-            {displayLiveMatches.length > 0 ? (
-              displayLiveMatches.map((m) => (
-                <LiveMatchCard
-                  key={m.id}
-                  match={m}
-                  onOpen={openMatch}
-                />
-              ))
-            ) : (
-              <NoLiveMatches />
-            )}
-
-            <div className="match-section-title upcoming-title">
-              UPCOMING
+            <div className="bz-list-section-label">
+              {matchesTopTab === "live"
+                ? "LIVE MATCHES"
+                : matchesTopTab === "upcoming"
+                  ? "UPCOMING MATCHES"
+                  : "RECENT RESULTS"}
             </div>
 
-            <div className="upcoming-list">
-              {upcomingFiltered.length > 0 ? (
-                upcomingFiltered.map((m) => (
-                  <UpcomingCard
-                    key={m.id}
-                    match={m}
+            {groupedMatches.length > 0 ? (
+              groupedMatches.map(
+                ([series, matches]) => (
+                  <BatzoMatchSeriesGroup
+                    key={series}
+                    title={series}
+                    matches={matches}
+                    mode={matchesTopTab}
                     onOpen={openMatch}
                   />
-                ))
-              ) : (
-                <div
-                  style={{
-                    padding: "24px 16px",
-                    textAlign: "center",
-                    opacity: 0.7
-                  }}
-                >
-                  No upcoming real matches available right now.
-                </div>
-              )}
-            </div>
+                )
+              )
+            ) : (
+              <div className="bz-no-match-data">
+                <div>🏏</div>
+
+                <strong>
+                  {matchesTopTab === "live"
+                    ? "No live matches right now"
+                    : matchesTopTab === "upcoming"
+                      ? "No upcoming matches available"
+                      : "No recent results available"}
+                </strong>
+
+                <small>
+                  Real cricket data will appear here
+                  automatically when available.
+                </small>
+              </div>
+            )}
           </section>
         )}
-
         {tab === "live-scoreboard" && (
         <LiveScoreboard
           match={selectedLiveMatch}
