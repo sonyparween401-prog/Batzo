@@ -41,3 +41,4 @@ backend/secrets/firebase-service-account.json
 *.jks
 apk-final/
 backups/
+*.service-account.json

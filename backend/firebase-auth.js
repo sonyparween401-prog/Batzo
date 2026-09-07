@@ -1,46 +1,105 @@
-const { getApps, initializeApp, cert } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
+const {
+  getApps,
+  initializeApp
+} = require("firebase-admin/app");
 
-let initialized = false;
+const {
+  getAuth
+} = require("firebase-admin/auth");
+
+/*
+ * BATZO FIREBASE AUTH VERIFIER
+ *
+ * Verifying a Firebase ID token only requires the Firebase
+ * project ID and Google's public signing certificates.
+ *
+ * We intentionally do NOT require the Firebase service-account
+ * private key for Wallet/login token verification.
+ */
+
+const FIREBASE_PROJECT_ID =
+  process.env.FIREBASE_PROJECT_ID ||
+  "batzo-369df";
+
+const AUTH_APP_NAME =
+  "batzo-auth-verifier";
 
 function initFirebaseAdmin() {
-  if (initialized) return;
-
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-
-  if (!raw) {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT_JSON is not configured on the Batzo backend.'
+  const existing =
+    getApps().find(
+      app => app.name === AUTH_APP_NAME
     );
+
+  if (existing) {
+    return existing;
   }
 
-  let serviceAccount;
-
-  try {
-    serviceAccount = JSON.parse(raw);
-  } catch {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON.'
+  const app =
+    initializeApp(
+      {
+        projectId: FIREBASE_PROJECT_ID
+      },
+      AUTH_APP_NAME
     );
-  }
 
-  if (getApps().length === 0) {
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
-  }
+  console.log(
+    "[BATZO FIREBASE] Auth verifier initialized:",
+    FIREBASE_PROJECT_ID
+  );
 
-  initialized = true;
+  return app;
 }
 
 async function verifyFirebaseToken(idToken) {
-  if (!idToken || typeof idToken !== 'string') {
-    throw new Error('Firebase ID token is required.');
+  if (
+    !idToken ||
+    typeof idToken !== "string" ||
+    !idToken.trim()
+  ) {
+    const error =
+      new Error(
+        "Firebase ID token is required."
+      );
+
+    error.code =
+      "FIREBASE_TOKEN_REQUIRED";
+
+    throw error;
   }
 
-  initFirebaseAdmin();
+  try {
+    const app =
+      initFirebaseAdmin();
 
-  return getAuth().verifyIdToken(idToken);
+    const decoded =
+      await getAuth(app).verifyIdToken(
+        idToken.trim(),
+        false
+      );
+
+    if (!decoded?.uid) {
+      const error =
+        new Error(
+          "Firebase token does not contain a user ID."
+        );
+
+      error.code =
+        "FIREBASE_UID_MISSING";
+
+      throw error;
+    }
+
+    return decoded;
+
+  } catch (error) {
+    console.error(
+      "[BATZO FIREBASE VERIFY]",
+      error?.code || "",
+      error?.message || error
+    );
+
+    throw error;
+  }
 }
 
 module.exports = {
