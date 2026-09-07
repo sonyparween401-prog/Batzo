@@ -178,3 +178,12 @@ main {
     font-size: 10px !important;
   }
 }
+
+/* BATZO FINAL: hide Account Settings header Back */
+[data-batzo-account-back="true"] {
+  display: none !important;
+}
+
+[data-batzo-account-header-back="true"]{display:none !important;}
+
+[data-batzo-account-back="1"]{display:none !important;}

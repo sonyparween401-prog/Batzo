@@ -281,235 +281,6 @@ function Header({ setNotice }) {
 }
 
 
-
-function BallByBallPanel({ match }) {
-  const [balls, setBalls] = useState([]);
-  const [bbbLoading, setBbbLoading] = useState(false);
-  const [bbbError, setBbbError] = useState("");
-  const [bbbUpdated, setBbbUpdated] = useState("");
-
-  const matchId =
-    match?.id ||
-    match?.raw?.id ||
-    match?.matchId ||
-    "";
-
-  const apiBase =
-    (import.meta.env.VITE_API_BASE_URL ||
-      "https://batzo.onrender.com"
-    ).replace(/\/+$/, "");
-
-  const loadBallByBall = async () => {
-    if (!matchId || bbbLoading) return;
-
-    setBbbLoading(true);
-    setBbbError("");
-
-    try {
-      const response = await fetch(
-        `${apiBase}/api/cricket/ball-by-ball/${encodeURIComponent(matchId)}`,
-        {
-          headers: {
-            Accept: "application/json"
-          },
-          cache: "no-store"
-        }
-      );
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          payload?.error ||
-          `HTTP ${response.status}`
-        );
-      }
-
-      const rows = Array.isArray(payload?.balls)
-        ? payload.balls
-        : [];
-
-      setBalls(rows);
-      setBbbUpdated(
-        new Date().toLocaleTimeString("en-IN", {
-          hour: "numeric",
-          minute: "2-digit"
-        })
-      );
-    } catch (error) {
-      console.warn(
-        "BATZO ball-by-ball:",
-        error
-      );
-
-      setBbbError(
-        "Ball-by-ball data is not available right now."
-      );
-    } finally {
-      setBbbLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setBalls([]);
-    setBbbError("");
-    setBbbUpdated("");
-
-    if (matchId) {
-      loadBallByBall();
-    }
-  }, [matchId]);
-
-  const ballLabel = (ball) => {
-    const penalty = String(
-      ball?.penalty ||
-      ball?.extraType ||
-      ""
-    ).toLowerCase();
-
-    if (
-      ball?.wicket ||
-      ball?.isWicket ||
-      ball?.dismissal
-    ) {
-      return "W";
-    }
-
-    if (penalty.includes("wide")) {
-      return "WD";
-    }
-
-    if (
-      penalty.includes("no ball") ||
-      penalty.includes("noball") ||
-      penalty.includes("no-ball")
-    ) {
-      return "NB";
-    }
-
-    if (penalty.includes("leg bye")) {
-      return "LB";
-    }
-
-    if (penalty.includes("bye")) {
-      return "B";
-    }
-
-    const runs = Number(ball?.runs ?? 0);
-
-    if (runs === 0) return "DOT";
-
-    return String(runs);
-  };
-
-  const latest =
-    balls.length > 0
-      ? balls[balls.length - 1]
-      : null;
-
-  return (
-    <section className="batzo-bbb-panel">
-      <div className="batzo-bbb-head">
-        <div>
-          <span className="batzo-bbb-kicker">
-            ● LIVE COMMENTARY
-          </span>
-          <h3>Ball by Ball</h3>
-        </div>
-
-        <button
-          type="button"
-          className="batzo-bbb-refresh"
-          onClick={loadBallByBall}
-          disabled={bbbLoading || !matchId}
-        >
-          {bbbLoading ? "Loading…" : "Refresh"}
-        </button>
-      </div>
-
-      {bbbUpdated && (
-        <small className="batzo-bbb-updated">
-          Updated {bbbUpdated}
-        </small>
-      )}
-
-      {latest && (
-        <div className="batzo-bbb-latest">
-          <div className="batzo-bbb-ballno">
-            {latest?.over ?? "-"}.
-            {latest?.ball ?? "-"}
-          </div>
-
-          <div className="batzo-bbb-latest-main">
-            <strong>
-              {ballLabel(latest)}
-            </strong>
-
-            <span>
-              {latest?.batsman?.name ||
-               "Batsman"}
-              {" • "}
-              {latest?.bowler?.name ||
-               "Bowler"}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {balls.length > 0 ? (
-        <>
-          <div className="batzo-bbb-recent-title">
-            RECENT BALLS
-          </div>
-
-          <div className="batzo-bbb-balls">
-            {balls.slice(-18).map((ball, index) => {
-              const label = ballLabel(ball);
-
-              const special =
-                label === "W"
-                  ? " wicket"
-                  : label === "4"
-                    ? " four"
-                    : label === "6"
-                      ? " six"
-                      : label === "WD" ||
-                        label === "NB"
-                        ? " extra"
-                        : "";
-
-              return (
-                <div
-                  key={`${ball?.inning ?? 0}-${ball?.over ?? 0}-${ball?.ball ?? 0}-${index}`}
-                  className={`batzo-ball-chip${special}`}
-                  title={`${ball?.over ?? "-"}.${ball?.ball ?? "-"}`}
-                >
-                  <small>
-                    {ball?.over ?? "-"}.
-                    {ball?.ball ?? "-"}
-                  </small>
-                  <strong>{label}</strong>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      ) : !bbbLoading && !bbbError ? (
-        <div className="batzo-bbb-empty">
-          Ball-by-ball events will appear here
-          when the provider has them.
-        </div>
-      ) : null}
-
-      {bbbError && (
-        <div className="batzo-bbb-error">
-          {bbbError}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function LiveScoreboard({ match, onBack }) {
   if (!match) return null;
 
@@ -660,9 +431,7 @@ function LiveScoreboard({ match, onBack }) {
           ))}
         </div>
       </div>
-    
-        <BallByBallPanel match={match} />
-      </section>
+    </section>
   );
 }
 
@@ -904,7 +673,7 @@ function BatzoAccountSettings({ onBack }) {
   const [confirmation, setConfirmation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
-
+  const [realLiveMatches, setRealLiveMatches] = useState([]);
   const [selectedLiveMatch, setSelectedLiveMatch] = useState(null);
   const accountRecaptchaRef = useRef(null);
 
@@ -1782,677 +1551,42 @@ function BatzoApp() {
 
 
   const [notice, setNotice] = useState("");
-  const [realLiveMatches, setRealLiveMatches] = useState([]);
-  const [realUpcomingMatches, setRealUpcomingMatches] = useState([]);
   const [search, setSearch] = useState("");
 
 
   useEffect(() => {
     let cancelled = false;
-    let retryTimer = null;
 
-    const apiBase =
-      (import.meta.env.VITE_API_BASE_URL ||
-        "https://batzo.onrender.com"
-      ).replace(/\/+$/, "");
-
-    const json = async (path) => {
-      const response = await fetch(
-        `${apiBase}${path}`,
-        {
-          headers: {
-            Accept: "application/json"
-          },
-          cache: "no-store"
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `${path} HTTP ${response.status}`
-        );
-      }
-
-      return response.json();
-    };
-
-    /* BATZO_MATCH_SCOPE_V3_START
-       FINAL MATCH SCOPE:
-
-       KEEP:
-       1. INTERNATIONAL MEN - country vs country
-       2. INDIA DOMESTIC MEN - Indian state/association vs Indian state/association
-       3. INDIA DOMESTIC WOMEN - Indian state/association women
-
-       REMOVE:
-       - International Women
-       - Foreign domestic/state cricket
-       - CPL / BBL / county / foreign franchise cricket
-       - A teams / U19 / academy / XI / development teams
-    */
-
-    const batzoNormalizeSide = (value) =>
-      String(value || "")
-        .toLowerCase()
-        .replace(/&/g, " and ")
-        .replace(/[’']/g, "")
-        .replace(
-          /\b(womens|women|woman|ladies|mens|men)\b/g,
-          " "
-        )
-        .replace(/\bcricket team\b/g, " ")
-        .replace(/[._-]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const batzoRawTeams = (m) => {
-      if (
-        Array.isArray(m?.teams) &&
-        m.teams.filter(Boolean).length >= 2
-      ) {
-        return m.teams.filter(Boolean).slice(0, 2);
-      }
-
-      if (Array.isArray(m?.teamInfo)) {
-        return m.teamInfo
-          .map((x) => x?.name)
-          .filter(Boolean)
-          .slice(0, 2);
-      }
-
-      return [];
-    };
-
-    const batzoIsWomenMatch = (m) => {
-      const text = [
-        m?.name,
-        m?.status,
-        ...(Array.isArray(m?.teams) ? m.teams : []),
-        ...(Array.isArray(m?.teamInfo)
-          ? m.teamInfo.map((x) => x?.name)
-          : [])
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return /\b(women|womens|woman|ladies)\b/.test(
-        text.replace(/[’']/g, "")
-      );
-    };
-
-    /*
-     * Senior international country names.
-     * Exact-name matching prevents franchise/state teams
-     * from being mistaken for internationals.
-     */
-    const BATZO_COUNTRIES = new Set([
-      "afghanistan",
-      "argentina",
-      "australia",
-      "austria",
-      "bahamas",
-      "bahrain",
-      "bangladesh",
-      "belgium",
-      "belize",
-      "bermuda",
-      "bhutan",
-      "botswana",
-      "brazil",
-      "bulgaria",
-      "canada",
-      "cayman islands",
-      "chile",
-      "china",
-      "cook islands",
-      "croatia",
-      "cyprus",
-      "czech republic",
-      "czechia",
-      "denmark",
-      "england",
-      "estonia",
-      "fiji",
-      "finland",
-      "france",
-      "gambia",
-      "germany",
-      "ghana",
-      "gibraltar",
-      "greece",
-      "guernsey",
-      "hong kong",
-      "hong kong china",
-      "hungary",
-      "india",
-      "indonesia",
-      "iran",
-      "ireland",
-      "isle of man",
-      "israel",
-      "italy",
-      "jamaica",
-      "japan",
-      "jersey",
-      "kenya",
-      "kuwait",
-      "lesotho",
-      "luxembourg",
-      "malawi",
-      "malaysia",
-      "maldives",
-      "mali",
-      "malta",
-      "mexico",
-      "mongolia",
-      "mozambique",
-      "myanmar",
-      "namibia",
-      "nepal",
-      "netherlands",
-      "new zealand",
-      "nigeria",
-      "norway",
-      "oman",
-      "pakistan",
-      "panama",
-      "papua new guinea",
-      "peru",
-      "philippines",
-      "portugal",
-      "qatar",
-      "romania",
-      "rwanda",
-      "saudi arabia",
-      "scotland",
-      "serbia",
-      "seychelles",
-      "sierra leone",
-      "singapore",
-      "slovenia",
-      "south africa",
-      "south korea",
-      "spain",
-      "sri lanka",
-      "eswatini",
-      "sweden",
-      "switzerland",
-      "tanzania",
-      "thailand",
-      "turkey",
-      "turkiye",
-      "uganda",
-      "united arab emirates",
-      "uae",
-      "united states",
-      "united states of america",
-      "usa",
-      "vanuatu",
-      "west indies",
-      "zambia",
-      "zimbabwe"
-    ]);
-
-    /*
-     * Indian senior domestic state/association teams.
-     * Women suffix is removed before matching, so both
-     * men's and women's domestic teams are supported.
-     */
-    const BATZO_INDIA_DOMESTIC = new Set([
-      "andhra",
-      "andhra pradesh",
-      "arunachal pradesh",
-      "assam",
-      "baroda",
-      "bengal",
-      "bihar",
-      "chandigarh",
-      "chhattisgarh",
-      "delhi",
-      "goa",
-      "gujarat",
-      "haryana",
-      "himachal pradesh",
-      "hyderabad",
-      "jammu and kashmir",
-      "jharkhand",
-      "karnataka",
-      "kerala",
-      "madhya pradesh",
-      "maharashtra",
-      "manipur",
-      "meghalaya",
-      "mizoram",
-      "mumbai",
-      "nagaland",
-      "odisha",
-      "orissa",
-      "puducherry",
-      "pondicherry",
-      "punjab",
-      "railways",
-      "rajasthan",
-      "saurashtra",
-      "services",
-      "sikkim",
-      "tamil nadu",
-      "tripura",
-      "uttar pradesh",
-      "uttarakhand",
-      "vidarbha"
-    ]);
-
-    const batzoMatchCategory = (m) => {
-      const teams = batzoRawTeams(m);
-
-      if (teams.length < 2) {
-        return null;
-      }
-
-      const teamA = batzoNormalizeSide(teams[0]);
-      const teamB = batzoNormalizeSide(teams[1]);
-
-      const fullText = [
-        m?.name,
-        teams[0],
-        teams[1]
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      /*
-       * No junior/A/development matches.
-       */
-      if (
-        /\b(u19|u-19|under 19|under-19|u23|u-23|under 23|under-23|academy|development|emerging|presidents xi|president xi|board xi|a team)\b/.test(
-          fullText
-        ) ||
-        /\b(india a|england lions|south africa a|australia a|pakistan a|new zealand a|sri lanka a|bangladesh a)\b/.test(
-          fullText
-        )
-      ) {
-        return null;
-      }
-
-      const international =
-        BATZO_COUNTRIES.has(teamA) &&
-        BATZO_COUNTRIES.has(teamB);
-
-      /*
-       * INTERNATIONAL WOMEN explicitly removed.
-       */
-      if (international) {
-        if (batzoIsWomenMatch(m)) {
-          return null;
-        }
-
-        return "INTERNATIONAL MEN";
-      }
-
-      const indiaDomestic =
-        BATZO_INDIA_DOMESTIC.has(teamA) &&
-        BATZO_INDIA_DOMESTIC.has(teamB);
-
-      if (indiaDomestic) {
-        return batzoIsWomenMatch(m)
-          ? "INDIA DOMESTIC WOMEN"
-          : "INDIA DOMESTIC MEN";
-      }
-
-      /*
-       * Everything else:
-       * foreign domestic, franchise, county, CPL, BBL etc.
-       */
-      return null;
-    };
-
-    const batzoWantedMatch = (m) =>
-      batzoMatchCategory(m) !== null;
-
-    /* BATZO_MATCH_SCOPE_V3_END */
-
-    const upcomingAdapter = (m, index) => {
-      const teams =
-        Array.isArray(m?.teams)
-          ? m.teams
-          : [];
-
-      const a = teams[0] || "Team 1";
-      const b = teams[1] || "Team 2";
-
-      const info =
-        Array.isArray(m?.teamInfo)
-          ? m.teamInfo
-          : [];
-
-      const metaA =
-        info.find((t) => t?.name === a) || {};
-
-      const metaB =
-        info.find((t) => t?.name === b) || {};
-
-      const short = (name, meta) => {
-        if (meta?.shortname) {
-          return meta.shortname;
-        }
-
-        return String(name || "")
-          .split(/\s+/)
-          .filter(Boolean)
-          .map((w) => w[0])
-          .join("")
-          .slice(0, 4)
-          .toUpperCase() || "TEAM";
-      };
-
-      let dt = null;
-
+    const loadLiveMatches = async () => {
       try {
-        const raw =
-          m?.dateTimeGMT ||
-          m?.date ||
-          "";
+        const data = await getLiveMatches();
 
-        if (raw) {
-          const normalized =
-            /Z$|[+-]\d\d:\d\d$/.test(raw)
-              ? raw
-              : `${raw}Z`;
-
-          const parsed =
-            new Date(normalized);
-
-          if (!Number.isNaN(parsed.getTime())) {
-            dt = parsed;
-          }
-        }
-      } catch (_) {}
-
-      return {
-        id:
-          m?.id ||
-          `real-upcoming-${index}`,
-
-        league:
-          m?.name ||
-          String(
-            m?.matchType || "CRICKET"
-          ).toUpperCase(),
-
-        a,
-        ac: short(a, metaA),
-        af: "🏏",
-
-        b,
-        bc: short(b, metaB),
-        bf: "🏏",
-
-        time: dt
-          ? dt.toLocaleDateString(
-              "en-IN",
-              {
-                day: "numeric",
-                month: "short"
-              }
-            )
-          : "Upcoming",
-
-        clock: dt
-          ? dt.toLocaleTimeString(
-              "en-IN",
-              {
-                hour: "numeric",
-                minute: "2-digit"
-              }
-            )
-          : "TBA",
-
-        status: "UPCOMING",
-        category: batzoMatchCategory(m),
-        raw: m
-      };
-    };
-
-    const loadRealMatches = async () => {
-      const trueValue = (value) =>
-        value === true ||
-        value === 1 ||
-        String(value || "").toLowerCase() === "true";
-
-      const statusOf = (m) =>
-        String(m?.status || "").trim().toLowerCase();
-
-      const timeOf = (m) => {
-        const raw = m?.dateTimeGMT || m?.date || "";
-        if (!raw) return NaN;
-
-        const normalized =
-          /Z$|[+-]\d\d:\d\d$/.test(raw)
-            ? raw
-            : `${raw}Z`;
-
-        return Date.parse(normalized);
-      };
-
-      const ended = (m) => {
-        const status = statusOf(m);
-
-        return trueValue(m?.matchEnded) ||
-          /\b(won|completed|complete|finished|drawn|abandoned|cancelled|canceled|no result)\b/.test(status);
-      };
-
-      const live = (m) => {
-        if (!m || ended(m)) return false;
-
-        const status = statusOf(m);
-        const time = timeOf(m);
-
-        if (
-          Number.isFinite(time) &&
-          time > Date.now() + 30 * 60 * 1000
-        ) {
-          return false;
-        }
-
-        return trueValue(m?.matchStarted) ||
-          /\b(live|in progress|innings break|lunch|tea break)\b/.test(status);
-      };
-
-      const upcoming = (m) => {
-        if (!m || ended(m) || live(m)) return false;
-
-        const time = timeOf(m);
-        const status = statusOf(m);
-
-        if (
-          Number.isFinite(time) &&
-          time > Date.now() + 5 * 60 * 1000
-        ) {
-          return true;
-        }
-
-        if (!trueValue(m?.matchStarted)) {
-          return true;
-        }
-
-        return /\b(upcoming|scheduled|not started|starts at|match starts)\b/.test(status);
-      };
-
-      const payloadRows = (payload) =>
-        Array.isArray(payload?.data)
-          ? payload.data
-          : [];
-
-      const unique = (list) => {
-        const seen = new Set();
-
-        return list.filter((m, index) => {
-          const id =
-            m?.id ||
-            `${m?.name || "match"}-${m?.dateTimeGMT || m?.date || index}`;
-
-          if (seen.has(id)) return false;
-          seen.add(id);
-          return true;
-        });
-      };
-
-      try {
-        const [
-          liveResult,
-          matchesResult,
-          upcomingResult
-        ] = await Promise.allSettled([
-          json("/api/cricket/live"),
-          json("/api/cricket/matches"),
-          json("/api/cricket/upcoming")
-        ]);
-
-        const liveRows =
-          liveResult.status === "fulfilled"
-            ? payloadRows(liveResult.value)
-            : [];
-
-        const matchRows =
-          matchesResult.status === "fulfilled"
-            ? payloadRows(matchesResult.value)
-            : [];
-
-        const upcomingRows =
-          upcomingResult.status === "fulfilled"
-            ? payloadRows(upcomingResult.value)
-            : [];
-
-        /*
-         * /matches also contains currentMatches,
-         * so use it as a LIVE fallback.
-         */
-        const genuineLive = unique([
-          ...liveRows,
-          ...matchRows
-        ])
-          .filter(live)
-          .filter(batzoWantedMatch)
-          .map((m) =>
-            batzoLiveAdapter({
-              ...m,
-              status: "LIVE"
-            })
-          );
-
-        const upcomingSource =
-          upcomingRows.length > 0
-            ? upcomingRows
-            : matchRows;
-
-        const genuineUpcoming = unique(upcomingSource)
-          .filter(upcoming)
-          .filter(batzoWantedMatch)
-          .sort((a, b) => {
-            const at = timeOf(a);
-            const bt = timeOf(b);
-
-            if (!Number.isFinite(at)) return 1;
-            if (!Number.isFinite(bt)) return -1;
-
-            return at - bt;
-          })
-          .slice(0, 80)
-          .map(upcomingAdapter);
+        const genuineLive = (Array.isArray(data) ? data : [])
+          .filter(m =>
+            m?.matchStarted === true &&
+            m?.matchEnded !== true
+          )
+          .map(batzoLiveAdapter);
 
         if (!cancelled) {
           setRealLiveMatches(genuineLive);
-          setRealUpcomingMatches(genuineUpcoming);
-        }
-
-        const anySuccess =
-          liveResult.status === "fulfilled" ||
-          matchesResult.status === "fulfilled" ||
-          upcomingResult.status === "fulfilled";
-
-        if (!anySuccess && !cancelled) {
-          clearTimeout(retryTimer);
-
-          retryTimer = setTimeout(
-            loadRealMatches,
-            15000
-          );
         }
       } catch (error) {
-        console.warn(
-          "BATZO real cricket refresh:",
-          error
-        );
-
-        if (!cancelled) {
-          clearTimeout(retryTimer);
-
-          retryTimer = setTimeout(
-            loadRealMatches,
-            15000
-          );
-        }
+        console.warn("BATZO real live refresh:", error);
       }
     };
 
-    loadRealMatches();
+    loadLiveMatches();
 
-    /*
-     * Refresh from Batzo backend occasionally.
-     * Backend caching protects CricketData quota.
-     */
-    const interval = setInterval(
-      loadRealMatches,
-      10 * 60 * 1000
-    );
-
-    const onFocus = () => {
-      loadRealMatches();
-    };
-
-    const onVisible = () => {
-      if (
-        document.visibilityState ===
-        "visible"
-      ) {
-        loadRealMatches();
-      }
-    };
-
-    window.addEventListener(
-      "focus",
-      onFocus
-    );
-
-    document.addEventListener(
-      "visibilitychange",
-      onVisible
-    );
+    const timer = setInterval(loadLiveMatches, 30000);
 
     return () => {
       cancelled = true;
-
-      clearTimeout(retryTimer);
-      clearInterval(interval);
-
-      window.removeEventListener(
-        "focus",
-        onFocus
-      );
-
-      document.removeEventListener(
-        "visibilitychange",
-        onVisible
-      );
+      clearInterval(timer);
     };
   }, []);
 
-  const displayLiveMatches =
-    realLiveMatches;
-
-  const displayUpcomingMatches = realUpcomingMatches;
+  const displayLiveMatches = realLiveMatches;
 
   const openMatch = (match) => {
     try {
@@ -2488,14 +1622,14 @@ function BatzoApp() {
 
   const upcomingFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return displayUpcomingMatches;
+    if (!q) return upcomingMatches;
 
-    return displayUpcomingMatches.filter((m) =>
+    return upcomingMatches.filter((m) =>
       `${m.a} ${m.b} ${m.ac} ${m.bc} ${m.league}`
         .toLowerCase()
         .includes(q)
     );
-  }, [search, displayUpcomingMatches]);
+  }, [search]);
 
   const showComing = (name) => {
     // BATZO CONTEST NAVIGATION FIX
@@ -2648,7 +1782,7 @@ function BatzoApp() {
               </div>
 
               <div className="upcoming-list">
-                {displayUpcomingMatches.slice(0, 2).map((m) => (
+                {upcomingMatches.slice(0, 2).map((m) => (
                   <UpcomingCard
                     key={m.id}
                     match={m}
@@ -2716,25 +1850,13 @@ function BatzoApp() {
             </div>
 
             <div className="upcoming-list">
-              {upcomingFiltered.length > 0 ? (
-                upcomingFiltered.map((m) => (
-                  <UpcomingCard
-                    key={m.id}
-                    match={m}
-                    onOpen={openMatch}
-                  />
-                ))
-              ) : (
-                <div
-                  style={{
-                    padding: "24px 16px",
-                    textAlign: "center",
-                    opacity: 0.7
-                  }}
-                >
-                  No upcoming real matches available right now.
-                </div>
-              )}
+              {upcomingFiltered.map((m) => (
+                <UpcomingCard
+                  key={m.id}
+                  match={m}
+                  onOpen={openMatch}
+                />
+              ))}
             </div>
           </section>
         )}
@@ -5961,7 +5083,6 @@ function BatzoWalletFinalPanel() {
 
 
 function App() {
-
 
   // BATZO_SINGLE_ANDROID_BACK_V3
   useEffect(() => {
