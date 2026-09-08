@@ -21,8 +21,9 @@ const router = express.Router();
 
 /* BATZO_CRICBUZZ_WEB_PRIMARY_V1 */
 const {
+  getCricbuzzMatchDetail,
   getCricbuzzWebData
-} = require("./cricbuzz-web-fallback");
+} = require("./cricbuzz-rsc");
 
 /*
  * These routes run BEFORE the older providers.
@@ -38,12 +39,13 @@ router.get(
       const data =
         await getCricbuzzWebData();
 
-      const all =
-        uniqueMatches([
+      const all = uniqueMatches(
+        data.all || [
           ...(data.live || []),
           ...(data.upcoming || []),
           ...(data.recent || [])
-        ]);
+        ]
+      );
 
       if (!all.length) {
         return next();
@@ -54,7 +56,7 @@ router.get(
         count: all.length,
         data: all,
         source:
-          "cricbuzz-web"
+          "cricbuzz-rsc-v2"
       });
 
     } catch (error) {
@@ -80,16 +82,12 @@ router.get(
           data.live || []
         );
 
-      if (!live.length) {
-        return next();
-      }
-
       return res.json({
         status: "success",
         count: live.length,
         data: live,
         source:
-          "cricbuzz-web"
+          "cricbuzz-rsc-v2"
       });
 
     } catch (error) {
@@ -115,10 +113,6 @@ router.get(
           data.upcoming || []
         );
 
-      if (!upcoming.length) {
-        return next();
-      }
-
       return res.json({
         status: "success",
         count:
@@ -126,7 +120,7 @@ router.get(
         data:
           upcoming,
         source:
-          "cricbuzz-web"
+          "cricbuzz-rsc-v2"
       });
 
     } catch (error) {
@@ -577,6 +571,21 @@ router.get("/ball-by-ball/:id", async (req, res) => {
       });
     }
 
+    if (/^(?:cricbuzz(?:-web)?[:_-])?\d+$/.test(id)) {
+      const detail = await getCricbuzzMatchDetail(id);
+      const allBalls = Array.isArray(detail?.balls)
+        ? detail.balls
+        : [];
+
+      return res.json({
+        status: "success",
+        source: "cricbuzz-rsc-v2",
+        match: detail?.match || { id },
+        count: allBalls.length,
+        balls: allBalls.slice(-36)
+      });
+    }
+
     const payload = await getBallByBall(id);
 
     const match =
@@ -623,8 +632,20 @@ router.get("/ball-by-ball/:id", async (req, res) => {
 
 router.get("/scorecard/:id", async (req, res) => {
   try {
+    const id = String(req.params.id || "").trim();
+
+    if (/^(?:cricbuzz(?:-web)?[:_-])?\d+$/.test(id)) {
+      const detail = await getCricbuzzMatchDetail(id);
+
+      return res.json({
+        status: "success",
+        source: "cricbuzz-rsc-v2",
+        data: detail?.match || null
+      });
+    }
+
     res.json(
-      await getScorecard(req.params.id)
+      await getScorecard(id)
     );
   } catch (error) {
     console.error(
@@ -641,8 +662,25 @@ router.get("/scorecard/:id", async (req, res) => {
 
 router.get("/squad/:id", async (req, res) => {
   try {
+    const id = String(req.params.id || "").trim();
+
+    if (/^(?:cricbuzz(?:-web)?[:_-])?\d+$/.test(id)) {
+      const detail = await getCricbuzzMatchDetail(id);
+      const players = Array.isArray(detail?.players)
+        ? detail.players
+        : [];
+
+      return res.json({
+        status: "success",
+        source: "cricbuzz-rsc-v2",
+        match: detail?.match || null,
+        count: players.length,
+        players
+      });
+    }
+
     res.json(
-      await getSquad(req.params.id)
+      await getSquad(id)
     );
   } catch (error) {
     console.error(
