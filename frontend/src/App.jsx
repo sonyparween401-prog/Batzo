@@ -3800,65 +3800,84 @@ function getContests() {
 
 
   async function players(match) {
-    const meta = matchMeta(match);
+    const sides = matchMeta(match);
+    if (!sides.id) return [];
 
-    if (!meta.id) return [];
+    const normalizeRole = function (value) {
+      const role = String(value || "").trim().toUpperCase();
+      if (role === "WK" || role.includes("WICKET") || role.includes("KEEPER")) return "WK";
+      if (role === "AR" || role.includes("ALLROUND") || role.includes("ALL-ROUND")) return "AR";
+      if (role === "BOWL" || role.includes("BOWL")) return "BOWL";
+      return "BAT";
+    };
 
-    const allCached = readJSON(SQUAD_KEY, {});
-    const cached = allCached[matchKey(match)];
+    const normalizeTeam = function (value, index) {
+      const team = String(value || "").trim().toUpperCase();
+      const aCode = String(sides.a.code || "").toUpperCase();
+      const bCode = String(sides.b.code || "").toUpperCase();
+      const aName = String(sides.a.name || "").toUpperCase();
+      const bName = String(sides.b.name || "").toUpperCase();
 
-    if (
-      cached &&
-      Array.isArray(cached.players) &&
-      cached.players.length &&
-      Date.now() - Number(cached.savedAt || 0) <
-        6 * 60 * 60 * 1000
-    ) {
-      return cached.players;
-    }
+      if (team === aCode || team.includes(aName) || aName.includes(team)) return sides.a.code;
+      if (team === bCode || team.includes(bName) || bName.includes(team)) return sides.b.code;
+      return index % 2 === 0 ? sides.a.code : sides.b.code;
+    };
+
+    const cleanPlayers = function (list) {
+      return list.map(function (player, index) {
+        return Object.assign({}, player, {
+          id: String(player.id || player.playerId || sides.id + "-player-" + index),
+          name: String(player.name || player.playerName || "Player " + (index + 1)),
+          role: normalizeRole(player.role || player.playingRole),
+          team: normalizeTeam(player.team || player.teamName, index),
+          credit: Number(player.credit ?? player.credits ?? 8.5)
+        });
+      });
+    };
 
     try {
-      const apiBase =
-        (import.meta.env.VITE_API_BASE_URL ||
-          "https://batzo.onrender.com"
-        ).replace(/\/+$/, "");
-
       const response = await fetch(
-        apiBase +
-          "/api/cricket/squad/" +
-          encodeURIComponent(meta.id),
-        {
-          headers: { Accept: "application/json" },
-          cache: "no-store"
-        }
+        "https://batzo.onrender.com/api/cricket/squad/" + encodeURIComponent(sides.id),
+        { headers: { Accept: "application/json" }, cache: "no-store" }
       );
 
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload?.error || "Squad request failed");
-      }
-
-      const rows = Array.isArray(payload?.players)
-        ? payload.players
-        : Array.isArray(payload?.data?.players)
-          ? payload.data.players
+      const data = await response.json();
+      const realPlayers = Array.isArray(data?.players)
+        ? data.players
+        : Array.isArray(data?.data?.players)
+          ? data.data.players
           : [];
 
-      if (rows.length) {
-        allCached[matchKey(match)] = {
-          savedAt: Date.now(),
-          players: rows
-        };
-
-        writeJSON(SQUAD_KEY, allCached);
-        return rows;
+      if (response.ok && realPlayers.length >= 11) {
+        return cleanPlayers(realPlayers);
       }
     } catch (error) {
-      console.warn("BATZO real squad:", error);
+      console.warn("BATZO squad request failed:", error);
     }
 
-    return Array.isArray(cached?.players) ? cached.players : [];
+    const fallback = [];
+    const roles = [
+      ["WK", 2],
+      ["BAT", 4],
+      ["AR", 2],
+      ["BOWL", 4]
+    ];
+
+    [sides.a, sides.b].forEach(function (side) {
+      roles.forEach(function (item) {
+        for (let number = 1; number <= item[1]; number++) {
+          fallback.push({
+            id: String(sides.id) + "-" + side.code + "-" + item[0] + "-" + number,
+            name: side.code + " " + item[0] + " Player " + number,
+            role: item[0],
+            team: side.code,
+            credit: 8.5
+          });
+        }
+      });
+    });
+
+    return fallback;
   }
 
   function root() {
