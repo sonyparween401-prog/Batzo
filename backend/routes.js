@@ -892,10 +892,9 @@ function registerRoutes(app, authenticateToken) {
           contest.match_id ?? contest.matchId
         );
 
-        const team = (db.teams || []).find(
+        let team = (db.teams || []).find(
           x =>
             String(x.id) === String(teamId) &&
-            Number(x.match_id) === matchId &&
             (
               String(x.user_id ?? x.userId ?? "") === userId ||
               !String(x.user_id ?? x.userId ?? "")
@@ -905,6 +904,15 @@ function registerRoutes(app, authenticateToken) {
         if (team && !String(team.user_id ?? team.userId ?? "")) {
           team.user_id = userId;
           team.userId = userId;
+        }
+
+        if (
+          team &&
+          Number(team.match_id ?? team.matchId) !== matchId &&
+          contestEntryFee(contest) === 0
+        ) {
+          team.match_id = matchId;
+          team.matchId = matchId;
         }
 
         if (!team) {
