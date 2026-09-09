@@ -445,6 +445,8 @@ function registerRoutes(app, authenticateToken) {
         totalBalance: wallet.total,
         pendingWithdrawal,
         withdrawableWinning: money(Math.max(0, wallet.winning - pendingWithdrawal)),
+        paymentEnvironment: cashfreeConfig().environment,
+        testMode: cashfreeConfig().environment !== 'production',
         transactions
       });
 

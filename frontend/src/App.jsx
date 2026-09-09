@@ -6775,7 +6775,8 @@ function BatzoWalletScreen() {
         balance: Number(data.balance || 0),
         winningBalance: Number(
           data.winningBalance ?? data.winning ?? 0
-        )
+        ),
+        testMode: data.testMode !== false
       });
 
       if (Array.isArray(data.transactions)) {
@@ -7053,6 +7054,20 @@ function BatzoWalletFinalPanel() {
             }}>
               BATZO
             </div>
+            {wallet?.testMode ? (
+              <div style={{
+                display:"inline-block",
+                marginTop:"6px",
+                padding:"4px 8px",
+                borderRadius:"999px",
+                background:"#ffb020",
+                color:"#1b1200",
+                fontSize:"10px",
+                fontWeight:"900"
+              }}>
+                SANDBOX • DEMO BALANCE • NOT REAL MONEY
+              </div>
+            ) : null}
             <h2 style={{margin:"4px 0 0",fontSize:"24px"}}>
               💰 Wallet
             </h2>
