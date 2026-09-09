@@ -6982,7 +6982,8 @@ function BatzoWalletFinalPanel() {
         balance: Number(data.balance || 0),
         winningBalance: Number(
           data.winningBalance ?? data.winning ?? 0
-        )
+        ),
+        testMode: data.testMode !== false
       });
 
       try {
