@@ -5313,16 +5313,27 @@ r.querySelector("#bzV11Teams").onclick = function () {
         };
       }
 
-      const matchId = Number(
-        contest?.matchId ||
-        contest?.match_id ||
-        match?.matchId ||
-        match?.match_id ||
-        match?.id ||
-        1
-      );
+      const rawMatchId =
+                            contest?.matchId ??
+                            contest?.match_id ??
+                            match?.matchId ??
+                            match?.match_id ??
+                            match?.id ??
+                            "";
 
-      if (!matchId) {
+                          let matchId = Number(rawMatchId);
+
+                          if (!Number.isFinite(matchId) || matchId <= 0) {
+                            const contestName = String(
+                              contest?.name || ""
+                            ).toUpperCase();
+
+                            matchId = contestName.includes("BATZO FREE DEMO")
+                              ? 3
+                              : 1;
+                          }
+
+                          if (!matchId) {
         return {
           ok: false,
           error: new Error("Match ID missing")
