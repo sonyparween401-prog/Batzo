@@ -255,7 +255,7 @@ React.useEffect(() => {
   return (
     <div className="logo-area">
       <img
-        src="/batzo-assets/Batzo-3D-Header-Logo.png?v=14"
+        src="/batzo-assets/Batzo-Final-Logo.svg?v=15"
         className="batzo-final-header-logo"
         alt="BATZO Cricket Hub"
       />
@@ -5598,8 +5598,9 @@ function showJoinConfirmation(match, contest, team) {
         }
 
         /* BATZO_FINAL_JOIN_TEAM_SYNC_V1 */
-        if (!team.backendId) {
-          const synced =
+        let synced = null;
+if (!team.backendId) {
+synced =
             await syncTeamToBackend(
               match,
               contest,
