@@ -6651,8 +6651,7 @@ async function batzoWalletRequest(path, options = {}) {
    * then retry exactly once.
    */
   if (
-    result.response.status === 401 ||
-    result.response.status === 403
+    result.response.status === 401
   ) {
     clearBatzoJwt();
 
@@ -6664,8 +6663,7 @@ async function batzoWalletRequest(path, options = {}) {
   }
 
   if (
-    result.response.status === 401 ||
-    result.response.status === 403
+    result.response.status === 401
   ) {
     const error =
       new Error(
@@ -6691,6 +6689,7 @@ async function batzoWalletRequest(path, options = {}) {
 
     error.status =
       result.response.status;
+    error.code = result.data?.code || "WALLET_REQUEST_FAILED";
 
     throw error;
   }
@@ -7388,12 +7387,49 @@ if (
         event.stopImmediatePropagation();
       }
 
+      if (isDeposit) {
+        const rawAmount = window.prompt("Enter amount to add (₹)", "100");
+        if (rawAmount === null) return;
+        const depositAmount = Number(String(rawAmount).replace(/[₹,\s]/g, ""));
+        if (!Number.isFinite(depositAmount) || depositAmount < 1 || depositAmount > 100000) {
+          window.alert("Enter an amount between ₹1 and ₹100000.");
+          return;
+        }
+        button.disabled = true;
+        try {
+          const requestId = Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+          const order = await batzoWalletRequest("/api/wallet/deposit/order", {
+            method: "POST",
+            headers: { "Idempotency-Key": "cashfree-order:" + requestId },
+            body: JSON.stringify({ amount: depositAmount, requestId })
+          });
+          if (typeof window.Cashfree !== "function") {
+            throw new Error("Cashfree checkout could not load. Check internet and try again.");
+          }
+          const cashfree = window.Cashfree({ mode: order.environment === "production" ? "production" : "sandbox" });
+          await cashfree.checkout({ paymentSessionId: order.paymentSessionId, redirectTarget: "_modal" });
+          const verified = await batzoWalletRequest(
+            "/api/wallet/deposit/" + encodeURIComponent(order.orderId) + "/status"
+          );
+          if (verified?.credited) {
+            window.alert("Payment verified and wallet credited successfully.");
+            window.location.reload();
+          } else {
+            window.alert("Payment is not confirmed yet. No wallet money was credited.");
+          }
+        } catch (error) {
+          console.error("[BATZO CASHFREE]", error);
+          window.alert(error?.message || "Unable to start Cashfree payment.");
+        } finally {
+          button.disabled = false;
+        }
+        return;
+      }
+
       const raw =
         window.prompt(
-          isDeposit
-            ? "Enter amount to add (₹)"
-            : "Enter winning amount to withdraw (₹)",
-          isDeposit ? "100" : ""
+          "Enter winning amount to withdraw (₹)",
+          ""
         );
 
       if (raw === null) return;
@@ -7417,15 +7453,35 @@ if (
       button.disabled = true;
 
       try {
+        const method = String(
+          window.prompt("Withdrawal method: UPI or BANK", "UPI") || ""
+        ).trim().toLowerCase();
+        if (!method) return;
+
+        const destination = String(
+          window.prompt(
+            method === "upi" ? "Enter UPI ID" : "Enter verified bank reference",
+            ""
+          ) || ""
+        ).trim();
+        if (!destination) return;
+
+        const requestId =
+          "wd-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+
         const result =
           await batzoWalletRequest(
-            isDeposit
-              ? "/api/wallet/demo/deposit"
-              : "/api/wallet/demo/withdraw",
+            "/api/wallet/withdraw",
             {
               method: "POST",
+              headers: {
+                "Idempotency-Key": "withdraw:" + requestId
+              },
               body: JSON.stringify({
-                amount
+                amount,
+                method,
+                destination,
+                requestId
               })
             }
           );
@@ -7453,10 +7509,23 @@ if (
           error
         );
 
-        window.alert(
-          error?.message ||
-          "Wallet transaction failed."
-        );
+        if (error?.code === "KYC_REQUIRED") {
+          const legalName = String(window.prompt("Enter legal name for KYC", "") || "").trim();
+          const panLast4 = String(window.prompt("Enter last 4 characters of PAN", "") || "").trim();
+          if (legalName && panLast4) {
+            try {
+              const kycResult = await batzoWalletRequest("/api/wallet/kyc", {
+                method: "POST",
+                body: JSON.stringify({ legalName, panLast4 })
+              });
+              window.alert(kycResult?.message || "KYC submitted for verification.");
+            } catch (kycError) {
+              window.alert(kycError?.message || "KYC submission failed.");
+            }
+          }
+        } else {
+          window.alert(error?.message || "Wallet transaction failed.");
+        }
 
       } finally {
         button.disabled = false;

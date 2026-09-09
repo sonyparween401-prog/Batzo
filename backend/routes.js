@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { validateTeam } = require('./fantasy-validation');
 
 const dbFile = path.join(__dirname, 'data', 'batzo.json');
@@ -26,6 +27,7 @@ function transactionTime(tx) {
 
 function getUserTransactions(db, userId) {
   if (!Array.isArray(db.transactions)) db.transactions = [];
+  if (!Array.isArray(db.deposits)) db.deposits = [];
 
   return db.transactions.filter(
     tx => String(tx.userId ?? tx.user_id) === String(userId)
@@ -111,6 +113,110 @@ function contestJoinedCount(db, contestId) {
 
 function generateId(prefix = 'id') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function ensureWalletCollections(db) {
+  if (!Array.isArray(db.transactions)) db.transactions = [];
+  if (!Array.isArray(db.contestEntries)) db.contestEntries = [];
+  if (!Array.isArray(db.withdrawals)) db.withdrawals = [];
+  if (!Array.isArray(db.kycRequests)) db.kycRequests = [];
+  if (!Array.isArray(db.walletIdempotency)) db.walletIdempotency = [];
+}
+
+function requireAdminKey(req, res, next) {
+  const configured = String(process.env.ADMIN_API_KEY || '');
+  const supplied = String(req.get('x-admin-key') || '');
+
+  if (configured.length < 32 || supplied !== configured) {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin authorization required'
+    });
+  }
+
+  next();
+}
+
+function idempotencyKey(req, fallback) {
+  return String(req.get('idempotency-key') || fallback || '').trim();
+}
+
+function rememberIdempotency(db, key, response) {
+  if (!key) return;
+  db.walletIdempotency.push({ key, response, createdAt: new Date().toISOString() });
+}
+
+function previousIdempotentResponse(db, key) {
+  if (!key) return null;
+  return db.walletIdempotency.find(item => item.key === key)?.response || null;
+}
+
+function pendingWithdrawalTotal(db, userId) {
+  return money(db.withdrawals
+    .filter(item =>
+      String(item.userId) === String(userId) &&
+      ['pending', 'processing'].includes(String(item.status).toLowerCase())
+    )
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount || 0)), 0));
+}
+
+function cashfreeConfig() {
+  const appId = String(process.env.CASHFREE_APP_ID || '').trim();
+  const secretKey = String(process.env.CASHFREE_SECRET_KEY || '').trim();
+  const environment = String(process.env.CASHFREE_ENV || 'sandbox').toLowerCase();
+  return {
+    appId,
+    secretKey,
+    environment,
+    baseUrl: environment === 'production'
+      ? 'https://api.cashfree.com/pg'
+      : 'https://sandbox.cashfree.com/pg'
+  };
+}
+
+async function cashfreeRequest(endpoint, options = {}) {
+  const config = cashfreeConfig();
+  if (!config.appId || !config.secretKey) {
+    const error = new Error('Cashfree is not configured');
+    error.status = 503;
+    error.code = 'CASHFREE_NOT_CONFIGURED';
+    throw error;
+  }
+  const response = await fetch(config.baseUrl + endpoint, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-version': '2025-01-01',
+      'x-client-id': config.appId,
+      'x-client-secret': config.secretKey,
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.message || data.type || 'Cashfree request failed');
+    error.status = response.status;
+    error.details = data;
+    throw error;
+  }
+  return data;
+}
+
+function creditCashfreeDeposit(db, deposit, paymentReference) {
+  const reference = `cashfree-deposit:${deposit.orderId}`;
+  const existing = db.transactions.find(tx => tx.reference === reference);
+  if (existing) return existing;
+  const transaction = {
+    id: generateId('tx'), userId: deposit.userId, type: 'deposit',
+    amount: deposit.amount, status: 'success', reference,
+    provider: 'cashfree', providerReference: String(paymentReference || ''),
+    description: 'Cashfree Add Money', createdAt: new Date().toISOString()
+  };
+  db.transactions.push(transaction);
+  deposit.status = 'success';
+  deposit.paymentReference = transaction.providerReference;
+  deposit.updatedAt = transaction.createdAt;
+  return transaction;
 }
 
 function registerRoutes(app, authenticateToken) {
@@ -319,7 +425,11 @@ function registerRoutes(app, authenticateToken) {
       const db = readDB();
       const userId = getUserId(req);
 
+      ensureWalletCollections(db);
+
       const wallet = calculateWallet(db, userId);
+
+      const pendingWithdrawal = pendingWithdrawalTotal(db, userId);
 
       const transactions = getUserTransactions(db, userId)
         .slice()
@@ -329,7 +439,11 @@ function registerRoutes(app, authenticateToken) {
         success: true,
         balance: wallet.balance,
         winning: wallet.winning,
+        winningBalance: wallet.winning,
         total: wallet.total,
+        totalBalance: wallet.total,
+        pendingWithdrawal,
+        withdrawableWinning: money(Math.max(0, wallet.winning - pendingWithdrawal)),
         transactions
       });
 
@@ -345,7 +459,121 @@ function registerRoutes(app, authenticateToken) {
 
   // ===== BATZO_DEMO_WALLET_ACTIONS_V1 =====
 
+  app.post('/api/wallet/deposit/order', authenticateToken, async (req, res) => {
+    try {
+      const db = readDB();
+      ensureWalletCollections(db);
+      const userId = getUserId(req);
+      const amount = money(req.body?.amount);
+      const requestId = String(req.body?.requestId || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 30);
+      const key = idempotencyKey(req, requestId ? `cashfree-order:${userId}:${requestId}` : '');
+      const previous = previousIdempotentResponse(db, key);
+      if (previous) return res.json(previous);
+      if (!Number.isFinite(amount) || amount < 1 || amount > 100000) {
+        return res.status(400).json({ success: false, message: 'Enter an amount between ₹1 and ₹100000' });
+      }
+      if (!requestId || !key) {
+        return res.status(400).json({ success: false, message: 'A unique requestId and Idempotency-Key are required' });
+      }
+      const user = (db.users || []).find(item => String(item.id) === userId) || {};
+      const orderId = `batzo_${userId}_${requestId}`.slice(0, 45);
+      const order = await cashfreeRequest('/orders', {
+        method: 'POST',
+        headers: { 'x-idempotency-key': key.slice(0, 40) },
+        body: JSON.stringify({
+          order_id: orderId,
+          order_amount: amount,
+          order_currency: 'INR',
+          customer_details: {
+            customer_id: `batzo_${userId}`,
+            customer_name: String(user.name || 'Batzo User').slice(0, 100),
+            customer_email: String(user.email || 'support@batzo.app'),
+            customer_phone: String(user.mobile || '9999999999').replace(/\D/g, '').slice(-10)
+          },
+          order_note: 'BATZO wallet add money'
+        })
+      });
+      const deposit = {
+        id: generateId('deposit'), orderId, cfOrderId: order.cf_order_id,
+        userId, amount, status: 'pending', provider: 'cashfree',
+        createdAt: new Date().toISOString()
+      };
+      db.deposits.push(deposit);
+      const response = {
+        success: true, orderId, paymentSessionId: order.payment_session_id,
+        environment: cashfreeConfig().environment
+      };
+      rememberIdempotency(db, key, response);
+      writeDB(db);
+      return res.status(201).json(response);
+    } catch (error) {
+      console.error('CASHFREE CREATE ORDER:', error.details || error);
+      return res.status(error.status || 502).json({
+        success: false, code: error.code || 'CASHFREE_ORDER_FAILED',
+        message: error.message || 'Unable to create payment order'
+      });
+    }
+  });
+
+  app.get('/api/wallet/deposit/:orderId/status', authenticateToken, async (req, res) => {
+    try {
+      const db = readDB();
+      ensureWalletCollections(db);
+      const userId = getUserId(req);
+      const deposit = db.deposits.find(item => item.orderId === req.params.orderId && String(item.userId) === userId);
+      if (!deposit) return res.status(404).json({ success: false, message: 'Deposit order not found' });
+      const order = await cashfreeRequest(`/orders/${encodeURIComponent(deposit.orderId)}`);
+      if (order.order_status === 'PAID') {
+        creditCashfreeDeposit(db, deposit, order.cf_order_id);
+        writeDB(db);
+      }
+      return res.json({
+        success: true, orderId: deposit.orderId, orderStatus: order.order_status,
+        credited: deposit.status === 'success', wallet: calculateWallet(db, userId)
+      });
+    } catch (error) {
+      console.error('CASHFREE ORDER STATUS:', error.details || error);
+      return res.status(error.status || 502).json({ success: false, message: error.message || 'Unable to verify payment' });
+    }
+  });
+
+  app.post('/api/wallet/cashfree/webhook', (req, res) => {
+    try {
+      const config = cashfreeConfig();
+      const timestamp = String(req.get('x-webhook-timestamp') || '');
+      const supplied = String(req.get('x-webhook-signature') || '');
+      const rawBody = String(req.rawBody || '');
+      const expected = crypto.createHmac('sha256', config.secretKey).update(timestamp + rawBody).digest('base64');
+      const a = Buffer.from(supplied);
+      const b = Buffer.from(expected);
+      if (!supplied || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+        return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+      }
+      const order = req.body?.data?.order || {};
+      const payment = req.body?.data?.payment || {};
+      if (order.order_status === 'PAID' || payment.payment_status === 'SUCCESS') {
+        const db = readDB();
+        ensureWalletCollections(db);
+        const deposit = db.deposits.find(item => item.orderId === order.order_id);
+        if (deposit) {
+          creditCashfreeDeposit(db, deposit, payment.cf_payment_id || order.cf_order_id);
+          writeDB(db);
+        }
+      }
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('CASHFREE WEBHOOK:', error);
+      return res.status(500).json({ success: false, message: 'Webhook processing failed' });
+    }
+  });
+
   app.post('/api/wallet/demo/deposit', authenticateToken, (req, res) => {
+    return res.status(503).json({
+      success: false,
+      code: 'PAYMENT_GATEWAY_NOT_CONFIGURED',
+      message: 'Add Money will be enabled after verified payment gateway setup.'
+    });
+    /* istanbul ignore next */
     try {
       const userId = getUserId(req);
 
@@ -403,6 +631,12 @@ function registerRoutes(app, authenticateToken) {
   });
 
   app.post('/api/wallet/demo/withdraw', authenticateToken, (req, res) => {
+    return res.status(410).json({
+      success: false,
+      code: 'DEMO_WITHDRAWAL_DISABLED',
+      message: 'Use the secure withdrawal request endpoint.'
+    });
+    /* istanbul ignore next */
     try {
       const userId = getUserId(req);
 
@@ -465,6 +699,120 @@ function registerRoutes(app, authenticateToken) {
         message: 'Unable to withdraw money'
       });
     }
+  });
+
+  app.post('/api/wallet/kyc', authenticateToken, (req, res) => {
+    try {
+      const db = readDB();
+      ensureWalletCollections(db);
+      const userId = getUserId(req);
+      const legalName = String(req.body?.legalName || '').trim();
+      const panLast4 = String(req.body?.panLast4 || '').trim().toUpperCase();
+
+      if (legalName.length < 3 || !/^[A-Z0-9]{4}$/.test(panLast4)) {
+        return res.status(400).json({ success: false, message: 'Valid KYC details are required' });
+      }
+
+      let kyc = db.kycRequests.find(item => String(item.userId) === userId);
+      const now = new Date().toISOString();
+      if (kyc?.status === 'verified') {
+        return res.json({ success: true, kyc });
+      }
+      if (!kyc) {
+        kyc = { id: generateId('kyc'), userId, createdAt: now };
+        db.kycRequests.push(kyc);
+      }
+      Object.assign(kyc, { legalName, panLast4, status: 'pending', updatedAt: now });
+      writeDB(db);
+      return res.status(202).json({ success: true, message: 'KYC submitted for verification', kyc });
+    } catch (error) {
+      console.error('KYC SUBMIT:', error);
+      return res.status(500).json({ success: false, message: 'Unable to submit KYC' });
+    }
+  });
+
+  app.patch('/api/admin/kyc/:kycId', requireAdminKey, (req, res) => {
+    const db = readDB();
+    ensureWalletCollections(db);
+    const kyc = db.kycRequests.find(item => String(item.id) === String(req.params.kycId));
+    const status = String(req.body?.status || '').toLowerCase();
+    if (!kyc) return res.status(404).json({ success: false, message: 'KYC request not found' });
+    if (!['verified', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Status must be verified or rejected' });
+    }
+    kyc.status = status;
+    kyc.reviewedAt = new Date().toISOString();
+    writeDB(db);
+    return res.json({ success: true, kyc });
+  });
+
+  app.post('/api/wallet/withdraw', authenticateToken, (req, res) => {
+    try {
+      const db = readDB();
+      ensureWalletCollections(db);
+      const userId = getUserId(req);
+      const amount = money(req.body?.amount);
+      const method = String(req.body?.method || '').toLowerCase();
+      const destination = String(req.body?.destination || '').trim();
+      const key = idempotencyKey(req, `withdraw:${userId}:${req.body?.requestId || ''}`);
+      const previous = previousIdempotentResponse(db, key);
+      if (previous) return res.json(previous);
+
+      const kyc = db.kycRequests.find(item => String(item.userId) === userId && item.status === 'verified');
+      if (!kyc) return res.status(403).json({ success: false, code: 'KYC_REQUIRED', message: 'Verified KYC is required' });
+      if (!Number.isFinite(amount) || amount < 1 || amount > 100000) {
+        return res.status(400).json({ success: false, message: 'Enter a valid withdrawal amount' });
+      }
+      if (!['upi', 'bank'].includes(method) || destination.length < 3) {
+        return res.status(400).json({ success: false, message: 'Valid UPI or bank destination is required' });
+      }
+      const wallet = calculateWallet(db, userId);
+      const available = money(wallet.winning - pendingWithdrawalTotal(db, userId));
+      if (amount > available) {
+        return res.status(400).json({ success: false, message: 'Insufficient withdrawable winning balance', available });
+      }
+      const withdrawal = {
+        id: generateId('withdrawal'), userId, amount, method, destination,
+        status: 'pending', createdAt: new Date().toISOString()
+      };
+      db.withdrawals.push(withdrawal);
+      const response = { success: true, message: 'Withdrawal request submitted', withdrawal };
+      rememberIdempotency(db, key, response);
+      writeDB(db);
+      return res.status(202).json(response);
+    } catch (error) {
+      console.error('WITHDRAW REQUEST:', error);
+      return res.status(500).json({ success: false, message: 'Unable to request withdrawal' });
+    }
+  });
+
+  app.patch('/api/admin/withdrawals/:withdrawalId', requireAdminKey, (req, res) => {
+    const db = readDB();
+    ensureWalletCollections(db);
+    const withdrawal = db.withdrawals.find(item => String(item.id) === String(req.params.withdrawalId));
+    const status = String(req.body?.status || '').toLowerCase();
+    if (!withdrawal) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
+    if (!['processing', 'success', 'failed'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid withdrawal status' });
+    }
+    if (['success', 'failed'].includes(withdrawal.status)) {
+      return res.status(409).json({ success: false, message: 'Withdrawal is already final' });
+    }
+    if (status === 'success') {
+      const reference = `withdrawal:${withdrawal.id}`;
+      if (!db.transactions.some(tx => tx.reference === reference)) {
+        db.transactions.push({
+          id: generateId('tx'), userId: withdrawal.userId, type: 'withdrawal',
+          amount: withdrawal.amount, status: 'success', reference,
+          description: 'Withdrawal paid', createdAt: new Date().toISOString()
+        });
+      }
+    }
+    withdrawal.status = status;
+    withdrawal.providerReference = String(req.body?.providerReference || '');
+    withdrawal.updatedAt = new Date().toISOString();
+    writeDB(db);
+    return res.json({ success: true, withdrawal });
   });
 
 
@@ -864,8 +1212,48 @@ function registerRoutes(app, authenticateToken) {
   // ============================================================
 
   app.post(
+    '/api/admin/contest-entries/:entryId/refund',
+    requireAdminKey,
+    (req, res) => {
+      try {
+        const db = readDB();
+        ensureWalletCollections(db);
+        const entry = db.contestEntries.find(item => String(item.id) === String(req.params.entryId));
+        if (!entry) return res.status(404).json({ success: false, message: 'Contest entry not found' });
+
+        const amount = money(entry.entryFee ?? entry.entry_fee);
+        const reference = `refund:${entry.id}`;
+        const existing = db.transactions.find(tx => tx.reference === reference);
+        if (existing) return res.json({ success: true, message: 'Entry was already refunded', transaction: existing });
+        if (amount <= 0) {
+          entry.status = 'refunded';
+          entry.refundedAt = new Date().toISOString();
+          writeDB(db);
+          return res.json({ success: true, message: 'Free entry marked refunded', entry });
+        }
+
+        const transaction = {
+          id: generateId('tx'), userId: String(entry.userId ?? entry.user_id),
+          type: 'refund', amount, status: 'success', reference,
+          contestId: Number(entry.contestId ?? entry.contest_id),
+          description: 'Contest entry refund', createdAt: new Date().toISOString()
+        };
+        db.transactions.push(transaction);
+        entry.status = 'refunded';
+        entry.refundedAt = transaction.createdAt;
+        writeDB(db);
+        return res.json({ success: true, message: 'Contest entry refunded', transaction, entry });
+      } catch (error) {
+        console.error('ENTRY REFUND:', error);
+        return res.status(500).json({ success: false, message: 'Refund failed' });
+      }
+    }
+  );
+
+  app.post(
     '/api/contests/:contestId/settle',
     authenticateToken,
+    requireAdminKey,
     (req, res) => {
       try {
         const db = readDB();
@@ -890,13 +1278,16 @@ function registerRoutes(app, authenticateToken) {
           });
         }
 
-        // Safety: this settlement endpoint is for practice/virtual contests.
         const entryFee = contestEntryFee(contest);
+        const requestedPrizes = Array.isArray(req.body?.prizes) ? req.body.prizes : [];
+        const prizeByEntry = new Map(
+          requestedPrizes.map(item => [String(item.entryId), money(item.amount)])
+        );
 
-        if (entryFee > 0) {
-          return res.status(403).json({
+        if (entryFee > 0 && requestedPrizes.length === 0) {
+          return res.status(400).json({
             success: false,
-            message: 'This settlement endpoint supports practice contests only'
+            message: 'Paid contest settlement requires an explicit prizes list'
           });
         }
 
@@ -955,19 +1346,29 @@ function registerRoutes(app, authenticateToken) {
         ranked.forEach(({ entry, rank }) => {
           entry.rank = rank;
           entry.updatedAt = now;
+          const prize = money(prizeByEntry.get(String(entry.id)) || 0);
+          entry.prize = prize;
+          entry.status = prize > 0 ? 'winner' : 'settled';
 
-          // Practice contest: no real-money prize.
-          // Virtual prize can be shown in the settlement result,
-          // but no wallet money is credited.
-          entry.prize = 0;
-          entry.status = rank === 1 ? 'winner' : 'settled';
+          if (prize > 0) {
+            const reference = `winning:${contestId}:${entry.id}`;
+            if (!db.transactions.some(tx => tx.reference === reference)) {
+              db.transactions.push({
+                id: generateId('tx'),
+                userId: String(entry.userId ?? entry.user_id),
+                type: 'winning', amount: prize, status: 'success', reference,
+                contestId, entryId: entry.id, description: 'Contest winnings',
+                createdAt: now
+              });
+            }
+          }
 
           settlement.push({
             entryId: entry.id,
             userId: String(entry.userId ?? entry.user_id),
             rank,
             points: Number(entry.points || 0),
-            prize: 0,
+            prize,
             status: entry.status
           });
         });
@@ -980,7 +1381,7 @@ function registerRoutes(app, authenticateToken) {
 
         return res.json({
           success: true,
-          message: 'Practice contest settled successfully',
+          message: 'Contest settled successfully',
           contest: {
             id: contest.id,
             name: contest.name,
