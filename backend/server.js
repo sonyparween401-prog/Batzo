@@ -5,7 +5,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { registerRoutes } = require('./routes');
-const { authenticateToken } = require('./auth-middleware');
+const { authenticateToken: baseAuthenticateToken } = require('./auth-middleware');
+const { installAdminControl, enforceActiveUser } = require('./admin-control');
+const authenticateToken = enforceActiveUser(baseAuthenticateToken); // BATZO_ADMIN_CONTROL_V1
 
 const { registerUser, loginUser } = require('./auth');
 const { requestOtp, verifyOtp } = require('./otp');
@@ -154,6 +156,9 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 });
 
+
+// BATZO ADMIN CONTROL ROUTES
+installAdminControl(app);
 
 // BATZO TEAM / CONTEST API ROUTES
 registerRoutes(app, authenticateToken);
