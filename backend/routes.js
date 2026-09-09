@@ -117,6 +117,7 @@ function generateId(prefix = 'id') {
 
 function ensureWalletCollections(db) {
   if (!Array.isArray(db.transactions)) db.transactions = [];
+  if (!Array.isArray(db.deposits)) db.deposits = [];
   if (!Array.isArray(db.contestEntries)) db.contestEntries = [];
   if (!Array.isArray(db.withdrawals)) db.withdrawals = [];
   if (!Array.isArray(db.kycRequests)) db.kycRequests = [];
