@@ -362,7 +362,8 @@ function registerRoutes(app, authenticateToken) {
 
       const team = {
         id: Date.now(),
-        user_id: req.user.userId,
+        user_id: userId,
+        userId: userId,
         match_id: Number(match_id),
         team_name: String(
           team_name || ('Team ' + (userTeams.length + 1))
@@ -894,9 +895,17 @@ function registerRoutes(app, authenticateToken) {
         const team = (db.teams || []).find(
           x =>
             String(x.id) === String(teamId) &&
-            String(x.user_id) === userId &&
-            Number(x.match_id) === matchId
+            Number(x.match_id) === matchId &&
+            (
+              String(x.user_id ?? x.userId ?? "") === userId ||
+              !String(x.user_id ?? x.userId ?? "")
+            )
         );
+
+        if (team && !String(team.user_id ?? team.userId ?? "")) {
+          team.user_id = userId;
+          team.userId = userId;
+        }
 
         if (!team) {
           return res.status(404).json({
